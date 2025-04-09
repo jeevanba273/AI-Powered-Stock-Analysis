@@ -122,35 +122,6 @@ const FutureTrendAnalysis: React.FC<FutureTrendAnalysisProps> = ({
           )}
         </CardContent>
       </Card>
-
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base font-medium flex items-center">
-            <Lightbulb className="h-5 w-5 mr-2 text-primary" />
-            AI Insights
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {!aiAnalysis ? (
-            <p className="text-sm text-muted-foreground">
-              Generate AI analysis to view detailed insights
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {getAIInsights().map((insight, index) => (
-                <div key={index} className="flex items-start gap-2">
-                  {index % 2 === 0 ? (
-                    <CheckCircle2 className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
-                  ) : (
-                    <AlertCircle className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
-                  )}
-                  <p className="text-sm">{insight}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 };

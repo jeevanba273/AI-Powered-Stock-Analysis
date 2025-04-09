@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -177,67 +178,69 @@ const Index = () => {
             }}
           />
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FutureTrendAnalysis 
-              changePercent={stockData.changePercent}
-              aiAnalysis={null}
-              className=""
-            />
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base font-medium flex items-center">
-                  <Search className="h-5 w-5 mr-2 text-primary" />
-                  News Sentiment
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm text-muted-foreground">Overall Sentiment</span>
-                  <span className={`text-sm font-medium ${
-                    stockData.newsSentiment?.overall === 'Positive' ? 'text-profit' : 
-                    stockData.newsSentiment?.overall === 'Negative' ? 'text-loss' : 'text-muted-foreground'
-                  }`}>
-                    {stockData.newsSentiment?.overall || "Neutral"}
-                  </span>
-                </div>
-                <div className="w-full bg-secondary rounded-full h-2 mb-3">
-                  <div 
-                    className="bg-profit h-2 rounded-full" 
-                    style={{ width: `${stockData.newsSentiment?.positivePercentage || 50}%` }}
-                  ></div>
-                </div>
-                <div className="space-y-3 mt-2">
-                  <div className="text-xs">
-                    <div className="flex items-center">
-                      <div className="w-2 h-2 rounded-full bg-profit mr-1"></div>
-                      <span className="text-muted-foreground">Positive mentions:</span>
-                      <span className="ml-auto font-medium">
-                        {stockData.newsSentiment?.positivePercentage || 50}%
-                      </span>
+          <div className="grid grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FutureTrendAnalysis 
+                changePercent={stockData.changePercent}
+                aiAnalysis={null}
+                className="h-full"
+              />
+              
+              <Card className="h-full">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base font-medium flex items-center">
+                    <Search className="h-5 w-5 mr-2 text-primary" />
+                    News Sentiment
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm text-muted-foreground">Overall Sentiment</span>
+                    <span className={`text-sm font-medium ${
+                      stockData.newsSentiment?.overall === 'Positive' ? 'text-profit' : 
+                      stockData.newsSentiment?.overall === 'Negative' ? 'text-loss' : 'text-muted-foreground'
+                    }`}>
+                      {stockData.newsSentiment?.overall || "Neutral"}
+                    </span>
+                  </div>
+                  <div className="w-full bg-secondary rounded-full h-2 mb-3">
+                    <div 
+                      className="bg-profit h-2 rounded-full" 
+                      style={{ width: `${stockData.newsSentiment?.positivePercentage || 50}%` }}
+                    ></div>
+                  </div>
+                  <div className="space-y-3 mt-2">
+                    <div className="text-xs">
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 rounded-full bg-profit mr-1"></div>
+                        <span className="text-muted-foreground">Positive mentions:</span>
+                        <span className="ml-auto font-medium">
+                          {stockData.newsSentiment?.positivePercentage || 50}%
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-xs">
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 rounded-full bg-muted-foreground mr-1"></div>
+                        <span className="text-muted-foreground">Neutral mentions:</span>
+                        <span className="ml-auto font-medium">
+                          {stockData.newsSentiment?.neutralPercentage || 30}%
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-xs">
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 rounded-full bg-loss mr-1"></div>
+                        <span className="text-muted-foreground">Negative mentions:</span>
+                        <span className="ml-auto font-medium">
+                          {stockData.newsSentiment?.negativePercentage || 20}%
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <div className="text-xs">
-                    <div className="flex items-center">
-                      <div className="w-2 h-2 rounded-full bg-muted-foreground mr-1"></div>
-                      <span className="text-muted-foreground">Neutral mentions:</span>
-                      <span className="ml-auto font-medium">
-                        {stockData.newsSentiment?.neutralPercentage || 30}%
-                      </span>
-                    </div>
-                  </div>
-                  <div className="text-xs">
-                    <div className="flex items-center">
-                      <div className="w-2 h-2 rounded-full bg-loss mr-1"></div>
-                      <span className="text-muted-foreground">Negative mentions:</span>
-                      <span className="ml-auto font-medium">
-                        {stockData.newsSentiment?.negativePercentage || 20}%
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       ) : (

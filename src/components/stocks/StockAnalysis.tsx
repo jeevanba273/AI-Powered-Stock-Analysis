@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CircleDashed, Brain, TrendingUp, TrendingDown, Gauge, AlertCircle, RefreshCcw, Layers } from 'lucide-react';
+import { CircleDashed, Brain, TrendingUp, TrendingDown, Gauge, AlertCircle, RefreshCcw, Layers, Lightbulb, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
@@ -65,6 +65,27 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
       case 5: return 'bg-red-500';
       default: return 'bg-secondary';
     }
+  };
+
+  // Generate AI insights based on the analysis
+  const getAIInsights = () => {
+    if (!analysis) return [];
+    
+    // Create 5-6 bullet points of insights
+    const insights = [
+      `The stock is showing ${analysis.recommendation.includes('Buy') ? 'bullish' : analysis.recommendation.includes('Sell') ? 'bearish' : 'neutral'} signals with a ${analysis.riskLevel.toLowerCase()} risk profile.`,
+      `Primary technical pattern identified: ${analysis.technicalPatterns[0] || 'N/A'}.`,
+      `Key support level at ₹${analysis.supportResistance.support[0]?.toLocaleString() || 'N/A'} with secondary support at ₹${analysis.supportResistance.support[1]?.toLocaleString() || 'N/A'}.`,
+      `Immediate resistance detected at ₹${analysis.supportResistance.resistance[0]?.toLocaleString() || 'N/A'}.`,
+      `${analysis.technicalPatterns.length > 1 ? `Additional pattern: ${analysis.technicalPatterns[1]}` : 'No additional patterns detected'}.`,
+      analysis.risk <= 2 
+        ? 'Risk-reward ratio appears favorable for entry positions.'
+        : analysis.risk >= 4
+          ? 'Current risk-reward ratio suggests caution before entering new positions.'
+          : 'Risk-reward ratio is balanced, consider position sizing carefully.'
+    ];
+    
+    return insights;
   };
 
   // Find any FutureTrendAnalysis component rendered on the page and update it with our analysis
@@ -156,18 +177,13 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
                   <AlertCircle className="w-4 h-4 mr-1" />
                   Technical Patterns
                 </h3>
-                <div className="space-y-1 max-h-20 overflow-y-auto">
-                  {analysis.technicalPatterns.slice(0, 3).map((pattern, idx) => (
+                <div className="space-y-1 max-h-28 overflow-y-auto">
+                  {analysis.technicalPatterns.map((pattern, idx) => (
                     <div key={idx} className="flex items-center text-xs">
                       <AlertCircle className="w-3 h-3 mr-1 text-primary" />
                       <span>{pattern}</span>
                     </div>
                   ))}
-                  {analysis.technicalPatterns.length > 3 && (
-                    <div className="text-xs text-muted-foreground">
-                      + {analysis.technicalPatterns.length - 3} more patterns
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -199,6 +215,29 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
                 </div>
               </div>
             </div>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base font-medium flex items-center">
+                  <Lightbulb className="h-5 w-5 mr-2 text-primary" />
+                  AI Insights
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {getAIInsights().map((insight, index) => (
+                    <div key={index} className="flex items-start gap-2">
+                      {index % 2 === 0 ? (
+                        <CheckCircle2 className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
+                      )}
+                      <p className="text-sm">{insight}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
             
             <div className="md:hidden">
               <FutureTrendAnalysis 
