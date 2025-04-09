@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -90,6 +91,7 @@ const Index = () => {
               marketStatus={stockData.marketStatus}
               lastUpdated={stockData.lastUpdated}
               stats={stockData.stats}
+              stockDetails={stockData.rawStockDetails}
               className="lg:col-span-1"
             />
             

@@ -72,6 +72,7 @@ export interface StockData {
     neutralPercentage: number;
     negativePercentage: number;
   };
+  rawStockDetails?: any; // Raw stock details from API
 }
 
 export interface MarketIndex {
@@ -135,8 +136,64 @@ const generateMockStockDetails = (ticker: string): Record<string, any> => {
       debtToEquity: Math.random() * 2,
       roe: Math.random() * 25
     },
-    fundamentals: [],
-    financials: []
+    fundamentals: [
+      {
+        name: "Market Cap",
+        shortName: "Mkt Cap",
+        value: `₹${Math.floor(Math.random() * 100000)}Cr`
+      },
+      {
+        name: "ROE",
+        shortName: "ROE",
+        value: `${(Math.random() * 30 + 10).toFixed(2)}%`
+      },
+      {
+        name: "P/E Ratio(TTM)",
+        shortName: "P/E Ratio(TTM)",
+        value: (Math.random() * 30 + 5).toFixed(2)
+      },
+      {
+        name: "EPS(TTM)",
+        shortName: "EPS(TTM)",
+        value: (Math.random() * 100 + 10).toFixed(2)
+      }
+    ],
+    financials: [
+      {
+        title: "Revenue",
+        yearly: {
+          "2020": Math.floor(Math.random() * 100000) + 10000,
+          "2021": Math.floor(Math.random() * 100000) + 20000,
+          "2022": Math.floor(Math.random() * 100000) + 30000,
+          "2023": Math.floor(Math.random() * 100000) + 40000,
+          "2024": Math.floor(Math.random() * 100000) + 50000
+        },
+        quarterly: {
+          "Dec '23": Math.floor(Math.random() * 20000) + 10000,
+          "Mar '24": Math.floor(Math.random() * 20000) + 11000,
+          "Jun '24": Math.floor(Math.random() * 20000) + 12000,
+          "Sep '24": Math.floor(Math.random() * 20000) + 13000,
+          "Dec '24": Math.floor(Math.random() * 20000) + 14000
+        }
+      },
+      {
+        title: "Profit",
+        yearly: {
+          "2020": Math.floor(Math.random() * 20000) + 5000,
+          "2021": Math.floor(Math.random() * 20000) + 6000,
+          "2022": Math.floor(Math.random() * 20000) + 7000,
+          "2023": Math.floor(Math.random() * 20000) + 8000,
+          "2024": Math.floor(Math.random() * 20000) + 9000
+        },
+        quarterly: {
+          "Dec '23": Math.floor(Math.random() * 5000) + 2000,
+          "Mar '24": Math.floor(Math.random() * 5000) + 2200,
+          "Jun '24": Math.floor(Math.random() * 5000) + 2400,
+          "Sep '24": Math.floor(Math.random() * 5000) + 2600,
+          "Dec '24": Math.floor(Math.random() * 5000) + 2800
+        }
+      }
+    ]
   };
 };
 
@@ -243,15 +300,18 @@ const generateTechnicalAnalysis = (stockData: StockDataPoint[]) => {
 const generateAIInsights = (stockData: StockDataPoint[], price: number) => {
   // In a real scenario, these would come from an AI model analysis
   const patterns = [
-    "double bottom formation",
+    "Double bottom formation",
     "Increasing volume on up days",
     "RSI uptrend without overbought conditions",
     "Price consolidation near resistance",
-    "Bullish engulfing pattern"
+    "Bullish engulfing pattern",
+    "Symmetrical triangle formation",
+    "Head and shoulders pattern",
+    "Cup and handle formation"
   ];
   
-  // Randomly select 2-3 patterns
-  const numPatterns = Math.floor(Math.random() * 2) + 2;
+  // Randomly select 4-6 patterns
+  const numPatterns = Math.floor(Math.random() * 3) + 4; // 4-6 patterns
   const selectedPatterns = [...patterns].sort(() => 0.5 - Math.random()).slice(0, numPatterns);
   
   // Generate support and resistance levels around the current price
@@ -314,11 +374,11 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
     const changePercent = previousPrice === 0 ? 0 : (change / previousPrice) * 100;
     
     // Extract relevant statistics
-    const pe = typeof stockDetails.stats.peRatio === 'number' ? stockDetails.stats.peRatio : 0;
-    const dividend = typeof stockDetails.stats.divYield === 'number' 
+    const pe = typeof stockDetails.stats?.peRatio === 'number' ? stockDetails.stats.peRatio : 0;
+    const dividend = typeof stockDetails.stats?.divYield === 'number' 
       ? `${stockDetails.stats.divYield}%` 
       : '0%';
-    const marketCap = typeof stockDetails.stats.marketCap === 'number'
+    const marketCap = typeof stockDetails.stats?.marketCap === 'number'
       ? `₹${(stockDetails.stats.marketCap).toFixed(2)}Cr`
       : '₹0Cr';
       
@@ -353,14 +413,15 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
         marketCap,
         pe,
         dividend,
-        bookValue: typeof stockDetails.stats.bookValue === 'number' ? stockDetails.stats.bookValue : 0,
-        debtToEquity: typeof stockDetails.stats.debtToEquity === 'number' ? stockDetails.stats.debtToEquity : 0,
-        roe: typeof stockDetails.stats.roe === 'number' ? stockDetails.stats.roe : 0
+        bookValue: typeof stockDetails.stats?.bookValue === 'number' ? stockDetails.stats.bookValue : 0,
+        debtToEquity: typeof stockDetails.stats?.debtToEquity === 'number' ? stockDetails.stats.debtToEquity : 0,
+        roe: typeof stockDetails.stats?.roe === 'number' ? stockDetails.stats.roe : 0
       },
       stockData: historicalData,
       technicalAnalysis,
       aiInsights,
-      newsSentiment
+      newsSentiment,
+      rawStockDetails: stockDetails // Store the raw stock details from API
     };
     
     return stockData;
@@ -372,6 +433,7 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
     // Return fallback mock data in case of any errors
     const historicalData = generateMockHistoricalData(ticker);
     const mockPrice = historicalData[historicalData.length - 1].close;
+    const mockStockDetails = generateMockStockDetails(ticker);
     
     // Generate additional analysis data for the mock data
     const technicalAnalysis = generateTechnicalAnalysis(historicalData);
@@ -400,7 +462,8 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
       stockData: historicalData,
       technicalAnalysis,
       aiInsights,
-      newsSentiment
+      newsSentiment,
+      rawStockDetails: mockStockDetails
     };
   }
 };

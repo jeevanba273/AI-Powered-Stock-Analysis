@@ -1,9 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowUpRight, ArrowDownRight, Clock, ChevronRight } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Clock, ChevronRight, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface StockSummaryProps {
   ticker: string;
@@ -23,8 +25,10 @@ interface StockSummaryProps {
     marketCap: string;
     pe: number;
     dividend: string;
+    [key: string]: any; // Allow additional stats
   };
   className?: string;
+  stockDetails?: any; // Raw stock details from API
 }
 
 const StockSummary: React.FC<StockSummaryProps> = ({
@@ -38,7 +42,9 @@ const StockSummary: React.FC<StockSummaryProps> = ({
   lastUpdated,
   stats,
   className,
+  stockDetails,
 }) => {
+  const [dialogOpen, setDialogOpen] = useState(false);
   const isPositive = change >= 0;
   
   const getMarketStatusColor = (status: string) => {
@@ -131,13 +137,162 @@ const StockSummary: React.FC<StockSummaryProps> = ({
         </div>
         
         <div className="mt-4">
-          <a 
-            href="#" 
-            className="text-xs flex items-center text-primary hover:text-primary/80 transition-colors"
-          >
-            <span>View detailed financials</span>
-            <ChevronRight className="h-3 w-3 ml-1" />
-          </a>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <button 
+                className="text-xs flex items-center text-primary hover:text-primary/80 transition-colors"
+              >
+                <span>View detailed financials</span>
+                <ChevronRight className="h-3 w-3 ml-1" />
+              </button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>{ticker} - Detailed Financials</DialogTitle>
+              </DialogHeader>
+              
+              <Tabs defaultValue="summary" className="w-full">
+                <TabsList className="grid grid-cols-4 mb-4">
+                  <TabsTrigger value="summary">Summary</TabsTrigger>
+                  <TabsTrigger value="fundamentals">Fundamentals</TabsTrigger>
+                  <TabsTrigger value="financials">Financials</TabsTrigger>
+                  <TabsTrigger value="stats">Advanced Stats</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="summary" className="space-y-4">
+                  <div className="bg-card border rounded-lg p-4">
+                    <h3 className="font-semibold mb-2">Company Overview</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {stockDetails?.company_summary || `No summary available for ${companyName}.`}
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-card border rounded-lg p-4">
+                      <h3 className="font-semibold mb-2">Industry</h3>
+                      <p className="text-sm">{stockDetails?.industry || "Technology"}</p>
+                    </div>
+                    <div className="bg-card border rounded-lg p-4">
+                      <h3 className="font-semibold mb-2">Stock Type</h3>
+                      <p className="text-sm">{stockDetails?.stats?.cappedType || "Large Cap"}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-card border rounded-lg p-4">
+                    <h3 className="font-semibold mb-2">52-Week Range</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <h4 className="text-xs text-muted-foreground">NSE</h4>
+                        <p className="text-sm">₹{stockDetails?.price_data?.nse?.yearLowPrice || "-"} - ₹{stockDetails?.price_data?.nse?.yearHighPrice || "-"}</p>
+                      </div>
+                      <div>
+                        <h4 className="text-xs text-muted-foreground">BSE</h4>
+                        <p className="text-sm">₹{stockDetails?.price_data?.bse?.yearLowPrice || "-"} - ₹{stockDetails?.price_data?.bse?.yearHighPrice || "-"}</p>
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="fundamentals" className="space-y-4">
+                  <div className="bg-card border rounded-lg p-4">
+                    <h3 className="font-semibold mb-2">Key Fundamentals</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      {stockDetails?.fundamentals?.map((item: any, index: number) => (
+                        <div key={index} className="border-b pb-2">
+                          <h4 className="text-xs text-muted-foreground">{item.name}</h4>
+                          <p className="text-sm font-medium">{item.value}</p>
+                        </div>
+                      )) || (
+                        <p className="text-sm text-muted-foreground">No fundamental data available.</p>
+                      )}
+                    </div>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="financials" className="space-y-4">
+                  {stockDetails?.financials?.map((item: any, index: number) => (
+                    <div key={index} className="bg-card border rounded-lg p-4">
+                      <h3 className="font-semibold mb-2">{item.title}</h3>
+                      
+                      {item.yearly && (
+                        <div className="mb-4">
+                          <h4 className="text-xs text-muted-foreground mb-1">Yearly (in ₹ Cr)</h4>
+                          <div className="grid grid-cols-5 gap-2">
+                            {Object.entries(item.yearly).map(([year, value]: [string, any]) => (
+                              <div key={year} className="text-center border-r last:border-r-0">
+                                <p className="text-xs font-medium">{year}</p>
+                                <p className="text-sm">{value}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {item.quarterly && (
+                        <div>
+                          <h4 className="text-xs text-muted-foreground mb-1">Quarterly (in ₹ Cr)</h4>
+                          <div className="grid grid-cols-5 gap-2">
+                            {Object.entries(item.quarterly).map(([quarter, value]: [string, any]) => (
+                              <div key={quarter} className="text-center border-r last:border-r-0">
+                                <p className="text-xs font-medium">{quarter}</p>
+                                <p className="text-sm">{value}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )) || (
+                    <p className="text-sm text-muted-foreground">No financial data available.</p>
+                  )}
+                </TabsContent>
+                
+                <TabsContent value="stats" className="space-y-4">
+                  <div className="bg-card border rounded-lg p-4">
+                    <h3 className="font-semibold mb-2">Advanced Statistics</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                      {stockDetails?.stats && Object.entries(stockDetails.stats)
+                        .filter(([key]) => typeof stockDetails.stats[key] !== 'object')
+                        .map(([key, value]: [string, any]) => (
+                          <div key={key} className="border-b pb-2">
+                            <h4 className="text-xs text-muted-foreground capitalize">
+                              {key.replace(/([A-Z])/g, ' $1')
+                                .replace(/^./, str => str.toUpperCase())
+                                .replace(/Ttm/i, 'TTM')
+                                .replace(/Roe/i, 'ROE')
+                                .replace(/Roic/i, 'ROIC')
+                                .replace(/Vs/i, 'vs')
+                                .replace(/Pe/i, 'P/E')
+                                .replace(/Pb/i, 'P/B')
+                                .replace(/Ev/i, 'EV')
+                                .replace(/Ocf/i, 'OCF')
+                                .replace(/Fcf/i, 'FCF')}
+                            </h4>
+                            <p className="text-sm font-medium">
+                              {typeof value === 'number' ? 
+                                (key.toLowerCase().includes('percent') || 
+                                 key.toLowerCase().includes('yield') || 
+                                 key.toLowerCase().includes('ratio') ? 
+                                  value.toFixed(2) : 
+                                  value.toLocaleString('en-IN', {maximumFractionDigits: 2})) : 
+                                String(value)}
+                              {(key.toLowerCase().includes('percent') || 
+                                key.toLowerCase().includes('yield') || 
+                                key.toLowerCase().includes('roe') ||
+                                key.toLowerCase().includes('roce') ||
+                                key.toLowerCase().includes('margin')) && 
+                                !String(value).includes('%') ? '%' : ''}
+                            </p>
+                          </div>
+                        )) || (
+                        <p className="text-sm text-muted-foreground">No advanced statistics available.</p>
+                      )}
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </DialogContent>
+          </Dialog>
         </div>
       </CardContent>
     </Card>

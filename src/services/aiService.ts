@@ -46,11 +46,11 @@ export const generateAIAnalysis = async (request: AIAnalysisRequest): Promise<AI
         messages: [
           {
             role: 'system',
-            content: 'You are a professional Indian stock market analyst. Analyze the provided Indian stock data and return ONLY a valid JSON object with these fields: "analysis" (detailed technical analysis), "supportResistance" (object with "support" and "resistance" arrays in ₹), "risk" (number 1-5), "riskLevel" (string: "Very Low", "Low", "Moderate", "High", "Very High"), "recommendation" (string: "Strong Buy", "Buy", "Hold", "Sell", "Strong Sell"), and "technicalPatterns" (array of identified patterns). All currency values MUST be in ₹ (Indian Rupees).'
+            content: 'You are a professional Indian stock market analyst. Analyze the provided Indian stock data and return ONLY a valid JSON object with these fields: "analysis" (detailed technical analysis with key patterns and trends), "supportResistance" (object with "support" and "resistance" arrays in ₹), "risk" (number 1-5), "riskLevel" (string: "Very Low", "Low", "Moderate", "High", "Very High"), "recommendation" (string: "Strong Buy", "Buy", "Hold", "Sell", "Strong Sell"), and "technicalPatterns" (array of at least 4 identified patterns like "Double Bottom", "Head and Shoulders", "Cup and Handle", "Falling Wedge", "Rising Wedge", "Bullish Flag", "Bearish Flag", "Double Top", "Triple Top", "Triple Bottom", "Rounding Bottom", "Ascending Triangle", "Descending Triangle", "Symmetrical Triangle", "Breakout", etc). All currency values MUST be in ₹ (Indian Rupees).'
           },
           {
             role: 'user',
-            content: `Analyze this ${request.ticker} stock. Price: ₹${request.stockData.price.toFixed(2)}, Change: ₹${request.stockData.change.toFixed(2)} (${request.stockData.changePercent.toFixed(2)}%). Stock data for last ${request.stockData.stockData.length} days provided. Provide detailed technical analysis with key patterns, trends, support/resistance levels in ₹, risk assessment on 1-5 scale with risk level, and investment recommendation.`
+            content: `Analyze this ${request.ticker} stock. Price: ₹${request.stockData.price.toFixed(2)}, Change: ₹${request.stockData.change.toFixed(2)} (${request.stockData.changePercent.toFixed(2)}%). Stock data for last ${request.stockData.stockData.length} days provided. Provide detailed technical analysis with key patterns, trends, support/resistance levels in ₹, risk assessment on 1-5 scale with risk level, and investment recommendation. Include at least 4 technical patterns.`
           }
         ],
         temperature: 0.2
@@ -87,7 +87,7 @@ export const generateAIAnalysis = async (request: AIAnalysisRequest): Promise<AI
         risk: analysis.risk || 3,
         riskLevel: analysis.riskLevel || getRiskLevelFromValue(analysis.risk || 3),
         recommendation: analysis.recommendation || "Hold",
-        technicalPatterns: analysis.technicalPatterns || ["No patterns identified"]
+        technicalPatterns: analysis.technicalPatterns || ["Consolidation", "Trading range", "Support test", "Moving average crossover"]
       };
     } catch (parseError) {
       // If parsing fails, format the response manually
@@ -103,7 +103,7 @@ export const generateAIAnalysis = async (request: AIAnalysisRequest): Promise<AI
         risk: 3,
         riskLevel: "Moderate",
         recommendation: "Hold",
-        technicalPatterns: ["Consolidation phase", "Trading range"]
+        technicalPatterns: ["Consolidation phase", "Trading range", "Support test", "Moving average crossover"]
       };
     }
   } catch (error) {
@@ -121,7 +121,7 @@ export const generateAIAnalysis = async (request: AIAnalysisRequest): Promise<AI
       risk: 3,
       riskLevel: "Moderate",
       recommendation: "Unable to determine",
-      technicalPatterns: ["Analysis not available"]
+      technicalPatterns: ["Analysis not available", "Data insufficient", "Technical error", "Please try again"]
     };
   }
 };
