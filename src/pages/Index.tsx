@@ -44,7 +44,7 @@ const Index = () => {
     if (!stockData) return;
     
     try {
-      // Pass the actual stock data to the AI service
+      // Pass the actual stock data to the AI service including news data
       const analysisResult = await generateAIAnalysis({
         ticker: activeStock,
         stockData: stockData,
@@ -52,7 +52,8 @@ const Index = () => {
           sma: true,
           rsi: true,
           macd: true
-        }
+        },
+        newsData: stockData.newsData
       });
       
       return analysisResult;
@@ -97,6 +98,7 @@ const Index = () => {
             
             <StockAnalysis 
               ticker={stockData.ticker}
+              stockData={stockData}
               onRequestAnalysis={handleAIAnalysis}
               className="lg:col-span-2"
             />

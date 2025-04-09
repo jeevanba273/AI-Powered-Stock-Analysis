@@ -11,11 +11,12 @@ import { AIAnalysisResponse } from '@/services/aiService';
 
 interface StockAnalysisProps {
   ticker: string;
+  stockData: any; // Full stock data including news
   onRequestAnalysis: () => Promise<AIAnalysisResponse | undefined>;
   className?: string;
 }
 
-const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, onRequestAnalysis, className }) => {
+const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequestAnalysis, className }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [analysis, setAnalysis] = useState<AIAnalysisResponse | null>(null);
 

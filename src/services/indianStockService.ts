@@ -1,5 +1,5 @@
-
 import { toast } from 'sonner';
+import { analyzeNewsSentiment } from './aiService';
 
 // API Configuration
 export const INDIAN_API_KEY = "sk-live-ABJDNr3hqHXiB8PKvxgWwzUU123KyDyIGCq6qfW7";
@@ -76,6 +76,7 @@ export interface StockData {
     negativePercentage: number;
   };
   rawStockDetails?: any; // Raw stock details from API
+  newsData?: any[]; // Raw news data
 }
 
 export interface MarketIndex {
@@ -231,6 +232,46 @@ const generateMockStockDetails = (ticker: string): Record<string, any> => {
   };
 };
 
+// API call to fetch live stock price
+const fetchLiveStockPrice = async (ticker: string): Promise<any> => {
+  try {
+    console.log(`Fetching live price data for ${ticker}...`);
+    const url = 'https://dev.indianapi.in/nse_stock_batch_live_price';
+    
+    const payload = {
+      stock_symbols: [ticker]
+    };
+    
+    const headers = {
+      'Authorization': `Bearer ${INDIAN_API_KEY}`,
+      'Content-Type': 'application/json'
+    };
+    
+    const response = await fetch(url, { 
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload)
+    });
+    
+    if (!response.ok) {
+      console.error(`API error: ${response.status} - ${await response.text()}`);
+      throw new Error(`API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log(`Live price data received for ${ticker}:`, data);
+    
+    if (data && data[ticker]) {
+      return data[ticker];
+    } else {
+      throw new Error('Invalid response format');
+    }
+  } catch (error) {
+    console.error('Error fetching live stock price:', error);
+    return null;
+  }
+};
+
 // API call to fetch historical data
 const fetchHistoricalData = async (ticker: string, period: string = '3yr'): Promise<StockDataPoint[]> => {
   try {
@@ -308,6 +349,33 @@ const fetchStockDetails = async (ticker: string): Promise<Record<string, any>> =
   }
 };
 
+// API call to fetch company news
+const fetchCompanyNews = async (ticker: string): Promise<any[]> => {
+  try {
+    console.log(`Fetching news for ${ticker}...`);
+    const url = `https://dev.indianapi.in/company_news?stock_name=${ticker}`;
+    
+    const headers = {
+      'Authorization': `Bearer ${INDIAN_API_KEY}`,
+      'Content-Type': 'application/json'
+    };
+    
+    const response = await fetch(url, { headers });
+    
+    if (!response.ok) {
+      console.error(`API error: ${response.status} - ${await response.text()}`);
+      throw new Error(`API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log(`News data received for ${ticker}:`, data);
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching company news:', error);
+    return [];
+  }
+};
+
 // Generate technical analysis based on stock data
 const generateTechnicalAnalysis = (stockData: StockDataPoint[]) => {
   // In a real scenario, we would calculate these from the historical data
@@ -370,92 +438,126 @@ const generateAIInsights = (stockData: StockDataPoint[], price: number) => {
   };
 };
 
-// Generate news sentiment
-const generateNewsSentiment = () => {
-  // In a real scenario, this would be based on actual news analysis
-  const positivePercentage = Math.floor(Math.random() * 60) + 20; // 20%-80%
-  const negativePercentage = Math.floor(Math.random() * 30); // 0%-30%
-  const neutralPercentage = 100 - positivePercentage - negativePercentage;
-  
-  let overall;
-  if (positivePercentage > 65) overall = "Positive";
-  else if (positivePercentage < 35) overall = "Negative";
-  else overall = "Neutral";
-  
-  return {
-    overall,
-    positivePercentage,
-    neutralPercentage,
-    negativePercentage
-  };
-};
-
 export const fetchStockData = async (ticker: string): Promise<StockData> => {
   try {
     toast.loading(`Fetching data for ${ticker}...`, { id: "fetch-stock" });
     
-    // Fetch historical data and stock details
-    const historicalData = await fetchHistoricalData(ticker);
-    const stockDetails = await fetchStockDetails(ticker);
+    // Fetch all data in parallel for efficiency
+    const [liveStockData, historicalData, stockDetails, companyNews] = await Promise.all([
+      fetchLiveStockPrice(ticker),
+      fetchHistoricalData(ticker),
+      fetchStockDetails(ticker),
+      fetchCompanyNews(ticker)
+    ]);
+    
+    // Process news sentiment with AI if we have news data
+    let newsSentiment;
+    if (companyNews && companyNews.length > 0) {
+      newsSentiment = await analyzeNewsSentiment(ticker, companyNews);
+    } else {
+      newsSentiment = {
+        overall: "Neutral",
+        positivePercentage: 50,
+        neutralPercentage: 30,
+        negativePercentage: 20
+      };
+    }
     
     toast.dismiss("fetch-stock");
     toast.success(`Data loaded for ${ticker}`);
     
-    // Get latest price and calculate change
-    const latestPrice = historicalData.length > 0 ? historicalData[historicalData.length - 1].close : 0;
-    const previousPrice = historicalData.length > 1 ? historicalData[historicalData.length - 2].close : latestPrice;
-    const change = latestPrice - previousPrice;
-    const changePercent = previousPrice === 0 ? 0 : (change / previousPrice) * 100;
+    // Determine the latest price and calculate change
+    let latestPrice, change, changePercent, openPrice, highPrice, lowPrice, volume, marketStatus;
     
-    // Extract relevant statistics
-    const pe = typeof stockDetails.stats?.peRatio === 'number' ? stockDetails.stats.peRatio : 0;
-    const dividend = typeof stockDetails.stats?.divYield === 'number' 
-      ? `${stockDetails.stats.divYield}%` 
-      : '0%';
-    const marketCap = typeof stockDetails.stats?.marketCap === 'number'
-      ? `₹${(stockDetails.stats.marketCap).toFixed(2)}Cr`
-      : '₹0Cr';
+    if (liveStockData) {
+      // Use live stock data
+      latestPrice = liveStockData.ltp;
+      change = liveStockData.day_change;
+      changePercent = liveStockData.day_change_percent;
+      openPrice = liveStockData.open;
+      highPrice = liveStockData.high;
+      lowPrice = liveStockData.low;
+      volume = liveStockData.volume;
       
-    // Get volume from historical data
-    const volume = historicalData.length > 0 && historicalData[historicalData.length - 1].volume 
-      ? historicalData[historicalData.length - 1].volume as number 
-      : 0;
+      // Determine market status based on timestamp
+      const now = new Date();
+      const lastTradeTime = new Date(liveStockData.last_trade_time);
+      const timeDiffMinutes = (now.getTime() - lastTradeTime.getTime()) / (1000 * 60);
+      
+      marketStatus = timeDiffMinutes < 30 ? 'open' : 'closed';
+    } else {
+      // Fall back to historical data
+      latestPrice = historicalData.length > 0 ? historicalData[historicalData.length - 1].close : 0;
+      const previousPrice = historicalData.length > 1 ? historicalData[historicalData.length - 2].close : latestPrice;
+      change = latestPrice - previousPrice;
+      changePercent = previousPrice === 0 ? 0 : (change / previousPrice) * 100;
+      
+      // Use the most recent historical data point
+      const latestDataPoint = historicalData[historicalData.length - 1];
+      openPrice = latestDataPoint.open || latestPrice * 0.99;
+      highPrice = latestDataPoint.high || latestPrice * 1.01;
+      lowPrice = latestDataPoint.low || latestPrice * 0.99;
+      volume = latestDataPoint.volume || 1000000;
+      
+      marketStatus = 'closed';
+    }
+    
+    // Extract relevant statistics from stock details
+    let pe, dividend, marketCap, bookValue, debtToEquity, roe;
+    
+    if (stockDetails && stockDetails.stats) {
+      pe = typeof stockDetails.stats.peRatio === 'number' ? stockDetails.stats.peRatio : 0;
+      dividend = typeof stockDetails.stats.divYield === 'number' 
+        ? `${stockDetails.stats.divYield}%` 
+        : '0%';
+      marketCap = typeof stockDetails.stats.marketCap === 'number'
+        ? `₹${(stockDetails.stats.marketCap).toFixed(2)}Cr`
+        : '₹0Cr';
+      bookValue = typeof stockDetails.stats.bookValue === 'number' ? stockDetails.stats.bookValue : 0;
+      debtToEquity = typeof stockDetails.stats.debtToEquity === 'number' ? stockDetails.stats.debtToEquity : 0;
+      roe = typeof stockDetails.stats.roe === 'number' ? stockDetails.stats.roe : 0;
+    } else {
+      pe = 0;
+      dividend = '0%';
+      marketCap = '₹0Cr';
+      bookValue = 0;
+      debtToEquity = 0;
+      roe = 0;
+    }
     
     // Generate additional analysis data
     const technicalAnalysis = generateTechnicalAnalysis(historicalData);
     const aiInsights = generateAIInsights(historicalData, latestPrice);
-    const newsSentiment = generateNewsSentiment();
     
     // Create stock data object
     const stockData: StockData = {
       ticker,
-      companyName: stockDetails.name || `${ticker} Ltd.`,
+      companyName: stockDetails?.name || `${ticker} Ltd.`,
       price: latestPrice,
       change,
       changePercent,
       currency: '₹',
-      marketStatus: 'open', // Assume market is open by default
+      marketStatus,
       lastUpdated: new Date().toLocaleTimeString(),
       stats: {
-        open: historicalData.length > 0 && historicalData[historicalData.length - 1].open 
-          ? historicalData[historicalData.length - 1].open as number 
-          : latestPrice,
-        high: stockDetails.price_data?.nse?.yearHighPrice || 0,
-        low: stockDetails.price_data?.nse?.yearLowPrice || 0,
+        open: openPrice,
+        high: highPrice,
+        low: lowPrice,
         volume,
         avgVolume: volume, // We don't have average volume in the data
         marketCap,
         pe,
         dividend,
-        bookValue: typeof stockDetails.stats?.bookValue === 'number' ? stockDetails.stats.bookValue : 0,
-        debtToEquity: typeof stockDetails.stats?.debtToEquity === 'number' ? stockDetails.stats.debtToEquity : 0,
-        roe: typeof stockDetails.stats?.roe === 'number' ? stockDetails.stats.roe : 0
+        bookValue,
+        debtToEquity,
+        roe
       },
       stockData: historicalData,
       technicalAnalysis,
       aiInsights,
       newsSentiment,
-      rawStockDetails: stockDetails // Store the raw stock details from API
+      rawStockDetails: stockDetails, // Store the raw stock details from API
+      newsData: companyNews // Store the news data
     };
     
     return stockData;
@@ -472,7 +574,12 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
     // Generate additional analysis data for the mock data
     const technicalAnalysis = generateTechnicalAnalysis(historicalData);
     const aiInsights = generateAIInsights(historicalData, mockPrice);
-    const newsSentiment = generateNewsSentiment();
+    const newsSentiment = {
+      overall: "Neutral",
+      positivePercentage: 50,
+      neutralPercentage: 30,
+      negativePercentage: 20
+    };
     
     return {
       ticker,
