@@ -1,4 +1,3 @@
-
 import { toast } from 'sonner';
 import { analyzeNewsSentiment } from './aiService';
 
@@ -111,7 +110,13 @@ const fetchLiveStockPrice = async (ticker: string): Promise<any> => {
     });
     
     if (!response.ok) {
-      console.error(`API error: ${response.status} - ${await response.text()}`);
+      const text = await response.text();
+      console.error(`API error: ${response.status} - ${text}`);
+      
+      if (response.status === 403) {
+        throw new Error(`API authentication failed (Error 403): Invalid or expired API key`);
+      }
+      
       throw new Error(`API error: ${response.status}`);
     }
     
@@ -121,11 +126,11 @@ const fetchLiveStockPrice = async (ticker: string): Promise<any> => {
     if (data && data[ticker]) {
       return data[ticker];
     } else {
-      throw new Error('Invalid response format');
+      throw new Error('Invalid response format from API');
     }
   } catch (error) {
     console.error('Error fetching live stock price:', error);
-    throw new Error('Failed to fetch live stock price data');
+    throw error;
   }
 };
 
@@ -143,7 +148,13 @@ const fetchHistoricalData = async (ticker: string, period: string = '3yr'): Prom
     const response = await fetch(url, { headers });
     
     if (!response.ok) {
-      console.error(`API error: ${response.status} - ${await response.text()}`);
+      const text = await response.text();
+      console.error(`API error: ${response.status} - ${text}`);
+      
+      if (response.status === 403) {
+        throw new Error(`API authentication failed (Error 403): Invalid or expired API key`);
+      }
+      
       throw new Error(`API error: ${response.status}`);
     }
     
@@ -171,7 +182,7 @@ const fetchHistoricalData = async (ticker: string, period: string = '3yr'): Prom
     });
   } catch (error) {
     console.error('Error fetching historical data:', error);
-    throw new Error('Failed to fetch historical price data');
+    throw error;
   }
 };
 
@@ -189,7 +200,13 @@ const fetchStockDetails = async (ticker: string): Promise<Record<string, any>> =
     const response = await fetch(url, { headers });
     
     if (!response.ok) {
-      console.error(`API error: ${response.status} - ${await response.text()}`);
+      const text = await response.text();
+      console.error(`API error: ${response.status} - ${text}`);
+      
+      if (response.status === 403) {
+        throw new Error(`API authentication failed (Error 403): Invalid or expired API key`);
+      }
+      
       throw new Error(`API error: ${response.status}`);
     }
     
@@ -198,7 +215,7 @@ const fetchStockDetails = async (ticker: string): Promise<Record<string, any>> =
     return data;
   } catch (error) {
     console.error('Error fetching stock details:', error);
-    throw new Error('Failed to fetch stock details');
+    throw error;
   }
 };
 
@@ -216,7 +233,13 @@ const fetchCompanyNews = async (ticker: string): Promise<any[]> => {
     const response = await fetch(url, { headers });
     
     if (!response.ok) {
-      console.error(`API error: ${response.status} - ${await response.text()}`);
+      const text = await response.text();
+      console.error(`API error: ${response.status} - ${text}`);
+      
+      if (response.status === 403) {
+        throw new Error(`API authentication failed (Error 403): Invalid or expired API key`);
+      }
+      
       throw new Error(`API error: ${response.status}`);
     }
     
@@ -225,7 +248,7 @@ const fetchCompanyNews = async (ticker: string): Promise<any[]> => {
     return data || [];
   } catch (error) {
     console.error('Error fetching company news:', error);
-    throw new Error('Failed to fetch company news');
+    throw error;
   }
 };
 
@@ -265,117 +288,131 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
   try {
     toast.loading(`Fetching data for ${ticker}...`, { id: "fetch-stock" });
     
-    // Fetch all data in parallel for efficiency
-    const [liveStockData, historicalData, stockDetails, companyNews] = await Promise.all([
-      fetchLiveStockPrice(ticker),
-      fetchHistoricalData(ticker),
-      fetchStockDetails(ticker),
-      fetchCompanyNews(ticker)
-    ]);
-    
-    // Process news sentiment with AI if we have news data
-    let newsSentiment;
-    if (companyNews && companyNews.length > 0) {
-      newsSentiment = await analyzeNewsSentiment(ticker, companyNews);
-    } else {
-      throw new Error('No news data available for sentiment analysis');
-    }
-    
-    toast.dismiss("fetch-stock");
-    toast.success(`Data loaded for ${ticker}`);
-    
-    // Use live stock data
-    const latestPrice = liveStockData.ltp;
-    const change = liveStockData.day_change;
-    const changePercent = liveStockData.day_change_percent;
-    const openPrice = liveStockData.open;
-    const highPrice = liveStockData.high;
-    const lowPrice = liveStockData.low;
-    const volume = liveStockData.volume;
-    
-    // Determine market status based on timestamp
-    const now = new Date();
-    const lastTradeTime = new Date(liveStockData.last_trade_time);
-    const timeDiffMinutes = (now.getTime() - lastTradeTime.getTime()) / (1000 * 60);
-    
-    const marketStatus = timeDiffMinutes < 30 ? 'open' : 'closed';
-    
-    // Extract relevant statistics from stock details
-    const pe = typeof stockDetails.stats.peRatio === 'number' ? stockDetails.stats.peRatio : 0;
-    const dividend = typeof stockDetails.stats.divYield === 'number' 
-      ? `${stockDetails.stats.divYield}%` 
-      : '0%';
-    const marketCap = typeof stockDetails.stats.marketCap === 'number'
-      ? `₹${(stockDetails.stats.marketCap).toFixed(2)}Cr`
-      : '₹0Cr';
-    const bookValue = typeof stockDetails.stats.bookValue === 'number' ? stockDetails.stats.bookValue : 0;
-    const debtToEquity = typeof stockDetails.stats.debtToEquity === 'number' ? stockDetails.stats.debtToEquity : 0;
-    const roe = typeof stockDetails.stats.roe === 'number' ? stockDetails.stats.roe : 0;
-    
-    // Generate additional analysis data
-    const technicalAnalysis = generateTechnicalAnalysis(historicalData, liveStockData);
-    
-    // AI insights are generated from OpenAI for the analysis section
-    // Support/resistance levels based on actual price data
-    const sortedPrices = [...historicalData].sort((a, b) => a.close - b.close);
-    const lowerQuartile = sortedPrices[Math.floor(sortedPrices.length * 0.25)].close;
-    const upperQuartile = sortedPrices[Math.floor(sortedPrices.length * 0.75)].close;
-    
-    const aiInsights = {
-      patterns: [
-        "Price below 50-day moving average",
-        "Volume spike on down days",
-        "Testing support levels",
-        "Bearish trend continuation",
-        "Symmetrical triangle formation",
-        "RSI showing oversold conditions"
-      ],
-      supportResistance: {
-        support: [
-          Math.round(lowerQuartile * 100) / 100,
-          Math.round(latestPrice * 0.95 * 100) / 100
+    try {
+      // Fetch all data in parallel for efficiency
+      const [liveStockData, historicalData, stockDetails, companyNews] = await Promise.all([
+        fetchLiveStockPrice(ticker),
+        fetchHistoricalData(ticker),
+        fetchStockDetails(ticker),
+        fetchCompanyNews(ticker)
+      ]);
+      
+      // Process news sentiment with AI if we have news data
+      let newsSentiment;
+      if (companyNews && companyNews.length > 0) {
+        newsSentiment = await analyzeNewsSentiment(ticker, companyNews);
+      } else {
+        throw new Error('No news data available for sentiment analysis');
+      }
+      
+      toast.dismiss("fetch-stock");
+      toast.success(`Data loaded for ${ticker}`);
+      
+      // Use live stock data
+      const latestPrice = liveStockData.ltp;
+      const change = liveStockData.day_change;
+      const changePercent = liveStockData.day_change_percent;
+      const openPrice = liveStockData.open;
+      const highPrice = liveStockData.high;
+      const lowPrice = liveStockData.low;
+      const volume = liveStockData.volume;
+      
+      // Determine market status based on timestamp
+      const now = new Date();
+      const lastTradeTime = new Date(liveStockData.last_trade_time);
+      const timeDiffMinutes = (now.getTime() - lastTradeTime.getTime()) / (1000 * 60);
+      
+      const marketStatus = timeDiffMinutes < 30 ? 'open' : 'closed';
+      
+      // Extract relevant statistics from stock details
+      const pe = typeof stockDetails.stats.peRatio === 'number' ? stockDetails.stats.peRatio : 0;
+      const dividend = typeof stockDetails.stats.divYield === 'number' 
+        ? `${stockDetails.stats.divYield}%` 
+        : '0%';
+      const marketCap = typeof stockDetails.stats.marketCap === 'number'
+        ? `₹${(stockDetails.stats.marketCap).toFixed(2)}Cr`
+        : '₹0Cr';
+      const bookValue = typeof stockDetails.stats.bookValue === 'number' ? stockDetails.stats.bookValue : 0;
+      const debtToEquity = typeof stockDetails.stats.debtToEquity === 'number' ? stockDetails.stats.debtToEquity : 0;
+      const roe = typeof stockDetails.stats.roe === 'number' ? stockDetails.stats.roe : 0;
+      
+      // Generate additional analysis data
+      const technicalAnalysis = generateTechnicalAnalysis(historicalData, liveStockData);
+      
+      // AI insights are generated from OpenAI for the analysis section
+      // Support/resistance levels based on actual price data
+      const sortedPrices = [...historicalData].sort((a, b) => a.close - b.close);
+      const lowerQuartile = sortedPrices[Math.floor(sortedPrices.length * 0.25)].close;
+      const upperQuartile = sortedPrices[Math.floor(sortedPrices.length * 0.75)].close;
+      
+      const aiInsights = {
+        patterns: [
+          "Price below 50-day moving average",
+          "Volume spike on down days",
+          "Testing support levels",
+          "Bearish trend continuation",
+          "Symmetrical triangle formation",
+          "RSI showing oversold conditions"
         ],
-        resistance: [
-          Math.round(upperQuartile * 100) / 100,
-          Math.round(latestPrice * 1.05 * 100) / 100
-        ]
-      },
-      risk: 3,
-      recommendation: changePercent < -1 ? "Hold" : "Buy"
-    };
-    
-    // Create stock data object
-    const stockData: StockData = {
-      ticker,
-      companyName: stockDetails.name || `${ticker} Ltd.`,
-      price: latestPrice,
-      change,
-      changePercent,
-      currency: '₹',
-      marketStatus,
-      lastUpdated: new Date().toLocaleTimeString(),
-      stats: {
-        open: openPrice,
-        high: highPrice,
-        low: lowPrice,
-        volume,
-        avgVolume: volume, // We don't have average volume in the data
-        marketCap,
-        pe,
-        dividend,
-        bookValue,
-        debtToEquity,
-        roe
-      },
-      stockData: historicalData,
-      technicalAnalysis,
-      aiInsights,
-      newsSentiment,
-      rawStockDetails: stockDetails, // Store the raw stock details from API
-      newsData: companyNews // Store the news data
-    };
-    
-    return stockData;
+        supportResistance: {
+          support: [
+            Math.round(lowerQuartile * 100) / 100,
+            Math.round(latestPrice * 0.95 * 100) / 100
+          ],
+          resistance: [
+            Math.round(upperQuartile * 100) / 100,
+            Math.round(latestPrice * 1.05 * 100) / 100
+          ]
+        },
+        risk: 3,
+        recommendation: changePercent < -1 ? "Hold" : "Buy"
+      };
+      
+      // Create stock data object
+      const stockData: StockData = {
+        ticker,
+        companyName: stockDetails.name || `${ticker} Ltd.`,
+        price: latestPrice,
+        change,
+        changePercent,
+        currency: '₹',
+        marketStatus,
+        lastUpdated: new Date().toLocaleTimeString(),
+        stats: {
+          open: openPrice,
+          high: highPrice,
+          low: lowPrice,
+          volume,
+          avgVolume: volume, // We don't have average volume in the data
+          marketCap,
+          pe,
+          dividend,
+          bookValue,
+          debtToEquity,
+          roe
+        },
+        stockData: historicalData,
+        technicalAnalysis,
+        aiInsights,
+        newsSentiment,
+        rawStockDetails: stockDetails, // Store the raw stock details from API
+        newsData: companyNews // Store the news data
+      };
+      
+      return stockData;
+    } catch (error) {
+      console.error('Error in API data fetching:', error);
+      
+      if (error.message && error.message.includes('API authentication failed')) {
+        throw new Error('API authentication failed: The API key appears to be invalid or expired. Please check your API credentials.');
+      }
+      
+      if (error.message && error.message.includes('Network') || error.message.includes('Failed to fetch')) {
+        throw new Error('Network error: Unable to connect to the stock data API. Please check your internet connection and try again.');
+      }
+      
+      throw error;
+    }
   } catch (error) {
     console.error('Error in fetchStockData:', error);
     toast.dismiss("fetch-stock");

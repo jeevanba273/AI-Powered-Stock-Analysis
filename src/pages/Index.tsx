@@ -6,11 +6,11 @@ import StockChart from '@/components/stocks/StockChart';
 import StockSummary from '@/components/stocks/StockSummary';
 import StockAnalysis from '@/components/stocks/StockAnalysis';
 import StockSearch from '@/components/stocks/StockSearch';
-import { fetchStockData, StockData } from '@/services/indianStockService';
+import { fetchStockData, StockData, INDIAN_API_KEY } from '@/services/indianStockService';
 import { generateAIAnalysis, AIAnalysisResponse } from '@/services/aiService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertCircle, CircleDashed, Gem, LineChart, Lightbulb, TrendingUp, TrendingDown, Search } from 'lucide-react';
+import { AlertCircle, CircleDashed, Gem, LineChart, Lightbulb, TrendingUp, TrendingDown, Search, KeyRound, RefreshCcw } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 
@@ -74,6 +74,12 @@ const Index = () => {
     loadStockData(activeStock);
   };
 
+  const isApiKeyError = error && 
+    (error.includes('API authentication failed') || 
+     error.includes('API key') || 
+     error.includes('Invalid or expired API key') ||
+     error.includes('Could not validate API key'));
+
   return (
     <DashboardLayout>
       <div className="mb-6">
@@ -94,13 +100,46 @@ const Index = () => {
         <div className="space-y-4">
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
+            <AlertTitle>API Error</AlertTitle>
             <AlertDescription>
-              {error}. This may be due to an API issue or invalid API key.
+              {error}
             </AlertDescription>
           </Alert>
+          
+          {isApiKeyError && (
+            <Card className="border-destructive/50">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center">
+                  <KeyRound className="h-5 w-5 mr-2 text-destructive" />
+                  API Key Issue Detected
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p>
+                  The application is unable to authenticate with the Indian Stock API. This is likely because:
+                </p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>The API key has expired</li>
+                  <li>The API key is invalid or incorrect</li>
+                  <li>There's a temporary issue with the API service</li>
+                </ul>
+                <p className="text-sm mt-2">
+                  Current API key: <code className="bg-muted px-1 py-0.5 rounded">{INDIAN_API_KEY.slice(0, 10)}...{INDIAN_API_KEY.slice(-5)}</code>
+                </p>
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>To fix this issue:</AlertTitle>
+                  <AlertDescription>
+                    Please update the API key in the <code className="bg-muted px-1 py-0.5 rounded">src/services/indianStockService.ts</code> file with a valid key.
+                  </AlertDescription>
+                </Alert>
+              </CardContent>
+            </Card>
+          )}
+          
           <div className="flex justify-center">
-            <Button onClick={handleRetry}>
+            <Button onClick={handleRetry} className="flex items-center">
+              <RefreshCcw className="h-4 w-4 mr-2" />
               Retry
             </Button>
           </div>
