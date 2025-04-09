@@ -7,11 +7,11 @@ import { fetchStockData as fetchIndianStockData, StockDataPoint as IndianStockDa
 
 export interface StockDataPoint {
   date: string;
-  open: number;
-  high: number;
-  low: number;
+  open?: number; // Making optional to match indianStockService
+  high?: number; // Making optional to match indianStockService
+  low?: number;  // Making optional to match indianStockService
   close: number;
-  volume: number;
+  volume?: number; // Making optional to match indianStockService
 }
 
 export interface StockData {

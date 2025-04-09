@@ -10,11 +10,11 @@ import { cn } from '@/lib/utils';
 
 interface StockDataPoint {
   date: string;
-  open: number;
-  high: number;
-  low: number;
+  open?: number; // Made optional to match service interfaces
+  high?: number; // Made optional to match service interfaces
+  low?: number;  // Made optional to match service interfaces
   close: number;
-  volume: number;
+  volume?: number; // Made optional to match service interfaces
 }
 
 interface ChartData {
@@ -56,30 +56,53 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     
-    const changePercent = ((data.close - data.open) / data.open * 100).toFixed(2);
-    const isPositive = data.close >= data.open;
+    // Check if open exists before calculating percentage change
+    const changePercent = data.open 
+      ? ((data.close - data.open) / data.open * 100).toFixed(2)
+      : '0.00';
+    const isPositive = data.open ? data.close >= data.open : true;
     
     return (
       <div className="bg-popover p-3 rounded-md border border-border shadow-lg">
         <p className="font-medium text-sm mb-2">{label}</p>
         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-          <p>Open:</p>
-          <p className="text-right">{formatNumber(data.open)}</p>
-          <p>High:</p>
-          <p className="text-right">{formatNumber(data.high)}</p>
-          <p>Low:</p>
-          <p className="text-right">{formatNumber(data.low)}</p>
+          {data.open !== undefined && (
+            <>
+              <p>Open:</p>
+              <p className="text-right">{formatNumber(data.open)}</p>
+            </>
+          )}
+          {data.high !== undefined && (
+            <>
+              <p>High:</p>
+              <p className="text-right">{formatNumber(data.high)}</p>
+            </>
+          )}
+          {data.low !== undefined && (
+            <>
+              <p>Low:</p>
+              <p className="text-right">{formatNumber(data.low)}</p>
+            </>
+          )}
           <p>Close:</p>
           <p className="text-right">{formatNumber(data.close)}</p>
-          <p>Volume:</p>
-          <p className="text-right">{formatVolume(data.volume)}</p>
-          <p>Change:</p>
-          <p className={cn(
-            "text-right",
-            isPositive ? "text-profit" : "text-loss"
-          )}>
-            {isPositive ? "+" : ""}{changePercent}%
-          </p>
+          {data.volume !== undefined && (
+            <>
+              <p>Volume:</p>
+              <p className="text-right">{formatVolume(data.volume)}</p>
+            </>
+          )}
+          {data.open !== undefined && (
+            <>
+              <p>Change:</p>
+              <p className={cn(
+                "text-right",
+                isPositive ? "text-profit" : "text-loss"
+              )}>
+                {isPositive ? "+" : ""}{changePercent}%
+              </p>
+            </>
+          )}
         </div>
       </div>
     );
