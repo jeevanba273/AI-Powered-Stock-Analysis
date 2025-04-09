@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +42,19 @@ const AIAnalysisResults: React.FC<AIAnalysisResultsProps> = ({
     }
   };
 
+  // Get indicator icon based on pattern text
+  const getPatternIcon = (pattern: string) => {
+    if (pattern.includes('Uptrend') || pattern.includes('bullish') || pattern.includes('Golden Cross') || 
+        pattern.includes('breakout') || pattern.includes('white soldiers')) {
+      return <TrendingUp className="w-3 h-3 mr-1 text-profit flex-shrink-0" />;
+    } else if (pattern.includes('Downtrend') || pattern.includes('bearish') || pattern.includes('Death Cross') ||
+              pattern.includes('breakdown') || pattern.includes('black crows')) {
+      return <TrendingDown className="w-3 h-3 mr-1 text-loss flex-shrink-0" />;
+    } else {
+      return <AlertCircle className="w-3 h-3 mr-1 text-primary flex-shrink-0" />;
+    }
+  };
+
   const getAIInsights = () => {
     if (!analysis) return [];
     
@@ -73,7 +87,7 @@ const AIAnalysisResults: React.FC<AIAnalysisResultsProps> = ({
       
       <Separator />
       
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <div className="bg-secondary/50 rounded-lg p-3 col-span-1 flex flex-col justify-center">
           <h3 className="text-sm font-medium flex items-center">
             <Gauge className="w-4 h-4 mr-1" />
@@ -92,48 +106,50 @@ const AIAnalysisResults: React.FC<AIAnalysisResultsProps> = ({
             Based on volatility, price action, and sector trends
           </div>
         </div>
+      </div>
 
-        <div className="bg-secondary/50 rounded-lg p-3 col-span-1">
-          <h3 className="text-sm font-medium flex items-center mb-2">
-            <AlertCircle className="w-4 h-4 mr-1" />
-            Technical Patterns
-          </h3>
-          <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
-            {analysis.technicalPatterns.map((pattern, idx) => (
-              <div key={idx} className="flex items-center">
-                <AlertCircle className="w-3 h-3 mr-1 text-primary flex-shrink-0" />
-                <span className="text-md font-medium">{pattern}</span>
-              </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-secondary/50 p-2 rounded-lg">
+          <h4 className="text-xs font-medium text-muted-foreground mb-1 flex items-center">
+            <TrendingDown className="w-3 h-3 mr-1 text-loss" />
+            Support Levels
+          </h4>
+          <div className="text-sm">
+            {analysis.supportResistance.support.map((level, idx) => (
+              <span key={idx} className="mr-2">₹{level.toLocaleString()}</span>
+            ))}
+          </div>
+        </div>
+        <div className="bg-secondary/50 p-2 rounded-lg">
+          <h4 className="text-xs font-medium text-muted-foreground mb-1 flex items-center">
+            <TrendingUp className="w-3 h-3 mr-1 text-profit" />
+            Resistance Levels
+          </h4>
+          <div className="text-sm">
+            {analysis.supportResistance.resistance.map((level, idx) => (
+              <span key={idx} className="mr-2">₹{level.toLocaleString()}</span>
             ))}
           </div>
         </div>
       </div>
 
-      <div>
-        <h3 className="text-sm font-medium mb-2">Support & Resistance</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-secondary/50 p-2 rounded-lg">
-            <h4 className="text-xs font-medium text-muted-foreground mb-1 flex items-center">
-              <TrendingDown className="w-3 h-3 mr-1 text-loss" />
-              Support Levels
-            </h4>
-            <div className="text-sm">
-              {analysis.supportResistance.support.map((level, idx) => (
-                <span key={idx} className="mr-2">₹{level.toLocaleString()}</span>
-              ))}
+      <div className="bg-secondary/50 rounded-lg p-3">
+        <h3 className="text-sm font-medium flex items-center mb-3">
+          <AlertCircle className="w-4 h-4 mr-1" />
+          Technical Patterns
+        </h3>
+        <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+          {analysis.technicalPatterns.map((pattern, idx) => (
+            <div key={idx} className="flex items-center bg-background/60 p-2 rounded-md">
+              {getPatternIcon(pattern)}
+              <span className="text-md font-medium">{pattern}</span>
+              {idx <= 1 && (
+                <Badge variant="outline" className="ml-auto text-xs">
+                  {idx === 0 ? 'Primary' : 'Secondary'}
+                </Badge>
+              )}
             </div>
-          </div>
-          <div className="bg-secondary/50 p-2 rounded-lg">
-            <h4 className="text-xs font-medium text-muted-foreground mb-1 flex items-center">
-              <TrendingUp className="w-3 h-3 mr-1 text-profit" />
-              Resistance Levels
-            </h4>
-            <div className="text-sm">
-              {analysis.supportResistance.resistance.map((level, idx) => (
-                <span key={idx} className="mr-2">₹{level.toLocaleString()}</span>
-              ))}
-            </div>
-          </div>
+          ))}
         </div>
       </div>
       

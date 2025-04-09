@@ -1,4 +1,3 @@
-
 // This service connects to the OpenAI API
 
 import { toast } from 'sonner';
@@ -73,7 +72,7 @@ const calculateRiskLevel = (stockData: any): number => {
   return Math.max(1, Math.min(5, riskScore));
 };
 
-// Detect technical patterns from price data
+// Detect technical patterns from price data - ENHANCED VERSION
 const detectTechnicalPatterns = (stockData: any): string[] => {
   const patterns = [];
   const priceData = stockData.stockData || [];
@@ -82,104 +81,168 @@ const detectTechnicalPatterns = (stockData: any): string[] => {
   
   // Get recent prices
   const closes = priceData.map((point: any) => point.close);
+  const opens = priceData.map((point: any) => point.open);
+  const highs = priceData.map((point: any) => point.high);
+  const lows = priceData.map((point: any) => point.low);
   const volumes = priceData.map((point: any) => point.volume);
   
-  // Detect trend
+  // Detect trend - KEEP THIS AS FIRST PATTERN
   const recentTrend = closes[closes.length - 1] > closes[closes.length - 10] 
     ? "Uptrend" : "Downtrend";
   patterns.push(recentTrend);
   
-  // Volume trend
+  // Volume trend - KEEP THIS AS SECOND PATTERN
   const volumeTrend = volumes[volumes.length - 1] > volumes[volumes.length - 5]
     ? "Increasing volume" : "Decreasing volume";
   patterns.push(volumeTrend);
   
-  // Check for double top/bottom
-  const max1Index = closes.indexOf(Math.max(...closes.slice(0, Math.floor(closes.length/2))));
-  const max2Index = closes.indexOf(Math.max(...closes.slice(Math.floor(closes.length/2))));
-  const min1Index = closes.indexOf(Math.min(...closes.slice(0, Math.floor(closes.length/2))));
-  const min2Index = closes.indexOf(Math.min(...closes.slice(Math.floor(closes.length/2))));
-  
-  if (Math.abs(closes[max1Index] - closes[max2Index]) < closes[max1Index] * 0.03 
-      && max1Index !== max2Index) {
-    patterns.push("Double Top");
-  }
-  
-  if (Math.abs(closes[min1Index] - closes[min2Index]) < closes[min1Index] * 0.03
-      && min1Index !== min2Index) {
-    patterns.push("Double Bottom");
-  }
-  
-  // Check for head and shoulders
-  if (patterns.length < 3) {
-    const thirds = Math.floor(closes.length / 3);
-    const peak1 = Math.max(...closes.slice(0, thirds));
-    const peak2 = Math.max(...closes.slice(thirds, 2*thirds));
-    const peak3 = Math.max(...closes.slice(2*thirds));
-    
-    if (peak2 > peak1 && peak2 > peak3 && Math.abs(peak1 - peak3) < peak1 * 0.1) {
-      patterns.push("Head and Shoulders");
+  // RSI-like calculation (simplified)
+  const gains = [];
+  const losses = [];
+  for (let i = 1; i < closes.length; i++) {
+    const change = closes[i] - closes[i-1];
+    if (change >= 0) {
+      gains.push(change);
+      losses.push(0);
+    } else {
+      gains.push(0);
+      losses.push(Math.abs(change));
     }
   }
   
-  // Check for support/resistance levels
-  let resistance = false;
-  let support = false;
+  // Calculate average gain and loss over 14 periods (or less if not enough data)
+  const periods = Math.min(14, gains.length);
+  const avgGain = gains.slice(-periods).reduce((sum, val) => sum + val, 0) / periods;
+  const avgLoss = losses.slice(-periods).reduce((sum, val) => sum + val, 0) / periods;
   
-  for (let i = 5; i < closes.length; i++) {
-    if (closes[i] > closes[i-1] && 
-        closes[i] > closes[i-2] && 
-        closes[i] > closes[i-3] && 
-        closes[i] > closes[i-4] && 
-        closes[i] > closes[i-5]) {
-      resistance = true;
-    }
+  // Calculate RSI
+  const rs = avgLoss > 0 ? avgGain / avgLoss : 100;
+  const rsi = 100 - (100 / (1 + rs));
+  
+  // RSI-based pattern
+  if (rsi > 70) {
+    patterns.push("Overbought conditions (RSI > 70)");
+  } else if (rsi < 30) {
+    patterns.push("Oversold conditions (RSI < 30)");
+  }
+  
+  // Bollinger Bands-like calculation (simplified)
+  const priceWindow = closes.slice(-20); // Last 20 days
+  const sma = priceWindow.reduce((sum, price) => sum + price, 0) / priceWindow.length;
+  const priceStdDev = Math.sqrt(
+    priceWindow.reduce((sum, price) => sum + Math.pow(price - sma, 2), 0) / priceWindow.length
+  );
+  const upperBand = sma + (2 * priceStdDev);
+  const lowerBand = sma - (2 * priceStdDev);
+  
+  // Bollinger Band signal
+  if (closes[closes.length - 1] > upperBand) {
+    patterns.push("Price above upper Bollinger Band");
+  } else if (closes[closes.length - 1] < lowerBand) {
+    patterns.push("Price below lower Bollinger Band");
+  } else if (
+    closes[closes.length - 2] < lowerBand && 
+    closes[closes.length - 1] > lowerBand
+  ) {
+    patterns.push("Bollinger Band bounce (bullish)");
+  }
+  
+  // Moving Average Crossovers (simple implementation)
+  if (priceData.length >= 50) {
+    const sma20 = closes.slice(-20).reduce((sum, price) => sum + price, 0) / 20;
+    const sma50 = closes.slice(-50).reduce((sum, price) => sum + price, 0) / 50;
+    const sma20Previous = closes.slice(-21, -1).reduce((sum, price) => sum + price, 0) / 20;
+    const sma50Previous = closes.slice(-51, -1).reduce((sum, price) => sum + price, 0) / 50;
     
-    if (closes[i] < closes[i-1] && 
-        closes[i] < closes[i-2] && 
-        closes[i] < closes[i-3] && 
-        closes[i] < closes[i-4] && 
-        closes[i] < closes[i-5]) {
-      support = true;
+    if (sma20Previous < sma50Previous && sma20 > sma50) {
+      patterns.push("Golden Cross (SMA20 crossed above SMA50)");
+    } else if (sma20Previous > sma50Previous && sma20 < sma50) {
+      patterns.push("Death Cross (SMA20 crossed below SMA50)");
     }
   }
   
-  if (resistance) patterns.push("Resistance level formed");
-  if (support) patterns.push("Support level tested");
-  
-  // Add more patterns if needed
-  const recentClosing = closes[closes.length - 1];
-  const recentOpening = priceData[priceData.length - 1].open;
-  
-  if (recentClosing > recentOpening * 1.02) {
-    patterns.push("Bullish Engulfing");
-  }
-  
-  if (recentClosing < recentOpening * 0.98) {
-    patterns.push("Bearish Engulfing");
-  }
-  
-  // Return at least 4 patterns, up to 6
-  while (patterns.length < 4) {
-    const additionalPatterns = [
-      "Consolidation phase", 
-      "Trading range", 
-      "Support test", 
-      "Moving average crossover",
-      "Volume spike",
-      "Price channel"
-    ];
-    
-    // Add a pattern not already in the list
-    for (const pattern of additionalPatterns) {
-      if (!patterns.includes(pattern)) {
-        patterns.push(pattern);
+  // Detect doji candle pattern (open and close very close to each other)
+  const recentCandles = 5;
+  for (let i = priceData.length - recentCandles; i < priceData.length; i++) {
+    if (i >= 0) {
+      const bodySize = Math.abs(opens[i] - closes[i]);
+      const shadowSize = highs[i] - lows[i];
+      if (bodySize < 0.1 * shadowSize) {
+        patterns.push("Doji pattern (indecision in the market)");
         break;
       }
     }
   }
   
+  // MACD-like calculation (simplified)
+  if (priceData.length >= 26) {
+    const ema12 = calculateEMA(closes, 12);
+    const ema26 = calculateEMA(closes, 26);
+    const macd = ema12 - ema26;
+    const macdSignal = calculateEMA(
+      Array(9).fill(0).map((_, i) => {
+        const idx = closes.length - 9 + i;
+        if (idx >= 0 && idx < closes.length) {
+          return calculateEMA(closes.slice(0, idx + 1), 12) - calculateEMA(closes.slice(0, idx + 1), 26);
+        }
+        return 0;
+      }),
+      9
+    );
+    
+    if (macd > macdSignal && macd > 0) {
+      patterns.push("Bullish MACD crossover");
+    } else if (macd < macdSignal && macd < 0) {
+      patterns.push("Bearish MACD crossover");
+    }
+  }
+  
+  // Check for price channel breakout
+  const recentHighs = highs.slice(-10);
+  const recentLows = lows.slice(-10);
+  const maxHigh = Math.max(...recentHighs.slice(0, -1));
+  const minLow = Math.min(...recentLows.slice(0, -1));
+  
+  if (highs[highs.length - 1] > maxHigh) {
+    patterns.push("Resistance breakout (bullish)");
+  } else if (lows[lows.length - 1] < minLow) {
+    patterns.push("Support breakdown (bearish)");
+  }
+  
+  // Check for three white soldiers / three black crows (simplified)
+  if (priceData.length >= 3) {
+    const lastThreeCandles = priceData.slice(-3);
+    let whiteCount = 0;
+    let blackCount = 0;
+    
+    for (const candle of lastThreeCandles) {
+      if (candle.close > candle.open) whiteCount++;
+      if (candle.close < candle.open) blackCount++;
+    }
+    
+    if (whiteCount === 3) {
+      patterns.push("Three white soldiers (bullish reversal)");
+    } else if (blackCount === 3) {
+      patterns.push("Three black crows (bearish reversal)");
+    }
+  }
+  
+  // Return a diverse set of patterns
   return patterns.slice(0, 6);
+};
+
+// Helper function for EMA calculation
+const calculateEMA = (data: number[], period: number): number => {
+  const k = 2 / (period + 1);
+  // Start with simple moving average
+  let ema = data.slice(0, period).reduce((sum, price) => sum + price, 0) / period;
+  
+  // Calculate EMA
+  for (let i = period; i < data.length; i++) {
+    ema = (data[i] * k) + (ema * (1 - k));
+  }
+  
+  return ema;
 };
 
 // Calculate support and resistance levels
