@@ -4,19 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SearchIcon, TrendingUp, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { popularIndianStocks } from '@/services/indianStockService';
 
 interface StockSearchProps {
   onSearchStock: (ticker: string) => void;
 }
-
-const popularStocks = [
-  { ticker: 'AAPL', name: 'Apple Inc.' },
-  { ticker: 'MSFT', name: 'Microsoft Corp.' },
-  { ticker: 'GOOG', name: 'Alphabet Inc.' },
-  { ticker: 'AMZN', name: 'Amazon.com Inc.' },
-  { ticker: 'NVDA', name: 'NVIDIA Corp.' },
-  { ticker: 'TSLA', name: 'Tesla Inc.' },
-];
 
 const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -49,7 +41,7 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
           <Input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Enter stock ticker (e.g. AAPL, MSFT)"
+            placeholder="Enter stock ticker (e.g. TCS, RELIANCE)"
             className="pl-10 pr-10"
           />
           <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -71,10 +63,10 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
       <div className="mb-6">
         <div className="flex items-center mb-2">
           <TrendingUp className="h-4 w-4 mr-2 text-muted-foreground" />
-          <h3 className="text-sm font-medium">Popular Stocks</h3>
+          <h3 className="text-sm font-medium">Popular Indian Stocks</h3>
         </div>
         <div className="flex flex-wrap gap-2">
-          {popularStocks.map((stock) => (
+          {popularIndianStocks.map((stock) => (
             <Button
               key={stock.ticker}
               variant="outline"

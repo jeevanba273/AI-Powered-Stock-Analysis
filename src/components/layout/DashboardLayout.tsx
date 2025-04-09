@@ -13,10 +13,10 @@ interface DashboardLayoutProps {
 const MarketStatus: React.FC = () => {
   // This would come from real API, mocked for demo
   const marketIndices = [
-    { name: "S&P 500", value: "4,782.95", change: "+0.57%", isPositive: true },
-    { name: "NASDAQ", value: "15,003.22", change: "+0.75%", isPositive: true },
-    { name: "DOW", value: "37,802.01", change: "-0.12%", isPositive: false },
-    { name: "10Y", value: "4.14%", change: "+0.02", isPositive: false },
+    { name: "NIFTY", value: "22,302.50", change: "+0.35%", isPositive: true },
+    { name: "SENSEX", value: "73,256.36", change: "+0.40%", isPositive: true },
+    { name: "BANKNIFTY", value: "47,786.55", change: "-0.12%", isPositive: false },
+    { name: "NIFTY-IT", value: "32,956.20", change: "+0.72%", isPositive: true },
   ];
 
   return (
@@ -48,7 +48,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             <header className="flex items-center justify-between border-b border-border h-14 px-4">
               <div className="flex items-center">
                 <SidebarTrigger />
-                <h1 className="ml-4 font-semibold text-xl">Stock Seer</h1>
+                <h1 className="ml-4 font-semibold text-xl">Stock Seer India</h1>
               </div>
               <div className="flex items-center space-x-3">
                 <button className="bg-primary/20 hover:bg-primary/30 text-primary-foreground px-3 py-1 rounded text-sm transition-colors">

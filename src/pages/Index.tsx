@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -13,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CircleDashed, Gem, LineChart, Lightbulb, TrendingUp, TrendingDown, Search } from 'lucide-react';
 
 const Index = () => {
-  const [activeStock, setActiveStock] = useState<string>('AAPL');
+  const [activeStock, setActiveStock] = useState<string>('TCS');
   const [stockData, setStockData] = useState<StockData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -40,7 +39,7 @@ const Index = () => {
     loadStockData(ticker);
   };
 
-  const handleAIAnalysis = async () => {
+  const handleAIAnalysis = async (): Promise<void> => {
     if (!stockData) return;
     
     try {
@@ -54,10 +53,8 @@ const Index = () => {
           macd: true
         }
       });
-      return true;
     } catch (error) {
       console.error("AI analysis error:", error);
-      return false;
     }
   };
 
