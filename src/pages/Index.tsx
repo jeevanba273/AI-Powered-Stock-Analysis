@@ -6,7 +6,7 @@ import StockSummary from '@/components/stocks/StockSummary';
 import StockAnalysis from '@/components/stocks/StockAnalysis';
 import StockSearch from '@/components/stocks/StockSearch';
 import { fetchStockData, StockData } from '@/services/stockService';
-import { generateAIAnalysisWithGPT } from '@/services/aiService';
+import { generateAIAnalysis } from '@/services/aiService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CircleDashed, Gem, LineChart, Lightbulb, TrendingUp, TrendingDown, Search } from 'lucide-react';
@@ -44,9 +44,9 @@ const Index = () => {
     
     try {
       // In a real app, this would pass the actual stock data to the AI service
-      await generateAIAnalysisWithGPT({
+      await generateAIAnalysis({
         ticker: activeStock,
-        stockData: stockData.stockData,
+        stockData: stockData,
         indicators: {
           sma: true,
           rsi: true,

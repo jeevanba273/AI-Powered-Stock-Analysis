@@ -3,7 +3,7 @@
 // This file is kept for backward compatibility
 
 import { toast } from 'sonner';
-import { fetchStockData as fetchIndianStockData } from './indianStockService';
+import { fetchStockData as fetchIndianStockData, StockDataPoint as IndianStockDataPoint } from './indianStockService';
 
 export interface StockDataPoint {
   date: string;
@@ -28,7 +28,7 @@ export interface StockData {
     high: number;
     low: number;
     volume: number;
-    avgVolume: number;
+    avgVolume?: number; // Changed from required to optional
     marketCap: string;
     pe: number;
     dividend: string;
