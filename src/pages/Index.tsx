@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import StockChart from '@/components/stocks/StockChart';
@@ -31,7 +32,7 @@ const Index = () => {
     setError(null);
     
     try {
-      const data = await fetchStockData(ticker, activeTimeFrame);
+      const data = await fetchStockData(ticker);
       setStockData(data);
       setActiveStock(ticker);
     } catch (error: any) {
@@ -78,7 +79,7 @@ const Index = () => {
   const handleTimeFrameChange = (timeFrame: string) => {
     setActiveTimeFrame(timeFrame);
     // Then reload data with new timeframe
-    fetchStockData(activeStock, timeFrame)
+    fetchStockData(activeStock)
       .then(data => {
         setStockData(data);
       })
@@ -271,8 +272,8 @@ const Index = () => {
       )}
       
       <footer className="mt-12 py-6 border-t border-border">
-        <div className="container flex flex-col md:flex-row items-center justify-center gap-6 text-center">
-          <p className="text-muted-foreground">© 2024 NeuraStock. All rights reserved.</p>
+        <div className="container flex flex-col items-center justify-center gap-6 text-center">
+          <p className="text-muted-foreground">© 2025 NeuraStock. All rights reserved.</p>
           <div className="flex items-center space-x-4">
             <a href="https://github.com/jeevanba273" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors duration-300">
               <span className="sr-only">GitHub</span>

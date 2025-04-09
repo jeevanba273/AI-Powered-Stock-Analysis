@@ -67,39 +67,42 @@ const AIAnalysisResults: React.FC<AIAnalysisResultsProps> = ({
       <div>
         <h3 className="text-sm font-medium mb-2">Technical Analysis</h3>
         <p className="text-sm text-muted-foreground">
-          {analysis.analysis} This analysis indicates the stock's current momentum and potential future direction based on chart patterns, price action, and technical indicators including relative strength, volume trends, and moving average crossovers. The technical outlook considers recent market developments and sector-specific trends to provide a comprehensive evaluation of the stock's position within its current trading range.
+          {analysis.analysis} This analysis evaluates the stock's current technical positioning by examining price action, volume trends, and chart patterns in conjunction with market conditions. The analysis considers moving averages, relative strength, momentum oscillators, and pattern recognition to identify potential support/resistance levels and likely price trajectories based on historical behavior and current market dynamics.
         </p>
       </div>
       
       <Separator />
       
       <div className="grid grid-cols-5 gap-4">
-        <div className="bg-secondary/50 rounded-lg p-3 col-span-3 flex flex-col">
-          <h3 className="text-sm font-medium flex items-center mb-2">
+        <div className="bg-secondary/50 rounded-lg p-3 col-span-2 flex flex-col">
+          <h3 className="text-sm font-medium flex items-center">
             <Gauge className="w-4 h-4 mr-1" />
             Risk Assessment
           </h3>
-          <div className="flex items-center my-auto">
+          <div className="flex items-center my-2">
             <div className="w-full bg-secondary rounded-full h-2.5">
               <div 
                 className={cn("h-2.5 rounded-full", getRiskColor(analysis.risk))} 
                 style={{ width: `${analysis.risk * 20}%` }}
               ></div>
             </div>
-            <span className="ml-2 text-sm">{analysis.riskLevel}</span>
+            <span className="ml-2 text-sm font-medium">{analysis.riskLevel}</span>
+          </div>
+          <div className="text-xs text-muted-foreground mt-1">
+            Based on volatility, price action, and sector trends
           </div>
         </div>
 
-        <div className="bg-secondary/50 rounded-lg p-3 col-span-2">
+        <div className="bg-secondary/50 rounded-lg p-3 col-span-3">
           <h3 className="text-sm font-medium flex items-center mb-2">
             <AlertCircle className="w-4 h-4 mr-1" />
-            Patterns
+            Technical Patterns
           </h3>
           <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
             {analysis.technicalPatterns.map((pattern, idx) => (
-              <div key={idx} className="flex items-center text-sm">
+              <div key={idx} className="flex items-center">
                 <AlertCircle className="w-3 h-3 mr-1 text-primary flex-shrink-0" />
-                <span className="text-base font-medium">{pattern}</span>
+                <span className="text-md font-medium">{pattern}</span>
               </div>
             ))}
           </div>

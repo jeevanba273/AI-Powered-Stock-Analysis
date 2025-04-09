@@ -6,7 +6,6 @@ import {
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 
 interface StockDataPoint {
   date: string;
@@ -181,16 +180,8 @@ const VolumeChart = ({ data }: { data: StockDataPoint[] }) => {
 
 const StockChart: React.FC<StockChartProps> = ({ 
   data, 
-  className, 
-  onTimeFrameChange,
-  activeTimeFrame = '1M'
+  className
 }) => {
-  const handleTimeFrameClick = (timeFrame: string) => {
-    if (onTimeFrameChange) {
-      onTimeFrameChange(timeFrame);
-    }
-  };
-
   return (
     <Card className={cn("", className)}>
       <CardHeader className="pb-2">
