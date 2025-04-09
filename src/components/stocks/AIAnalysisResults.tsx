@@ -63,6 +63,7 @@ const AIAnalysisResults: React.FC<AIAnalysisResultsProps> = ({
              pattern.includes('Overbought') ||
              pattern.includes('Resistance') ||
              pattern.includes('Double Top') ||
+             pattern.includes('MACD crossover') ||
              pattern.includes('Head and Shoulders')) {
       return <ArrowDown className="w-3 h-3 mr-1 text-loss flex-shrink-0" />;
     } 
@@ -92,6 +93,7 @@ const AIAnalysisResults: React.FC<AIAnalysisResultsProps> = ({
               pattern.includes('Overbought') ||
               pattern.includes('Resistance') ||
               pattern.includes('Double Top') ||
+              pattern.includes('MACD crossover') ||
               pattern.includes('Head and Shoulders')) {
       return false;
     }

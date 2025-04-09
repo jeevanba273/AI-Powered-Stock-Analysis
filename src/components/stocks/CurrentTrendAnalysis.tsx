@@ -119,7 +119,7 @@ const CurrentTrendAnalysis: React.FC<CurrentTrendAnalysisProps> = ({
             {trend.strength.charAt(0).toUpperCase() + trend.strength.slice(1)} {trend.direction}
           </div>
           <div className="text-xs text-muted-foreground">
-            {percentChange > 0 ? "+" : ""}{trend.percentChange}% change with {trend.volatility} volatility
+            {percentChange >= 0 ? "+" : ""}{trend.percentChange}% change with {trend.volatility} volatility
           </div>
         </div>
         
