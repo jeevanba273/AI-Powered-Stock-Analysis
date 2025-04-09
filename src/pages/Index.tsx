@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -6,6 +5,7 @@ import StockChart from '@/components/stocks/StockChart';
 import StockSummary from '@/components/stocks/StockSummary';
 import StockAnalysis from '@/components/stocks/StockAnalysis';
 import StockSearch from '@/components/stocks/StockSearch';
+import FutureTrendAnalysis from '@/components/stocks/FutureTrendAnalysis';
 import { fetchStockData, StockData, INDIAN_API_KEY } from '@/services/indianStockService';
 import { generateAIAnalysis, AIAnalysisResponse } from '@/services/aiService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -178,6 +178,12 @@ const Index = () => {
           />
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FutureTrendAnalysis 
+              changePercent={stockData.changePercent}
+              aiAnalysis={null}
+              className=""
+            />
+            
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-base font-medium flex items-center">

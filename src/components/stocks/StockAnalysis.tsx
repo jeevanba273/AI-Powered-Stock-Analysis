@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { AIAnalysisResponse } from '@/services/aiService';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import FutureTrendAnalysis from './FutureTrendAnalysis';
 
 interface StockAnalysisProps {
   ticker: string;
@@ -66,6 +67,15 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
     }
   };
 
+  // Find any FutureTrendAnalysis component rendered on the page and update it with our analysis
+  useEffect(() => {
+    if (analysis) {
+      // Using a custom event to communicate with the FutureTrendAnalysis component
+      const event = new CustomEvent('aiAnalysisUpdated', { detail: { analysis } });
+      window.dispatchEvent(event);
+    }
+  }, [analysis]);
+
   return (
     <Card className={cn("h-full", className)}>
       <CardHeader>
@@ -117,33 +127,31 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-secondary/50 rounded-lg p-3">
-                <h3 className="text-sm font-medium flex items-center mb-2">
-                  <Gauge className="w-4 h-4 mr-1" />
-                  Risk Assessment
-                </h3>
-                <div className="flex items-center">
-                  <div className="w-full bg-secondary rounded-full h-2.5">
-                    <div 
-                      className={cn("h-2.5 rounded-full", getRiskColor(analysis.risk))} 
-                      style={{ width: `${analysis.risk * 20}%` }}
-                    ></div>
-                  </div>
-                  <span className="ml-2 text-sm">{analysis.riskLevel}</span>
+            <div className="bg-secondary/50 rounded-lg p-3">
+              <h3 className="text-sm font-medium flex items-center mb-2">
+                <Gauge className="w-4 h-4 mr-1" />
+                Risk Assessment
+              </h3>
+              <div className="flex items-center">
+                <div className="w-full bg-secondary rounded-full h-2.5">
+                  <div 
+                    className={cn("h-2.5 rounded-full", getRiskColor(analysis.risk))} 
+                    style={{ width: `${analysis.risk * 20}%` }}
+                  ></div>
                 </div>
+                <span className="ml-2 text-sm">{analysis.riskLevel}</span>
               </div>
-              
-              <div className="bg-secondary/50 rounded-lg p-3">
-                <h3 className="text-sm font-medium mb-2">Technical Patterns</h3>
-                <div className="space-y-1">
-                  {analysis.technicalPatterns.map((pattern, idx) => (
-                    <div key={idx} className="flex items-center text-sm">
-                      <AlertCircle className="w-3 h-3 mr-1 text-primary" />
-                      <span>{pattern}</span>
-                    </div>
-                  ))}
-                </div>
+            </div>
+            
+            <div>
+              <h3 className="text-sm font-medium mb-2">Technical Patterns</h3>
+              <div className="space-y-1">
+                {analysis.technicalPatterns.map((pattern, idx) => (
+                  <div key={idx} className="flex items-center text-sm">
+                    <AlertCircle className="w-3 h-3 mr-1 text-primary" />
+                    <span>{pattern}</span>
+                  </div>
+                ))}
               </div>
             </div>
             
@@ -197,6 +205,13 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
                   and current market conditions.
                 </p>
               </div>
+            </div>
+            
+            <div className="md:hidden">
+              <FutureTrendAnalysis 
+                changePercent={stockData.changePercent} 
+                aiAnalysis={analysis}
+              />
             </div>
           </div>
         )}
