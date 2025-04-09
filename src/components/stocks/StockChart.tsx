@@ -2,7 +2,7 @@
 import React from 'react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  BarChart, Bar, Legend, ReferenceLine, ComposedChart, Line
+  BarChart, Bar
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -179,114 +179,7 @@ const VolumeChart = ({ data }: { data: StockDataPoint[] }) => {
   );
 };
 
-const RSIChart = ({ data, rsiData }: { data: StockDataPoint[], rsiData: number[] }) => {
-  // Combine date with RSI data
-  const chartData = data.map((point, index) => ({
-    date: point.date,
-    rsi: rsiData[index] || null
-  }));
-
-  return (
-    <ResponsiveContainer width="100%" height={200}>
-      <ComposedChart
-        data={chartData}
-        margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-      >
-        <XAxis 
-          dataKey="date" 
-          tick={{ fontSize: 12 }} 
-          tickLine={{ stroke: '#2D3748' }} 
-          axisLine={{ stroke: '#2D3748' }} 
-        />
-        <YAxis 
-          domain={[0, 100]} 
-          tick={{ fontSize: 12 }} 
-          tickLine={{ stroke: '#2D3748' }} 
-          axisLine={{ stroke: '#2D3748' }} 
-          orientation="right"
-        />
-        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#2D3748" />
-        <Tooltip />
-        <ReferenceLine y={70} stroke="red" strokeDasharray="3 3" />
-        <ReferenceLine y={30} stroke="green" strokeDasharray="3 3" />
-        <Line 
-          type="monotone" 
-          dataKey="rsi" 
-          stroke="#ED8936" 
-          strokeWidth={2} 
-          dot={false} 
-        />
-      </ComposedChart>
-    </ResponsiveContainer>
-  );
-};
-
-const MACDChart = ({ data, macdData }: { 
-  data: StockDataPoint[], 
-  macdData: { macd: number[], signal: number[], histogram: number[] } 
-}) => {
-  // Combine date with MACD data
-  const chartData = data.map((point, index) => ({
-    date: point.date,
-    macd: macdData.macd[index] || null,
-    signal: macdData.signal[index] || null,
-    histogram: macdData.histogram[index] || null
-  }));
-
-  return (
-    <ResponsiveContainer width="100%" height={200}>
-      <ComposedChart
-        data={chartData}
-        margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-      >
-        <XAxis 
-          dataKey="date" 
-          tick={{ fontSize: 12 }} 
-          tickLine={{ stroke: '#2D3748' }} 
-          axisLine={{ stroke: '#2D3748' }} 
-        />
-        <YAxis 
-          tick={{ fontSize: 12 }} 
-          tickLine={{ stroke: '#2D3748' }} 
-          axisLine={{ stroke: '#2D3748' }} 
-          orientation="right"
-        />
-        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#2D3748" />
-        <Tooltip />
-        <Bar 
-          dataKey="histogram" 
-          fill="#9F7AEA" 
-          opacity={0.8} 
-        />
-        <Line 
-          type="monotone" 
-          dataKey="macd" 
-          stroke="#9F7AEA" 
-          strokeWidth={2} 
-          dot={false} 
-        />
-        <Line 
-          type="monotone" 
-          dataKey="signal" 
-          stroke="#F687B3" 
-          strokeWidth={2} 
-          dot={false} 
-        />
-        <Legend />
-      </ComposedChart>
-    </ResponsiveContainer>
-  );
-};
-
 const StockChart: React.FC<StockChartProps> = ({ data, className }) => {
-  // Mock data for RSI and MACD if not provided
-  const rsiData = data.indicators?.rsi || Array(data.stockData.length).fill(0).map(() => Math.random() * 100);
-  const macdData = data.indicators?.macd || {
-    macd: Array(data.stockData.length).fill(0).map(() => Math.random() * 2 - 1),
-    signal: Array(data.stockData.length).fill(0).map(() => Math.random() * 2 - 1),
-    histogram: Array(data.stockData.length).fill(0).map(() => Math.random() * 2 - 1)
-  };
-
   return (
     <Card className={cn("", className)}>
       <CardHeader className="pb-2">
@@ -302,29 +195,10 @@ const StockChart: React.FC<StockChartProps> = ({ data, className }) => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="price" className="w-full">
-          <TabsList className="mb-4">
-            <TabsTrigger value="price">Price</TabsTrigger>
-            <TabsTrigger value="indicators">Indicators</TabsTrigger>
-          </TabsList>
-          <TabsContent value="price" className="space-y-4">
-            <PriceChart data={data.stockData} />
-            <VolumeChart data={data.stockData} />
-          </TabsContent>
-          <TabsContent value="indicators" className="space-y-4">
-            <PriceChart data={data.stockData} />
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="indicator-panel">
-                <h3 className="text-sm font-medium mb-2">RSI (Relative Strength Index)</h3>
-                <RSIChart data={data.stockData} rsiData={rsiData} />
-              </div>
-              <div className="indicator-panel">
-                <h3 className="text-sm font-medium mb-2">MACD (Moving Average Convergence Divergence)</h3>
-                <MACDChart data={data.stockData} macdData={macdData} />
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+        <div className="space-y-4">
+          <PriceChart data={data.stockData} />
+          <VolumeChart data={data.stockData} />
+        </div>
       </CardContent>
     </Card>
   );

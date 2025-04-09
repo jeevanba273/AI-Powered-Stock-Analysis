@@ -1,3 +1,4 @@
+
 import { toast } from 'sonner';
 import { analyzeNewsSentiment } from './aiService';
 
@@ -40,34 +41,6 @@ export interface StockData {
   stockData: StockDataPoint[];
   indicators?: {
     sma?: number[];
-    rsi?: number[];
-    macd?: { macd: number[]; signal: number[]; histogram: number[] };
-  };
-  technicalAnalysis?: {
-    momentum: {
-      rsi: number;
-      stochastic: number;
-      cci: number;
-    };
-    trend: {
-      macd: string;
-      adx: number;
-      maCross: string;
-    };
-    volatility: {
-      bollinger: string;
-      atr: number;
-      stdDev: string;
-    };
-  };
-  aiInsights?: {
-    patterns: string[];
-    supportResistance: {
-      support: number[];
-      resistance: number[];
-    };
-    risk: number;
-    recommendation: string;
   };
   newsSentiment?: {
     overall: string;
@@ -251,30 +224,6 @@ const fetchCompanyNews = async (ticker: string): Promise<any[]> => {
   }
 };
 
-const generateTechnicalAnalysis = (stockData: StockDataPoint[], apiData: any) => {
-  if (!apiData || !stockData || stockData.length === 0) {
-    throw new Error('Insufficient data for technical analysis');
-  }
-  
-  return {
-    momentum: {
-      rsi: 55.3,
-      stochastic: 63.7,
-      cci: 78.4
-    },
-    trend: {
-      macd: "Bearish",
-      adx: 22.5,
-      maCross: stockData[stockData.length - 1].close < 3500 ? "Negative" : "Positive"
-    },
-    volatility: {
-      bollinger: "Middle",
-      atr: 45.2,
-      stdDev: "2.8%"
-    }
-  };
-};
-
 export const fetchStockData = async (ticker: string): Promise<StockData> => {
   try {
     toast.loading(`Fetching data for ${ticker}...`, { id: "fetch-stock" });
@@ -291,7 +240,7 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
       if (companyNews && companyNews.length > 0) {
         newsSentiment = await analyzeNewsSentiment(ticker, companyNews);
       } else {
-        throw new Error('No news data available for sentiment analysis');
+        console.log('No news data available for sentiment analysis');
       }
       
       toast.dismiss("fetch-stock");
@@ -322,35 +271,6 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
       const debtToEquity = typeof stockDetails.stats.debtToEquity === 'number' ? stockDetails.stats.debtToEquity : 0;
       const roe = typeof stockDetails.stats.roe === 'number' ? stockDetails.stats.roe : 0;
       
-      const technicalAnalysis = generateTechnicalAnalysis(historicalData, liveStockData);
-      
-      const sortedPrices = [...historicalData].sort((a, b) => a.close - b.close);
-      const lowerQuartile = sortedPrices[Math.floor(sortedPrices.length * 0.25)].close;
-      const upperQuartile = sortedPrices[Math.floor(sortedPrices.length * 0.75)].close;
-      
-      const aiInsights = {
-        patterns: [
-          "Price below 50-day moving average",
-          "Volume spike on down days",
-          "Testing support levels",
-          "Bearish trend continuation",
-          "Symmetrical triangle formation",
-          "RSI showing oversold conditions"
-        ],
-        supportResistance: {
-          support: [
-            Math.round(lowerQuartile * 100) / 100,
-            Math.round(latestPrice * 0.95 * 100) / 100
-          ],
-          resistance: [
-            Math.round(upperQuartile * 100) / 100,
-            Math.round(latestPrice * 1.05 * 100) / 100
-          ]
-        },
-        risk: 3,
-        recommendation: changePercent < -1 ? "Hold" : "Buy"
-      };
-      
       const stockData: StockData = {
         ticker,
         companyName: stockDetails.name || `${ticker} Ltd.`,
@@ -374,8 +294,6 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
           roe
         },
         stockData: historicalData,
-        technicalAnalysis,
-        aiInsights,
         newsSentiment,
         rawStockDetails: stockDetails,
         newsData: companyNews
