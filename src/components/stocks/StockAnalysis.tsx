@@ -56,17 +56,6 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
     }
   };
 
-  const getRiskColor = (risk: number) => {
-    switch (risk) {
-      case 1: return 'bg-emerald-500';
-      case 2: return 'bg-green-500';
-      case 3: return 'bg-yellow-500';
-      case 4: return 'bg-orange-500';
-      case 5: return 'bg-red-500';
-      default: return 'bg-secondary';
-    }
-  };
-
   // Find any FutureTrendAnalysis component rendered on the page and update it with our analysis
   useEffect(() => {
     if (analysis) {
@@ -127,65 +116,9 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="bg-secondary/50 rounded-lg p-3">
-              <h3 className="text-sm font-medium flex items-center mb-2">
-                <Gauge className="w-4 h-4 mr-1" />
-                Risk Assessment
-              </h3>
-              <div className="flex items-center">
-                <div className="w-full bg-secondary rounded-full h-2.5">
-                  <div 
-                    className={cn("h-2.5 rounded-full", getRiskColor(analysis.risk))} 
-                    style={{ width: `${analysis.risk * 20}%` }}
-                  ></div>
-                </div>
-                <span className="ml-2 text-sm">{analysis.riskLevel}</span>
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="text-sm font-medium mb-2">Technical Patterns</h3>
-              <div className="space-y-1">
-                {analysis.technicalPatterns.map((pattern, idx) => (
-                  <div key={idx} className="flex items-center text-sm">
-                    <AlertCircle className="w-3 h-3 mr-1 text-primary" />
-                    <span>{pattern}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
             <div>
               <h3 className="text-sm font-medium mb-2">Technical Analysis</h3>
               <p className="text-sm text-muted-foreground">{analysis.analysis}</p>
-            </div>
-            
-            <div>
-              <h3 className="text-sm font-medium mb-2">Support & Resistance</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-secondary/50 p-2 rounded-lg">
-                  <h4 className="text-xs font-medium text-muted-foreground mb-1 flex items-center">
-                    <TrendingDown className="w-3 h-3 mr-1 text-loss" />
-                    Support Levels
-                  </h4>
-                  <div className="text-sm">
-                    {analysis.supportResistance.support.map((level, idx) => (
-                      <span key={idx} className="mr-2">₹{level.toLocaleString()}</span>
-                    ))}
-                  </div>
-                </div>
-                <div className="bg-secondary/50 p-2 rounded-lg">
-                  <h4 className="text-xs font-medium text-muted-foreground mb-1 flex items-center">
-                    <TrendingUp className="w-3 h-3 mr-1 text-profit" />
-                    Resistance Levels
-                  </h4>
-                  <div className="text-sm">
-                    {analysis.supportResistance.resistance.map((level, idx) => (
-                      <span key={idx} className="mr-2">₹{level.toLocaleString()}</span>
-                    ))}
-                  </div>
-                </div>
-              </div>
             </div>
             
             <Separator />
