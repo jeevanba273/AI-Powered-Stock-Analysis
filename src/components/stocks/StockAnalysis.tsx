@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -67,31 +66,29 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
     }
   };
 
-  // Generate AI insights based on the analysis
   const getAIInsights = () => {
     if (!analysis) return [];
     
-    // Create 5-6 bullet points of insights
     const insights = [
       `The stock is showing ${analysis.recommendation.includes('Buy') ? 'bullish' : analysis.recommendation.includes('Sell') ? 'bearish' : 'neutral'} signals with a ${analysis.riskLevel.toLowerCase()} risk profile.`,
       `Primary technical pattern identified: ${analysis.technicalPatterns[0] || 'N/A'}.`,
       `Key support level at ₹${analysis.supportResistance.support[0]?.toLocaleString() || 'N/A'} with secondary support at ₹${analysis.supportResistance.support[1]?.toLocaleString() || 'N/A'}.`,
       `Immediate resistance detected at ₹${analysis.supportResistance.resistance[0]?.toLocaleString() || 'N/A'}.`,
       `${analysis.technicalPatterns.length > 1 ? `Additional pattern: ${analysis.technicalPatterns[1]}` : 'No additional patterns detected'}.`,
-      analysis.risk <= 2 
-        ? 'Risk-reward ratio appears favorable for entry positions.'
-        : analysis.risk >= 4
-          ? 'Current risk-reward ratio suggests caution before entering new positions.'
-          : 'Risk-reward ratio is balanced, consider position sizing carefully.'
+      `Final recommendation: ${analysis.recommendation} - ${
+        analysis.recommendation === 'Strong Buy' ? 'Excellent opportunity for entry'
+        : analysis.recommendation === 'Buy' ? 'Good potential for positive returns'
+        : analysis.recommendation === 'Hold' ? 'Consider maintaining current positions'
+        : analysis.recommendation === 'Sell' ? 'Consider reducing exposure'
+        : 'Consider exiting positions'
+      }`
     ];
     
     return insights;
   };
 
-  // Find any FutureTrendAnalysis component rendered on the page and update it with our analysis
   useEffect(() => {
     if (analysis) {
-      // Using a custom event to communicate with the FutureTrendAnalysis component
       const event = new CustomEvent('aiAnalysisUpdated', { detail: { analysis } });
       window.dispatchEvent(event);
     }
@@ -106,7 +103,7 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
             <span>AI-Powered Analysis</span>
           </div>
           {analysis && (
-            <Badge className={cn("ml-2", getRecommendationColor(analysis.recommendation))}>
+            <Badge className={cn("ml-2 text-base px-3 py-1", getRecommendationColor(analysis.recommendation))}>
               {analysis.recommendation}
             </Badge>
           )}
@@ -156,7 +153,7 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
             <Separator />
             
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-secondary/50 rounded-lg p-3">
+              <div className="bg-secondary/50 rounded-lg p-3 col-span-1">
                 <h3 className="text-sm font-medium flex items-center mb-2">
                   <Gauge className="w-4 h-4 mr-1" />
                   Risk Assessment
@@ -172,15 +169,15 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
                 </div>
               </div>
 
-              <div className="bg-secondary/50 rounded-lg p-3">
+              <div className="bg-secondary/50 rounded-lg p-3 col-span-1">
                 <h3 className="text-sm font-medium flex items-center mb-2">
                   <AlertCircle className="w-4 h-4 mr-1" />
                   Technical Patterns
                 </h3>
-                <div className="space-y-1 max-h-28 overflow-y-auto">
+                <div className="space-y-1 max-h-36 overflow-y-auto pr-1">
                   {analysis.technicalPatterns.map((pattern, idx) => (
                     <div key={idx} className="flex items-center text-xs">
-                      <AlertCircle className="w-3 h-3 mr-1 text-primary" />
+                      <AlertCircle className="w-3 h-3 mr-1 text-primary flex-shrink-0" />
                       <span>{pattern}</span>
                     </div>
                   ))}
@@ -216,7 +213,7 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
               </div>
             </div>
             
-            <Card>
+            <Card className="w-full">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base font-medium flex items-center">
                   <Lightbulb className="h-5 w-5 mr-2 text-primary" />
@@ -227,12 +224,21 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
                 <div className="space-y-2">
                   {getAIInsights().map((insight, index) => (
                     <div key={index} className="flex items-start gap-2">
-                      {index % 2 === 0 ? (
-                        <CheckCircle2 className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
+                      {index === getAIInsights().length - 1 ? (
+                        <div className="flex items-start gap-2 w-full">
+                          <CheckCircle2 className="w-5 h-5 mt-0.5 text-primary flex-shrink-0" />
+                          <p className="text-base font-medium">{insight}</p>
+                        </div>
                       ) : (
-                        <AlertCircle className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
+                        <>
+                          {index % 2 === 0 ? (
+                            <CheckCircle2 className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
+                          ) : (
+                            <AlertCircle className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
+                          )}
+                          <p className="text-sm">{insight}</p>
+                        </>
                       )}
-                      <p className="text-sm">{insight}</p>
                     </div>
                   ))}
                 </div>

@@ -83,18 +83,20 @@ const FutureTrendAnalysis: React.FC<FutureTrendAnalysisProps> = ({
   const getAIInsights = () => {
     if (!aiAnalysis) return [];
     
-    // Create 5-6 bullet points of insights
+    // Create 5-6 bullet points of insights with the last one being the final recommendation
     const insights = [
       `The stock is showing ${aiAnalysis.recommendation.includes('Buy') ? 'bullish' : aiAnalysis.recommendation.includes('Sell') ? 'bearish' : 'neutral'} signals with a ${aiAnalysis.riskLevel.toLowerCase()} risk profile.`,
       `Primary technical pattern identified: ${aiAnalysis.technicalPatterns[0] || 'N/A'}.`,
       `Key support level at ₹${aiAnalysis.supportResistance.support[0]?.toLocaleString() || 'N/A'} with secondary support at ₹${aiAnalysis.supportResistance.support[1]?.toLocaleString() || 'N/A'}.`,
       `Immediate resistance detected at ₹${aiAnalysis.supportResistance.resistance[0]?.toLocaleString() || 'N/A'}.`,
       `${aiAnalysis.technicalPatterns.length > 1 ? `Additional pattern: ${aiAnalysis.technicalPatterns[1]}` : 'No additional patterns detected'}.`,
-      aiAnalysis.risk <= 2 
-        ? 'Risk-reward ratio appears favorable for entry positions.'
-        : aiAnalysis.risk >= 4
-          ? 'Current risk-reward ratio suggests caution before entering new positions.'
-          : 'Risk-reward ratio is balanced, consider position sizing carefully.'
+      `Final recommendation: ${aiAnalysis.recommendation} - ${
+        aiAnalysis.recommendation === 'Strong Buy' ? 'Excellent opportunity for entry'
+        : aiAnalysis.recommendation === 'Buy' ? 'Good potential for positive returns'
+        : aiAnalysis.recommendation === 'Hold' ? 'Consider maintaining current positions'
+        : aiAnalysis.recommendation === 'Sell' ? 'Consider reducing exposure'
+        : 'Consider exiting positions'
+      }`
     ];
     
     return insights;
