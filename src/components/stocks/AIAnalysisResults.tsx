@@ -71,8 +71,8 @@ const AIAnalysisResults: React.FC<AIAnalysisResultsProps> = ({
       
       <Separator />
       
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-secondary/50 rounded-lg p-3 col-span-1 flex-grow">
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-secondary/50 rounded-lg p-3 col-span-2 flex-grow">
           <h3 className="text-sm font-medium flex items-center mb-2">
             <Gauge className="w-4 h-4 mr-1" />
             Risk Assessment
@@ -95,7 +95,7 @@ const AIAnalysisResults: React.FC<AIAnalysisResultsProps> = ({
           </h3>
           <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
             {analysis.technicalPatterns.map((pattern, idx) => (
-              <div key={idx} className="flex items-center text-xs">
+              <div key={idx} className="flex items-center text-sm">
                 <AlertCircle className="w-3 h-3 mr-1 text-primary flex-shrink-0" />
                 <span>{pattern}</span>
               </div>
@@ -144,7 +144,7 @@ const AIAnalysisResults: React.FC<AIAnalysisResultsProps> = ({
             {getAIInsights().map((insight, index) => (
               <div key={index} className="flex items-start gap-2">
                 {index === getAIInsights().length - 1 ? (
-                  <div className="flex items-start gap-2 w-full">
+                  <div className="flex items-start gap-2 w-full bg-secondary/50 p-2 rounded-lg">
                     <CheckCircle2 className="w-5 h-5 mt-0.5 text-primary flex-shrink-0" />
                     <p className="text-base font-medium">{insight}</p>
                   </div>

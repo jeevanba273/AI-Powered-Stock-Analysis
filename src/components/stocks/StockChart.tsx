@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
@@ -200,7 +201,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, className, onTimeFrameCha
             ].map((timeFrame) => (
               <Button
                 key={timeFrame.value}
-                variant={activeTimeFrame === timeFrame.value ? "primary" : "secondary"}
+                variant={activeTimeFrame === timeFrame.value ? "default" : "secondary"}
                 size="sm"
                 onClick={() => handleTimeFrameClick(timeFrame.value)}
                 className="text-sm font-normal px-3 py-1 h-8"

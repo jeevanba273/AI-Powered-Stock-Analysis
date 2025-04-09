@@ -1,6 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import DashboardLayout from '@/components/layout/DashboardLayout';
 import StockChart from '@/components/stocks/StockChart';
 import StockSummary from '@/components/stocks/StockSummary';
 import StockAnalysis from '@/components/stocks/StockAnalysis';
@@ -21,19 +21,19 @@ const Index = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Load initial stock on mount
-    loadStockData(activeStock);
+    // Load initial stock on mount with default timeframe
+    loadStockData(activeStock, '1M');
   }, []);
 
-  const loadStockData = async (ticker: string) => {
+  const loadStockData = async (ticker: string, timeFrame: string = '1M') => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const data = await fetchStockData(ticker);
+      const data = await fetchStockData(ticker, timeFrame);
       setStockData(data);
       setActiveStock(ticker);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching stock data:", error);
       setError(error.message || 'Failed to load data');
       toast.error(`Failed to load data for ${ticker}`);
@@ -43,7 +43,7 @@ const Index = () => {
   };
 
   const handleStockSearch = (ticker: string) => {
-    loadStockData(ticker);
+    loadStockData(ticker, '1M');
   };
 
   const handleAIAnalysis = async (): Promise<AIAnalysisResponse | undefined> => {
@@ -63,7 +63,7 @@ const Index = () => {
       });
       
       return analysisResult;
-    } catch (error) {
+    } catch (error: any) {
       console.error("AI analysis error:", error);
       toast.error(`Failed to generate AI analysis: ${error.message}`);
       return undefined;
@@ -71,14 +71,13 @@ const Index = () => {
   };
 
   const handleRetry = () => {
-    loadStockData(activeStock);
+    loadStockData(activeStock, '1M');
   };
 
   const handleTimeFrameChange = async (timeFrame: string) => {
     try {
-      const data = await fetchStockData(activeStock, timeFrame);
-      setStockData(data);
-    } catch (error) {
+      await loadStockData(activeStock, timeFrame);
+    } catch (error: any) {
       console.error("Error fetching stock data:", error);
       setError(error.message || 'Failed to load data');
       toast.error(`Failed to load data for ${activeStock}`);
@@ -93,8 +92,8 @@ const Index = () => {
 
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">NeuraStock</h1>
+      <div className="mb-6 text-center">
+        <h1 className="text-3xl font-bold mb-2">NeuraStock</h1>
         <p className="text-muted-foreground">
           AI-Powered Stock Analysis Platform
         </p>
@@ -158,19 +157,20 @@ const Index = () => {
       ) : stockData ? (
         <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <StockSummary 
-              ticker={stockData.ticker}
-              companyName={stockData.companyName}
-              price={stockData.price}
-              change={stockData.change}
-              changePercent={stockData.changePercent}
-              currency={stockData.currency}
-              marketStatus={stockData.marketStatus}
-              lastUpdated={stockData.lastUpdated}
-              stats={stockData.stats}
-              stockDetails={stockData.rawStockDetails}
-              className="lg:col-span-1"
-            >
+            <div className="lg:col-span-1">
+              <StockSummary 
+                ticker={stockData.ticker}
+                companyName={stockData.companyName}
+                price={stockData.price}
+                change={stockData.change}
+                changePercent={stockData.changePercent}
+                currency={stockData.currency}
+                marketStatus={stockData.marketStatus}
+                lastUpdated={stockData.lastUpdated}
+                stats={stockData.stats}
+                stockDetails={stockData.rawStockDetails}
+                className="h-full"
+              />
               <Button 
                 variant="outline" 
                 size="lg" 
@@ -179,7 +179,7 @@ const Index = () => {
               >
                 View Detailed Financials
               </Button>
-            </StockSummary>
+            </div>
             
             <StockAnalysis 
               ticker={stockData.ticker}
