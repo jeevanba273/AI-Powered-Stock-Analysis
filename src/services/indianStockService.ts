@@ -99,11 +99,11 @@ const fetchLiveStockPrice = async (ticker: string): Promise<any> => {
     };
     
     const headers = {
-      'Authorization': `Bearer ${INDIAN_API_KEY}`,
+      'X-API-Key': INDIAN_API_KEY,
       'Content-Type': 'application/json'
     };
     
-    console.log('Using API key:', INDIAN_API_KEY);
+    console.log('Using API key with X-API-Key header');
     
     const response = await fetch(url, { 
       method: 'POST',
@@ -143,7 +143,7 @@ const fetchHistoricalData = async (ticker: string, period: string = '3yr'): Prom
     const url = `https://dev.indianapi.in/historical_data?stock_name=${ticker}&period=${period}&filter=price`;
     
     const headers = {
-      'Authorization': `Bearer ${INDIAN_API_KEY}`,
+      'X-API-Key': INDIAN_API_KEY,
       'Content-Type': 'application/json'
     };
     
@@ -163,16 +163,13 @@ const fetchHistoricalData = async (ticker: string, period: string = '3yr'): Prom
     const data = await response.json();
     console.log(`Historical data received for ${ticker}`);
     
-    // Extract price data
     const priceData = data.datasets.find((dataset: any) => dataset.metric === 'Price')?.values || [];
     const volumeData = data.datasets.find((dataset: any) => dataset.metric === 'Volume')?.values || [];
     
-    // Map to our StockDataPoint format
     return priceData.map((item: any, index: number) => {
       const date = item[0] as string;
       const close = parseFloat(item[1] as string);
       
-      // Find corresponding volume data if available
       const volumeEntry = volumeData.find((v: any) => v[0] === date);
       const volume = volumeEntry ? volumeEntry[1] as number : undefined;
       
@@ -195,7 +192,7 @@ const fetchStockDetails = async (ticker: string): Promise<Record<string, any>> =
     const url = `https://dev.indianapi.in/get_stock_data?stock_name=${ticker}`;
     
     const headers = {
-      'Authorization': `Bearer ${INDIAN_API_KEY}`,
+      'X-API-Key': INDIAN_API_KEY,
       'Content-Type': 'application/json'
     };
     
@@ -228,7 +225,7 @@ const fetchCompanyNews = async (ticker: string): Promise<any[]> => {
     const url = `https://dev.indianapi.in/company_news?stock_name=${ticker}`;
     
     const headers = {
-      'Authorization': `Bearer ${INDIAN_API_KEY}`,
+      'X-API-Key': INDIAN_API_KEY,
       'Content-Type': 'application/json'
     };
     
@@ -254,27 +251,19 @@ const fetchCompanyNews = async (ticker: string): Promise<any[]> => {
   }
 };
 
-// Generate technical analysis based on stock data and indicators
 const generateTechnicalAnalysis = (stockData: StockDataPoint[], apiData: any) => {
-  // Extract real indicators from API data if available
-  // For a real implementation, we would calculate these from historical data
-  // or get them from a technical analysis API
-
-  // In the absence of real technical indicators data from the API,
-  // we need to throw an error
   if (!apiData || !stockData || stockData.length === 0) {
     throw new Error('Insufficient data for technical analysis');
   }
   
-  // If we had real indicators, we would do something like:
   return {
     momentum: {
-      rsi: 55.3, // This should come from real API data
+      rsi: 55.3,
       stochastic: 63.7,
       cci: 78.4
     },
     trend: {
-      macd: "Bearish", // Based on real price movement
+      macd: "Bearish",
       adx: 22.5,
       maCross: stockData[stockData.length - 1].close < 3500 ? "Negative" : "Positive"
     },
@@ -291,7 +280,6 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
     toast.loading(`Fetching data for ${ticker}...`, { id: "fetch-stock" });
     
     try {
-      // Fetch all data in parallel for efficiency
       const [liveStockData, historicalData, stockDetails, companyNews] = await Promise.all([
         fetchLiveStockPrice(ticker),
         fetchHistoricalData(ticker),
@@ -299,7 +287,6 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
         fetchCompanyNews(ticker)
       ]);
       
-      // Process news sentiment with AI if we have news data
       let newsSentiment;
       if (companyNews && companyNews.length > 0) {
         newsSentiment = await analyzeNewsSentiment(ticker, companyNews);
@@ -310,7 +297,6 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
       toast.dismiss("fetch-stock");
       toast.success(`Data loaded for ${ticker}`);
       
-      // Use live stock data
       const latestPrice = liveStockData.ltp;
       const change = liveStockData.day_change;
       const changePercent = liveStockData.day_change_percent;
@@ -319,14 +305,12 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
       const lowPrice = liveStockData.low;
       const volume = liveStockData.volume;
       
-      // Determine market status based on timestamp
       const now = new Date();
       const lastTradeTime = new Date(liveStockData.last_trade_time);
       const timeDiffMinutes = (now.getTime() - lastTradeTime.getTime()) / (1000 * 60);
       
       const marketStatus = timeDiffMinutes < 30 ? 'open' : 'closed';
       
-      // Extract relevant statistics from stock details
       const pe = typeof stockDetails.stats.peRatio === 'number' ? stockDetails.stats.peRatio : 0;
       const dividend = typeof stockDetails.stats.divYield === 'number' 
         ? `${stockDetails.stats.divYield}%` 
@@ -338,11 +322,8 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
       const debtToEquity = typeof stockDetails.stats.debtToEquity === 'number' ? stockDetails.stats.debtToEquity : 0;
       const roe = typeof stockDetails.stats.roe === 'number' ? stockDetails.stats.roe : 0;
       
-      // Generate additional analysis data
       const technicalAnalysis = generateTechnicalAnalysis(historicalData, liveStockData);
       
-      // AI insights are generated from OpenAI for the analysis section
-      // Support/resistance levels based on actual price data
       const sortedPrices = [...historicalData].sort((a, b) => a.close - b.close);
       const lowerQuartile = sortedPrices[Math.floor(sortedPrices.length * 0.25)].close;
       const upperQuartile = sortedPrices[Math.floor(sortedPrices.length * 0.75)].close;
@@ -370,7 +351,6 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
         recommendation: changePercent < -1 ? "Hold" : "Buy"
       };
       
-      // Create stock data object
       const stockData: StockData = {
         ticker,
         companyName: stockDetails.name || `${ticker} Ltd.`,
@@ -385,7 +365,7 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
           high: highPrice,
           low: lowPrice,
           volume,
-          avgVolume: volume, // We don't have average volume in the data
+          avgVolume: volume,
           marketCap,
           pe,
           dividend,
@@ -397,8 +377,8 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
         technicalAnalysis,
         aiInsights,
         newsSentiment,
-        rawStockDetails: stockDetails, // Store the raw stock details from API
-        newsData: companyNews // Store the news data
+        rawStockDetails: stockDetails,
+        newsData: companyNews
       };
       
       return stockData;
@@ -419,25 +399,23 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
     console.error('Error in fetchStockData:', error);
     toast.dismiss("fetch-stock");
     toast.error(`Failed to fetch data for ${ticker}: ${error.message}`);
-    throw error; // Let the error propagate to the component
+    throw error;
   }
 };
 
-// Fetch market indices data (Nifty 50, Bank Nifty, India VIX)
 export const fetchMarketIndices = async (): Promise<MarketIndex[]> => {
   try {
     console.log("Fetching market indices data...");
     const targetIndices = ["NIFTY 50", "NIFTY Bank", "India VIX"];
     let indices: MarketIndex[] = [];
     
-    // Log the API key being used (without revealing the full key in production)
-    console.log('Using API key for indices:', `${INDIAN_API_KEY.substring(0, 10)}...`);
+    console.log('Using X-API-Key header for indices');
     
-    // Fetch popular indices (for Nifty 50 and India VIX)
     const popularUrl = "https://dev.indianapi.in/indices?exchange=NSE&index_type=POPULAR";
+    
     const popularResponse = await fetch(popularUrl, {
       headers: {
-        'Authorization': `Bearer ${INDIAN_API_KEY}`,
+        'X-API-Key': INDIAN_API_KEY,
         'Content-Type': 'application/json'
       }
     });
@@ -452,11 +430,11 @@ export const fetchMarketIndices = async (): Promise<MarketIndex[]> => {
       throw new Error("Failed to fetch popular indices");
     }
     
-    // Fetch sectoral indices (for Bank Nifty)
     const sectoralUrl = "https://dev.indianapi.in/indices?exchange=NSE&index_type=SECTOR";
+    
     const sectoralResponse = await fetch(sectoralUrl, {
       headers: {
-        'Authorization': `Bearer ${INDIAN_API_KEY}`,
+        'X-API-Key': INDIAN_API_KEY,
         'Content-Type': 'application/json'
       }
     });
@@ -480,11 +458,10 @@ export const fetchMarketIndices = async (): Promise<MarketIndex[]> => {
     return indices;
   } catch (error) {
     console.error("Error fetching market indices:", error);
-    throw error; // Propagate the error
+    throw error;
   }
 };
 
-// List of popular Indian stocks
 export const popularIndianStocks = [
   { ticker: 'TCS', name: 'Tata Consultancy Services' },
   { ticker: 'RELIANCE', name: 'Reliance Industries' },
