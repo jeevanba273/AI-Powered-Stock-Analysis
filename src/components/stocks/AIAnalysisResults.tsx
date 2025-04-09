@@ -7,6 +7,7 @@ import { TrendingDown, TrendingUp, Gauge, AlertCircle, Layers, Lightbulb, CheckC
 import { cn } from '@/lib/utils';
 import { AIAnalysisResponse } from '@/services/aiService';
 import FutureTrendAnalysis from './FutureTrendAnalysis';
+import CurrentTrendAnalysis from './CurrentTrendAnalysis';
 
 interface AIAnalysisResultsProps {
   analysis: AIAnalysisResponse;
@@ -73,8 +74,8 @@ const AIAnalysisResults: React.FC<AIAnalysisResultsProps> = ({
       
       <Separator />
       
-      <div className="grid grid-cols-5 gap-4">
-        <div className="bg-secondary/50 rounded-lg p-3 col-span-2 flex flex-col">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-secondary/50 rounded-lg p-3 col-span-1 flex flex-col justify-center">
           <h3 className="text-sm font-medium flex items-center">
             <Gauge className="w-4 h-4 mr-1" />
             Risk Assessment
@@ -93,7 +94,7 @@ const AIAnalysisResults: React.FC<AIAnalysisResultsProps> = ({
           </div>
         </div>
 
-        <div className="bg-secondary/50 rounded-lg p-3 col-span-3">
+        <div className="bg-secondary/50 rounded-lg p-3 col-span-1">
           <h3 className="text-sm font-medium flex items-center mb-2">
             <AlertCircle className="w-4 h-4 mr-1" />
             Technical Patterns
@@ -169,11 +170,18 @@ const AIAnalysisResults: React.FC<AIAnalysisResultsProps> = ({
         </CardContent>
       </Card>
       
-      <div className="md:hidden">
-        <FutureTrendAnalysis 
-          changePercent={stockData.changePercent} 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <CurrentTrendAnalysis 
+          stockData={stockData} 
           aiAnalysis={analysis}
         />
+        
+        <div className="md:block hidden">
+          <FutureTrendAnalysis 
+            changePercent={stockData.changePercent} 
+            aiAnalysis={analysis}
+          />
+        </div>
       </div>
     </div>
   );
