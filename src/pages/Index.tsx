@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -7,7 +6,7 @@ import StockSummary from '@/components/stocks/StockSummary';
 import StockAnalysis from '@/components/stocks/StockAnalysis';
 import StockSearch from '@/components/stocks/StockSearch';
 import { fetchStockData, StockData } from '@/services/indianStockService';
-import { generateAIAnalysis } from '@/services/aiService';
+import { generateAIAnalysis, AIAnalysisResponse } from '@/services/aiService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CircleDashed, Gem, LineChart, Lightbulb, TrendingUp, TrendingDown, Search } from 'lucide-react';
@@ -40,12 +39,12 @@ const Index = () => {
     loadStockData(ticker);
   };
 
-  const handleAIAnalysis = async (): Promise<void> => {
+  const handleAIAnalysis = async (): Promise<AIAnalysisResponse | undefined> => {
     if (!stockData) return;
     
     try {
-      // In a real app, this would pass the actual stock data to the AI service
-      await generateAIAnalysis({
+      // Pass the actual stock data to the AI service
+      const analysisResult = await generateAIAnalysis({
         ticker: activeStock,
         stockData: stockData,
         indicators: {
@@ -54,8 +53,11 @@ const Index = () => {
           macd: true
         }
       });
+      
+      return analysisResult;
     } catch (error) {
       console.error("AI analysis error:", error);
+      return undefined;
     }
   };
 

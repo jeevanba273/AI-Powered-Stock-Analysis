@@ -20,9 +20,14 @@ export interface AIAnalysisRequest {
 
 export interface AIAnalysisResponse {
   analysis: string;
-  supportResistance: string;
+  supportResistance: {
+    support: number[];
+    resistance: number[];
+  };
   risk: number;
+  riskLevel: string;
   recommendation: string;
+  technicalPatterns: string[];
 }
 
 // Actual OpenAI API call
@@ -41,11 +46,11 @@ export const generateAIAnalysis = async (request: AIAnalysisRequest): Promise<AI
         messages: [
           {
             role: 'system',
-            content: 'You are a professional Indian stock market analyst. Analyze the stock data provided and return a JSON object with your analysis, support/resistance levels in ₹ (Indian Rupees), risk assessment (1-5), and recommendation (Strong Buy, Buy, Hold, Sell, Strong Sell).'
+            content: 'You are a professional Indian stock market analyst. Analyze the provided Indian stock data and return ONLY a valid JSON object with these fields: "analysis" (detailed technical analysis), "supportResistance" (object with "support" and "resistance" arrays in ₹), "risk" (number 1-5), "riskLevel" (string: "Very Low", "Low", "Moderate", "High", "Very High"), "recommendation" (string: "Strong Buy", "Buy", "Hold", "Sell", "Strong Sell"), and "technicalPatterns" (array of identified patterns). All currency values MUST be in ₹ (Indian Rupees).'
           },
           {
             role: 'user',
-            content: `Analyze this ${request.ticker} stock. Price: ₹${request.stockData.price.toFixed(2)}, Change: ${request.stockData.change.toFixed(2)} (${request.stockData.changePercent.toFixed(2)}%). Stock data for last ${request.stockData.stockData.length} days provided. Provide technical analysis.`
+            content: `Analyze this ${request.ticker} stock. Price: ₹${request.stockData.price.toFixed(2)}, Change: ₹${request.stockData.change.toFixed(2)} (${request.stockData.changePercent.toFixed(2)}%). Stock data for last ${request.stockData.stockData.length} days provided. Provide detailed technical analysis with key patterns, trends, support/resistance levels in ₹, risk assessment on 1-5 scale with risk level, and investment recommendation.`
           }
         ],
         temperature: 0.2
@@ -58,22 +63,47 @@ export const generateAIAnalysis = async (request: AIAnalysisRequest): Promise<AI
     
     const data = await response.json();
     toast.dismiss("ai-analysis");
+    console.log("OpenAI response:", data.choices[0].message.content);
     
     try {
       // Try to parse the content as JSON
       const analysisContent = data.choices[0].message.content;
-      const analysis = JSON.parse(analysisContent);
-      return analysis;
+      // Extract JSON if wrapped in markdown code blocks
+      const jsonContent = analysisContent.includes("```json") 
+        ? analysisContent.split("```json")[1].split("```")[0].trim()
+        : analysisContent.includes("```") 
+          ? analysisContent.split("```")[1].split("```")[0].trim()
+          : analysisContent;
+          
+      const analysis = JSON.parse(jsonContent);
+      
+      // Ensure the response has the expected structure
+      return {
+        analysis: analysis.analysis || "Analysis not available",
+        supportResistance: analysis.supportResistance || { 
+          support: [Math.floor(request.stockData.price * 0.95), Math.floor(request.stockData.price * 0.9)],
+          resistance: [Math.ceil(request.stockData.price * 1.05), Math.ceil(request.stockData.price * 1.1)]
+        },
+        risk: analysis.risk || 3,
+        riskLevel: analysis.riskLevel || getRiskLevelFromValue(analysis.risk || 3),
+        recommendation: analysis.recommendation || "Hold",
+        technicalPatterns: analysis.technicalPatterns || ["No patterns identified"]
+      };
     } catch (parseError) {
       // If parsing fails, format the response manually
       console.error("Failed to parse OpenAI response as JSON:", parseError);
-      const content = data.choices[0].message.content;
+      toast.error("Could not parse AI analysis properly. Using fallback data.");
       
       return {
-        analysis: content.slice(0, 500), // Use first part of the response
-        supportResistance: `Support levels: ₹${(request.stockData.price * 0.95).toFixed(2)}, ₹${(request.stockData.price * 0.9).toFixed(2)}\nResistance levels: ₹${(request.stockData.price * 1.05).toFixed(2)}, ₹${(request.stockData.price * 1.1).toFixed(2)}`,
+        analysis: "Based on current price trends and market conditions, the stock appears to be showing mixed signals. Volume patterns suggest neutral accumulation/distribution activity.",
+        supportResistance: {
+          support: [Math.floor(request.stockData.price * 0.95), Math.floor(request.stockData.price * 0.9)],
+          resistance: [Math.ceil(request.stockData.price * 1.05), Math.ceil(request.stockData.price * 1.1)]
+        },
         risk: 3,
-        recommendation: "Hold"
+        riskLevel: "Moderate",
+        recommendation: "Hold",
+        technicalPatterns: ["Consolidation phase", "Trading range"]
       };
     }
   } catch (error) {
@@ -84,9 +114,26 @@ export const generateAIAnalysis = async (request: AIAnalysisRequest): Promise<AI
     // Return a fallback response in case of errors
     return {
       analysis: `We couldn't complete the AI analysis for ${request.ticker} due to a technical issue. Please try again later.`,
-      supportResistance: "Support and resistance levels unavailable",
+      supportResistance: {
+        support: [0, 0],
+        resistance: [0, 0]
+      },
       risk: 3,
-      recommendation: "Unable to determine"
+      riskLevel: "Moderate",
+      recommendation: "Unable to determine",
+      technicalPatterns: ["Analysis not available"]
     };
   }
 };
+
+// Helper function to get risk level from numerical value
+function getRiskLevelFromValue(risk: number): string {
+  switch (risk) {
+    case 1: return "Very Low";
+    case 2: return "Low";
+    case 3: return "Moderate";
+    case 4: return "High";
+    case 5: return "Very High";
+    default: return "Moderate";
+  }
+}
