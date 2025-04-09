@@ -98,6 +98,7 @@ const CurrentTrendAnalysis: React.FC<CurrentTrendAnalysisProps> = ({
     );
     
     const isBullish = trend.direction === 'bullish';
+    const percentChange = parseFloat(trend.percentChange);
     
     return (
       <div className={cn(
@@ -118,7 +119,7 @@ const CurrentTrendAnalysis: React.FC<CurrentTrendAnalysisProps> = ({
             {trend.strength.charAt(0).toUpperCase() + trend.strength.slice(1)} {trend.direction}
           </div>
           <div className="text-xs text-muted-foreground">
-            {isBullish ? "+" : ""}{trend.percentChange}% change with {trend.volatility} volatility
+            {percentChange > 0 ? "+" : ""}{trend.percentChange}% change with {trend.volatility} volatility
           </div>
         </div>
         

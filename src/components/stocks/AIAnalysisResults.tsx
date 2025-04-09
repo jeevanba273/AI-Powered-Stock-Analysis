@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -42,9 +41,7 @@ const AIAnalysisResults: React.FC<AIAnalysisResultsProps> = ({
     }
   };
 
-  // Get indicator icon based on pattern text with improved color logic
   const getPatternIcon = (pattern: string) => {
-    // Positive/bullish patterns - green arrow up
     if (pattern.includes('Uptrend') || 
         pattern.includes('bullish') || 
         pattern.includes('Golden Cross') || 
@@ -57,7 +54,6 @@ const AIAnalysisResults: React.FC<AIAnalysisResultsProps> = ({
         pattern.includes('Double Bottom')) {
       return <ArrowUp className="w-3 h-3 mr-1 text-profit flex-shrink-0" />;
     } 
-    // Negative/bearish patterns - red arrow down
     else if (pattern.includes('Downtrend') || 
              pattern.includes('bearish') || 
              pattern.includes('Death Cross') ||
@@ -70,10 +66,36 @@ const AIAnalysisResults: React.FC<AIAnalysisResultsProps> = ({
              pattern.includes('Head and Shoulders')) {
       return <ArrowDown className="w-3 h-3 mr-1 text-loss flex-shrink-0" />;
     } 
-    // Neutral patterns - info circle
     else {
       return <AlertCircle className="w-3 h-3 mr-1 text-primary flex-shrink-0" />;
     }
+  };
+
+  const isPatternBullish = (pattern: string): boolean | null => {
+    if (pattern.includes('Uptrend') || 
+        pattern.includes('bullish') || 
+        pattern.includes('Golden Cross') || 
+        pattern.includes('breakout') || 
+        pattern.includes('white soldiers') ||
+        pattern.includes('Increasing volume') ||
+        pattern.includes('Oversold') ||
+        pattern.includes('bounce') ||
+        pattern.includes('Support') ||
+        pattern.includes('Double Bottom')) {
+      return true;
+    } else if (pattern.includes('Downtrend') || 
+              pattern.includes('bearish') || 
+              pattern.includes('Death Cross') ||
+              pattern.includes('breakdown') || 
+              pattern.includes('black crows') ||
+              pattern.includes('Decreasing volume') ||
+              pattern.includes('Overbought') ||
+              pattern.includes('Resistance') ||
+              pattern.includes('Double Top') ||
+              pattern.includes('Head and Shoulders')) {
+      return false;
+    }
+    return null; // neutral
   };
 
   const getAIInsights = () => {
@@ -160,12 +182,32 @@ const AIAnalysisResults: React.FC<AIAnalysisResultsProps> = ({
           Technical Patterns
         </h3>
         <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-          {analysis.technicalPatterns.map((pattern, idx) => (
-            <div key={idx} className="flex items-center bg-background/60 p-2 rounded-md">
-              {getPatternIcon(pattern)}
-              <span className="text-md font-medium">{pattern}</span>
-            </div>
-          ))}
+          {analysis.technicalPatterns.map((pattern, idx) => {
+            const isBullish = isPatternBullish(pattern);
+            const isLastItem = idx === analysis.technicalPatterns.length - 1;
+            
+            return (
+              <div 
+                key={idx} 
+                className={cn(
+                  "flex items-center p-2 rounded-md",
+                  isLastItem && isBullish === true ? "bg-green-500/20" : 
+                  isLastItem && isBullish === false ? "bg-red-500/20" : 
+                  "bg-background/60"
+                )}
+              >
+                {getPatternIcon(pattern)}
+                <span className={cn(
+                  "text-md font-medium",
+                  isLastItem && isBullish === true ? "text-profit" : 
+                  isLastItem && isBullish === false ? "text-loss" : 
+                  ""
+                )}>
+                  {pattern}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
       
