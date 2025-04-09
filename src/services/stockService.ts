@@ -3,7 +3,11 @@
 // This file is kept for backward compatibility
 
 import { toast } from 'sonner';
-import { fetchStockData as fetchIndianStockData, StockDataPoint as IndianStockDataPoint, StockData as IndianStockData } from './indianStockService';
+import { 
+  fetchStockData as fetchIndianStockData, 
+  StockDataPoint as IndianStockDataPoint, 
+  StockData as IndianStockData 
+} from './indianStockService';
 
 export interface StockDataPoint {
   date: string;
@@ -38,6 +42,38 @@ export interface StockData {
     sma?: number[];
     rsi?: number[];
     macd?: { macd: number[]; signal: number[]; histogram: number[] };
+  };
+  technicalAnalysis?: {
+    momentum: {
+      rsi: number;
+      stochastic: number;
+      cci: number;
+    };
+    trend: {
+      macd: string;
+      adx: number;
+      maCross: string;
+    };
+    volatility: {
+      bollinger: string;
+      atr: number;
+      stdDev: string;
+    };
+  };
+  aiInsights?: {
+    patterns: string[];
+    supportResistance: {
+      support: number[];
+      resistance: number[];
+    };
+    risk: number;
+    recommendation: string;
+  };
+  newsSentiment?: {
+    overall: string;
+    positivePercentage: number;
+    neutralPercentage: number;
+    negativePercentage: number;
   };
 }
 

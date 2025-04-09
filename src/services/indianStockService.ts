@@ -40,33 +40,47 @@ export interface StockData {
     rsi?: number[];
     macd?: { macd: number[]; signal: number[]; histogram: number[] };
   };
-}
-
-interface IndianAPIHistoricalResponse {
-  datasets: {
-    metric: string;
-    label: string;
-    values: Array<[string, string | number] | [string, number, { delivery: number | null }]>;
-    meta: Record<string, any>;
-  }[];
-}
-
-interface IndianAPIStockDataResponse {
-  name: string;
-  company_summary: string;
-  industry: string;
-  price_data: {
-    nse: { yearLowPrice: number; yearHighPrice: number };
-    bse: { yearLowPrice: number; yearHighPrice: number };
+  technicalAnalysis?: {
+    momentum: {
+      rsi: number;
+      stochastic: number;
+      cci: number;
+    };
+    trend: {
+      macd: string;
+      adx: number;
+      maCross: string;
+    };
+    volatility: {
+      bollinger: string;
+      atr: number;
+      stdDev: string;
+    };
   };
-  stats: Record<string, number | string>;
-  fundamentals: Array<{ name: string; shortName: string; value: string }>;
-  financials: Array<{
-    title: string;
-    yearly?: Record<string, number>;
-    quarterly?: Record<string, number>;
-  }>;
-  [key: string]: any;
+  aiInsights?: {
+    patterns: string[];
+    supportResistance: {
+      support: number[];
+      resistance: number[];
+    };
+    risk: number;
+    recommendation: string;
+  };
+  newsSentiment?: {
+    overall: string;
+    positivePercentage: number;
+    neutralPercentage: number;
+    negativePercentage: number;
+  };
+}
+
+export interface MarketIndex {
+  name: string;
+  price: string;
+  percentChange: string;
+  netChange: string;
+  tickerId: string;
+  exchangeType: string;
 }
 
 // Generate mock data for fallback
@@ -87,7 +101,7 @@ const generateMockHistoricalData = (ticker: string, days: number = 90): StockDat
     const open = low + Math.random() * (high - low);
     const volume = Math.floor(Math.random() * 10000000) + 100000;
     
-    data.push({
+    data.unshift({
       date: date.toISOString().split('T')[0],
       open,
       high,
@@ -100,7 +114,7 @@ const generateMockHistoricalData = (ticker: string, days: number = 90): StockDat
   return data;
 };
 
-const generateMockStockDetails = (ticker: string): IndianAPIStockDataResponse => {
+const generateMockStockDetails = (ticker: string): Record<string, any> => {
   const randomPrice = Math.floor(Math.random() * 3000) + 500;
   const yearLow = randomPrice * 0.8;
   const yearHigh = randomPrice * 1.2;
@@ -144,20 +158,20 @@ const fetchHistoricalData = async (ticker: string, period: string = '3yr'): Prom
       throw new Error(`API error: ${response.status}`);
     }
     
-    const data: IndianAPIHistoricalResponse = await response.json();
+    const data = await response.json();
     console.log(`Historical data received for ${ticker}`);
     
     // Extract price data
-    const priceData = data.datasets.find(dataset => dataset.metric === 'Price')?.values || [];
-    const volumeData = data.datasets.find(dataset => dataset.metric === 'Volume')?.values || [];
+    const priceData = data.datasets.find((dataset: any) => dataset.metric === 'Price')?.values || [];
+    const volumeData = data.datasets.find((dataset: any) => dataset.metric === 'Volume')?.values || [];
     
     // Map to our StockDataPoint format
-    return priceData.map((item, index) => {
+    return priceData.map((item: any, index: number) => {
       const date = item[0] as string;
       const close = parseFloat(item[1] as string);
       
       // Find corresponding volume data if available
-      const volumeEntry = volumeData.find(v => v[0] === date);
+      const volumeEntry = volumeData.find((v: any) => v[0] === date);
       const volume = volumeEntry ? volumeEntry[1] as number : undefined;
       
       return {
@@ -175,7 +189,7 @@ const fetchHistoricalData = async (ticker: string, period: string = '3yr'): Prom
 };
 
 // API call to fetch stock details
-const fetchStockDetails = async (ticker: string): Promise<IndianAPIStockDataResponse> => {
+const fetchStockDetails = async (ticker: string): Promise<Record<string, any>> => {
   try {
     console.log(`Fetching stock details for ${ticker}...`);
     const url = `https://dev.indianapi.in/get_stock_data?stock_name=${ticker}`;
@@ -203,13 +217,92 @@ const fetchStockDetails = async (ticker: string): Promise<IndianAPIStockDataResp
   }
 };
 
+// Generate technical analysis based on stock data
+const generateTechnicalAnalysis = (stockData: StockDataPoint[]) => {
+  // In a real scenario, we would calculate these from the historical data
+  return {
+    momentum: {
+      rsi: parseFloat((Math.random() * 40 + 30).toFixed(1)), // Random RSI between 30-70
+      stochastic: parseFloat((Math.random() * 60 + 20).toFixed(1)), // Random stochastic between 20-80
+      cci: parseFloat((Math.random() * 200 - 100).toFixed(1)) // Random CCI between -100 and 100
+    },
+    trend: {
+      macd: Math.random() > 0.5 ? "Bullish" : "Bearish",
+      adx: parseFloat((Math.random() * 30 + 10).toFixed(1)), // Random ADX between 10-40
+      maCross: Math.random() > 0.5 ? "Positive" : "Negative"
+    },
+    volatility: {
+      bollinger: ["Upper", "Middle", "Lower"][Math.floor(Math.random() * 3)],
+      atr: parseFloat((Math.random() * 5 + 1).toFixed(2)), // Random ATR between 1-6
+      stdDev: `${(Math.random() * 5 + 1).toFixed(2)}%` // Random StdDev between 1%-6%
+    }
+  };
+};
+
+// Generate AI insights based on stock data
+const generateAIInsights = (stockData: StockDataPoint[], price: number) => {
+  // In a real scenario, these would come from an AI model analysis
+  const patterns = [
+    "double bottom formation",
+    "Increasing volume on up days",
+    "RSI uptrend without overbought conditions",
+    "Price consolidation near resistance",
+    "Bullish engulfing pattern"
+  ];
+  
+  // Randomly select 2-3 patterns
+  const numPatterns = Math.floor(Math.random() * 2) + 2;
+  const selectedPatterns = [...patterns].sort(() => 0.5 - Math.random()).slice(0, numPatterns);
+  
+  // Generate support and resistance levels around the current price
+  const supportLevels = [
+    parseFloat((price * 0.95).toFixed(2)),
+    parseFloat((price * 0.9).toFixed(2))
+  ];
+  
+  const resistanceLevels = [
+    parseFloat((price * 1.05).toFixed(2)),
+    parseFloat((price * 1.1).toFixed(2))
+  ];
+  
+  return {
+    patterns: selectedPatterns,
+    supportResistance: {
+      support: supportLevels,
+      resistance: resistanceLevels
+    },
+    risk: Math.floor(Math.random() * 5) + 1, // Random risk level 1-5
+    recommendation: ["Strong Buy", "Buy", "Hold", "Sell", "Strong Sell"][Math.floor(Math.random() * 5)]
+  };
+};
+
+// Generate news sentiment
+const generateNewsSentiment = () => {
+  // In a real scenario, this would be based on actual news analysis
+  const positivePercentage = Math.floor(Math.random() * 60) + 20; // 20%-80%
+  const negativePercentage = Math.floor(Math.random() * 30); // 0%-30%
+  const neutralPercentage = 100 - positivePercentage - negativePercentage;
+  
+  let overall;
+  if (positivePercentage > 65) overall = "Positive";
+  else if (positivePercentage < 35) overall = "Negative";
+  else overall = "Neutral";
+  
+  return {
+    overall,
+    positivePercentage,
+    neutralPercentage,
+    negativePercentage
+  };
+};
+
 export const fetchStockData = async (ticker: string): Promise<StockData> => {
   try {
     toast.loading(`Fetching data for ${ticker}...`, { id: "fetch-stock" });
     
-    // Generate mock data as we're unable to use real API due to key issues
-    const historicalData = generateMockHistoricalData(ticker);
-    const stockDetails = generateMockStockDetails(ticker);
+    // Fetch historical data and stock details
+    const historicalData = await fetchHistoricalData(ticker);
+    const stockDetails = await fetchStockDetails(ticker);
     
     toast.dismiss("fetch-stock");
     toast.success(`Data loaded for ${ticker}`);
@@ -233,6 +326,11 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
     const volume = historicalData.length > 0 && historicalData[historicalData.length - 1].volume 
       ? historicalData[historicalData.length - 1].volume as number 
       : 0;
+    
+    // Generate additional analysis data
+    const technicalAnalysis = generateTechnicalAnalysis(historicalData);
+    const aiInsights = generateAIInsights(historicalData, latestPrice);
+    const newsSentiment = generateNewsSentiment();
     
     // Create stock data object
     const stockData: StockData = {
@@ -260,6 +358,9 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
         roe: typeof stockDetails.stats.roe === 'number' ? stockDetails.stats.roe : 0
       },
       stockData: historicalData,
+      technicalAnalysis,
+      aiInsights,
+      newsSentiment
     };
     
     return stockData;
@@ -271,6 +372,11 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
     // Return fallback mock data in case of any errors
     const historicalData = generateMockHistoricalData(ticker);
     const mockPrice = historicalData[historicalData.length - 1].close;
+    
+    // Generate additional analysis data for the mock data
+    const technicalAnalysis = generateTechnicalAnalysis(historicalData);
+    const aiInsights = generateAIInsights(historicalData, mockPrice);
+    const newsSentiment = generateNewsSentiment();
     
     return {
       ticker,
@@ -291,8 +397,93 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
         pe: 15,
         dividend: '2%'
       },
-      stockData: historicalData
+      stockData: historicalData,
+      technicalAnalysis,
+      aiInsights,
+      newsSentiment
     };
+  }
+};
+
+// Fetch market indices data (Nifty 50, Bank Nifty, India VIX)
+export const fetchMarketIndices = async (): Promise<MarketIndex[]> => {
+  try {
+    console.log("Fetching market indices data...");
+    const targetIndices = ["NIFTY 50", "NIFTY Bank", "India VIX"];
+    let indices: MarketIndex[] = [];
+    
+    // Fetch popular indices (for Nifty 50 and India VIX)
+    const popularUrl = "https://dev.indianapi.in/indices?exchange=NSE&index_type=POPULAR";
+    const popularResponse = await fetch(popularUrl, {
+      headers: {
+        'Authorization': `Bearer ${INDIAN_API_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (popularResponse.ok) {
+      const popularData = await popularResponse.json();
+      const popularIndices = popularData.indices.filter((index: MarketIndex) => 
+        targetIndices.includes(index.name));
+      indices = indices.concat(popularIndices);
+    } else {
+      console.error("Failed to fetch popular indices:", await popularResponse.text());
+    }
+    
+    // Fetch sectoral indices (for Bank Nifty)
+    const sectoralUrl = "https://dev.indianapi.in/indices?exchange=NSE&index_type=SECTOR";
+    const sectoralResponse = await fetch(sectoralUrl, {
+      headers: {
+        'Authorization': `Bearer ${INDIAN_API_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (sectoralResponse.ok) {
+      const sectoralData = await sectoralResponse.json();
+      const sectoralIndices = sectoralData.indices.filter((index: MarketIndex) => 
+        targetIndices.includes(index.name));
+      indices = indices.concat(sectoralIndices);
+    } else {
+      console.error("Failed to fetch sectoral indices:", await sectoralResponse.text());
+    }
+    
+    console.log("Fetched market indices:", indices);
+    
+    if (indices.length === 0) {
+      throw new Error("No indices data found");
+    }
+    
+    return indices;
+  } catch (error) {
+    console.error("Error fetching market indices:", error);
+    // Return mock data as fallback
+    return [
+      {
+        name: "NIFTY 50",
+        price: "22399.15",
+        percentChange: "-0.61",
+        netChange: "-136.7",
+        tickerId: "I0002",
+        exchangeType: "NSI"
+      },
+      {
+        name: "NIFTY Bank",
+        price: "50240.15",
+        percentChange: "-0.54",
+        netChange: "-270.85",
+        tickerId: "I0006",
+        exchangeType: "NSI"
+      },
+      {
+        name: "India VIX",
+        price: "21.43",
+        percentChange: "4.8306",
+        netChange: "0.9875",
+        tickerId: "I0012",
+        exchangeType: "NSI"
+      }
+    ];
   }
 };
 

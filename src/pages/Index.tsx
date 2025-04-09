@@ -102,6 +102,7 @@ const Index = () => {
             data={{
               ticker: stockData.ticker,
               stockData: stockData.stockData,
+              indicators: stockData.indicators
             }}
           />
           
@@ -118,22 +119,49 @@ const Index = () => {
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Short-term (1W)</span>
                     <div className="flex items-center">
-                      <TrendingUp className="h-4 w-4 mr-1 text-profit" />
-                      <span className="text-sm font-medium text-profit">Bullish</span>
+                      {stockData.changePercent > 0 ? (
+                        <>
+                          <TrendingUp className="h-4 w-4 mr-1 text-profit" />
+                          <span className="text-sm font-medium text-profit">Bullish</span>
+                        </>
+                      ) : (
+                        <>
+                          <TrendingDown className="h-4 w-4 mr-1 text-loss" />
+                          <span className="text-sm font-medium text-loss">Bearish</span>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Mid-term (1M)</span>
                     <div className="flex items-center">
-                      <TrendingUp className="h-4 w-4 mr-1 text-profit" />
-                      <span className="text-sm font-medium text-profit">Bullish</span>
+                      {stockData.technicalAnalysis?.trend.macd === "Bullish" ? (
+                        <>
+                          <TrendingUp className="h-4 w-4 mr-1 text-profit" />
+                          <span className="text-sm font-medium text-profit">Bullish</span>
+                        </>
+                      ) : (
+                        <>
+                          <TrendingDown className="h-4 w-4 mr-1 text-loss" />
+                          <span className="text-sm font-medium text-loss">Bearish</span>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Long-term (3M)</span>
                     <div className="flex items-center">
-                      <TrendingDown className="h-4 w-4 mr-1 text-loss" />
-                      <span className="text-sm font-medium text-loss">Bearish</span>
+                      {stockData.aiInsights?.recommendation.includes("Buy") ? (
+                        <>
+                          <TrendingUp className="h-4 w-4 mr-1 text-profit" />
+                          <span className="text-sm font-medium text-profit">Bullish</span>
+                        </>
+                      ) : (
+                        <>
+                          <TrendingDown className="h-4 w-4 mr-1 text-loss" />
+                          <span className="text-sm font-medium text-loss">Bearish</span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -159,15 +187,21 @@ const Index = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">RSI (14)</span>
-                        <span className="text-sm font-medium">62.5</span>
+                        <span className="text-sm font-medium">
+                          {stockData.technicalAnalysis?.momentum.rsi.toFixed(1) || "62.5"}
+                        </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">Stochastic</span>
-                        <span className="text-sm font-medium">78.3</span>
+                        <span className="text-sm font-medium">
+                          {stockData.technicalAnalysis?.momentum.stochastic.toFixed(1) || "78.3"}
+                        </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">CCI</span>
-                        <span className="text-sm font-medium">124.6</span>
+                        <span className="text-sm font-medium">
+                          {stockData.technicalAnalysis?.momentum.cci.toFixed(1) || "124.6"}
+                        </span>
                       </div>
                     </div>
                   </TabsContent>
@@ -176,15 +210,25 @@ const Index = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">MACD</span>
-                        <span className="text-sm font-medium text-profit">Bullish</span>
+                        <span className={`text-sm font-medium ${
+                          stockData.technicalAnalysis?.trend.macd === "Bullish" ? "text-profit" : "text-loss"
+                        }`}>
+                          {stockData.technicalAnalysis?.trend.macd || "Bullish"}
+                        </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">ADX</span>
-                        <span className="text-sm font-medium">28.5</span>
+                        <span className="text-sm font-medium">
+                          {stockData.technicalAnalysis?.trend.adx.toFixed(1) || "28.5"}
+                        </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">MA Cross</span>
-                        <span className="text-sm font-medium text-profit">Positive</span>
+                        <span className={`text-sm font-medium ${
+                          stockData.technicalAnalysis?.trend.maCross === "Positive" ? "text-profit" : "text-loss"
+                        }`}>
+                          {stockData.technicalAnalysis?.trend.maCross || "Positive"}
+                        </span>
                       </div>
                     </div>
                   </TabsContent>
@@ -193,15 +237,21 @@ const Index = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">Bollinger</span>
-                        <span className="text-sm font-medium">Upper</span>
+                        <span className="text-sm font-medium">
+                          {stockData.technicalAnalysis?.volatility.bollinger || "Upper"}
+                        </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">ATR</span>
-                        <span className="text-sm font-medium">3.45</span>
+                        <span className="text-sm font-medium">
+                          {stockData.technicalAnalysis?.volatility.atr.toFixed(2) || "3.45"}
+                        </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">Std Dev</span>
-                        <span className="text-sm font-medium">2.78%</span>
+                        <span className="text-sm font-medium">
+                          {stockData.technicalAnalysis?.volatility.stdDev || "2.78%"}
+                        </span>
                       </div>
                     </div>
                   </TabsContent>
@@ -220,10 +270,31 @@ const Index = () => {
                 <div className="text-sm">
                   <p>Based on technical analysis, AI identifies these patterns:</p>
                   <ul className="list-disc pl-5 mt-2 space-y-1">
-                    <li>Potential <span className="text-profit">double bottom formation</span></li>
-                    <li>Increasing volume on up days</li>
-                    <li>RSI uptrend without overbought conditions</li>
+                    {stockData.aiInsights?.patterns.map((pattern, index) => (
+                      <li key={index}>
+                        {index === 0 ? (
+                          <span className="text-profit">{pattern}</span>
+                        ) : pattern}
+                      </li>
+                    ))}
                   </ul>
+                </div>
+                <div className="text-sm mt-3">
+                  <p className="font-medium">Support/Resistance:</p>
+                  <div className="mt-1">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Support:</span>
+                      <span>
+                        ₹{stockData.aiInsights?.supportResistance.support.join(', ₹') || '0'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Resistance:</span>
+                      <span>
+                        ₹{stockData.aiInsights?.supportResistance.resistance.join(', ₹') || '0'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -238,31 +309,45 @@ const Index = () => {
               <CardContent>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm text-muted-foreground">Overall Sentiment</span>
-                  <span className="text-sm font-medium text-profit">Positive</span>
+                  <span className={`text-sm font-medium ${
+                    stockData.newsSentiment?.overall === 'Positive' ? 'text-profit' : 
+                    stockData.newsSentiment?.overall === 'Negative' ? 'text-loss' : 'text-muted-foreground'
+                  }`}>
+                    {stockData.newsSentiment?.overall || "Positive"}
+                  </span>
                 </div>
                 <div className="w-full bg-secondary rounded-full h-2 mb-3">
-                  <div className="bg-profit h-2 rounded-full" style={{ width: '75%' }}></div>
+                  <div 
+                    className="bg-profit h-2 rounded-full" 
+                    style={{ width: `${stockData.newsSentiment?.positivePercentage || 75}%` }}
+                  ></div>
                 </div>
                 <div className="space-y-3 mt-2">
                   <div className="text-xs">
                     <div className="flex items-center">
                       <div className="w-2 h-2 rounded-full bg-profit mr-1"></div>
                       <span className="text-muted-foreground">Positive mentions:</span>
-                      <span className="ml-auto font-medium">78%</span>
+                      <span className="ml-auto font-medium">
+                        {stockData.newsSentiment?.positivePercentage || 78}%
+                      </span>
                     </div>
                   </div>
                   <div className="text-xs">
                     <div className="flex items-center">
                       <div className="w-2 h-2 rounded-full bg-muted-foreground mr-1"></div>
                       <span className="text-muted-foreground">Neutral mentions:</span>
-                      <span className="ml-auto font-medium">15%</span>
+                      <span className="ml-auto font-medium">
+                        {stockData.newsSentiment?.neutralPercentage || 15}%
+                      </span>
                     </div>
                   </div>
                   <div className="text-xs">
                     <div className="flex items-center">
                       <div className="w-2 h-2 rounded-full bg-loss mr-1"></div>
                       <span className="text-muted-foreground">Negative mentions:</span>
-                      <span className="ml-auto font-medium">7%</span>
+                      <span className="ml-auto font-medium">
+                        {stockData.newsSentiment?.negativePercentage || 7}%
+                      </span>
                     </div>
                   </div>
                 </div>
