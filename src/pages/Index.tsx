@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import StockChart from '@/components/stocks/StockChart';
@@ -19,6 +18,7 @@ const Index = () => {
   const [stockData, setStockData] = useState<StockData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTimeFrame, setActiveTimeFrame] = useState<string>('1M');
 
   useEffect(() => {
     // Load initial stock on mount with default timeframe
@@ -33,6 +33,7 @@ const Index = () => {
       const data = await fetchStockData(ticker, timeFrame);
       setStockData(data);
       setActiveStock(ticker);
+      setActiveTimeFrame(timeFrame);
     } catch (error: any) {
       console.error("Error fetching stock data:", error);
       setError(error.message || 'Failed to load data');
@@ -43,7 +44,7 @@ const Index = () => {
   };
 
   const handleStockSearch = (ticker: string) => {
-    loadStockData(ticker, '1M');
+    loadStockData(ticker, activeTimeFrame);
   };
 
   const handleAIAnalysis = async (): Promise<AIAnalysisResponse | undefined> => {
@@ -71,17 +72,11 @@ const Index = () => {
   };
 
   const handleRetry = () => {
-    loadStockData(activeStock, '1M');
+    loadStockData(activeStock, activeTimeFrame);
   };
 
-  const handleTimeFrameChange = async (timeFrame: string) => {
-    try {
-      await loadStockData(activeStock, timeFrame);
-    } catch (error: any) {
-      console.error("Error fetching stock data:", error);
-      setError(error.message || 'Failed to load data');
-      toast.error(`Failed to load data for ${activeStock}`);
-    }
+  const handleTimeFrameChange = (timeFrame: string) => {
+    loadStockData(activeStock, timeFrame);
   };
 
   const isApiKeyError = error && 
@@ -93,8 +88,8 @@ const Index = () => {
   return (
     <div className="p-6">
       <div className="mb-6 text-center">
-        <h1 className="text-3xl font-bold mb-2">NeuraStock</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-4xl font-bold mb-2">NeuraStock</h1>
+        <p className="text-muted-foreground text-lg">
           AI-Powered Stock Analysis Platform
         </p>
       </div>
@@ -171,14 +166,6 @@ const Index = () => {
                 stockDetails={stockData.rawStockDetails}
                 className="h-full"
               />
-              <Button 
-                variant="outline" 
-                size="lg" 
-                className="w-full mt-4 text-lg font-semibold"
-                onClick={() => window.open(`/financials/${stockData.ticker}`, '_blank')}
-              >
-                View Detailed Financials
-              </Button>
             </div>
             
             <StockAnalysis 
@@ -196,6 +183,7 @@ const Index = () => {
               indicators: stockData.indicators
             }}
             onTimeFrameChange={handleTimeFrameChange}
+            activeTimeFrame={activeTimeFrame}
           />
           
           <div className="grid grid-cols-1 gap-6">

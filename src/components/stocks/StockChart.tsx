@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   BarChart, Bar
@@ -31,6 +30,7 @@ interface StockChartProps {
   data: ChartData;
   className?: string;
   onTimeFrameChange?: (timeFrame: string) => void;
+  activeTimeFrame?: string;
 }
 
 const formatNumber = (num: number): string => {
@@ -178,13 +178,25 @@ const VolumeChart = ({ data }: { data: StockDataPoint[] }) => {
   );
 };
 
-const StockChart: React.FC<StockChartProps> = ({ data, className, onTimeFrameChange }) => {
-  const [activeTimeFrame, setActiveTimeFrame] = useState('1M');
-
+const StockChart: React.FC<StockChartProps> = ({ 
+  data, 
+  className, 
+  onTimeFrameChange,
+  activeTimeFrame = '1M'
+}) => {
   const handleTimeFrameClick = (timeFrame: string) => {
-    setActiveTimeFrame(timeFrame);
-    onTimeFrameChange?.(timeFrame);
+    if (onTimeFrameChange) {
+      onTimeFrameChange(timeFrame);
+    }
   };
+
+  const timeFrames = [
+    { label: '1D', value: '1D' },
+    { label: '1W', value: '1W' },
+    { label: '1M', value: '1M' },
+    { label: '1Y', value: '1Y' },
+    { label: '5Y', value: '5Y' },
+  ];
 
   return (
     <Card className={cn("", className)}>
@@ -192,13 +204,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, className, onTimeFrameCha
         <CardTitle className="text-lg font-semibold flex justify-between items-center">
           <span>{data.ticker} Stock Price Chart</span>
           <div className="flex gap-2">
-            {[
-              { label: '1D', value: '1D' },
-              { label: '1W', value: '1W' },
-              { label: '1M', value: '1M' },
-              { label: '1Y', value: '1Y' },
-              { label: '5Y', value: '5Y' },
-            ].map((timeFrame) => (
+            {timeFrames.map((timeFrame) => (
               <Button
                 key={timeFrame.value}
                 variant={activeTimeFrame === timeFrame.value ? "default" : "secondary"}

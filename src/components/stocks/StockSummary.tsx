@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 
 interface StockSummaryProps {
   ticker: string;
@@ -139,12 +140,14 @@ const StockSummary: React.FC<StockSummaryProps> = ({
         <div className="mt-4">
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <button 
-                className="text-xs flex items-center text-primary hover:text-primary/80 transition-colors"
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="w-full text-lg font-semibold"
               >
-                <span>View detailed financials</span>
-                <ChevronRight className="h-3 w-3 ml-1" />
-              </button>
+                View Detailed Financials
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
             </DialogTrigger>
             <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
