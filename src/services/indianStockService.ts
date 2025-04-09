@@ -103,6 +103,8 @@ const fetchLiveStockPrice = async (ticker: string): Promise<any> => {
       'Content-Type': 'application/json'
     };
     
+    console.log('Using API key:', INDIAN_API_KEY);
+    
     const response = await fetch(url, { 
       method: 'POST',
       headers,
@@ -427,6 +429,9 @@ export const fetchMarketIndices = async (): Promise<MarketIndex[]> => {
     console.log("Fetching market indices data...");
     const targetIndices = ["NIFTY 50", "NIFTY Bank", "India VIX"];
     let indices: MarketIndex[] = [];
+    
+    // Log the API key being used (without revealing the full key in production)
+    console.log('Using API key for indices:', `${INDIAN_API_KEY.substring(0, 10)}...`);
     
     // Fetch popular indices (for Nifty 50 and India VIX)
     const popularUrl = "https://dev.indianapi.in/indices?exchange=NSE&index_type=POPULAR";
