@@ -1,7 +1,7 @@
 
 import { toast } from 'sonner';
 
-// API Configuration with real API keys
+// API Configuration
 export const INDIAN_API_KEY = "sk-live-ABJDNr3hqHXiB8PKvxgWwzUU123KyDyIGCq6qfW7";
 export const OPENAI_API_KEY = "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";
 
@@ -69,9 +69,67 @@ interface IndianAPIStockDataResponse {
   [key: string]: any;
 }
 
-// Real API call to fetch historical data from Indian API
+// Generate mock data for fallback
+const generateMockHistoricalData = (ticker: string, days: number = 90): StockDataPoint[] => {
+  const data: StockDataPoint[] = [];
+  const basePrice = Math.random() * 1000 + 500; // Random base price between 500 and 1500
+  const today = new Date();
+  
+  for (let i = days; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    
+    // Create some random but somewhat realistic price movement
+    const randomChange = (Math.random() - 0.5) * 20;
+    const close = i === 0 ? basePrice : data[data.length-1].close * (1 + randomChange/1000);
+    const high = close * (1 + Math.random() * 0.02);
+    const low = close * (1 - Math.random() * 0.02);
+    const open = low + Math.random() * (high - low);
+    const volume = Math.floor(Math.random() * 10000000) + 100000;
+    
+    data.push({
+      date: date.toISOString().split('T')[0],
+      open,
+      high,
+      low,
+      close,
+      volume
+    });
+  }
+  
+  return data;
+};
+
+const generateMockStockDetails = (ticker: string): IndianAPIStockDataResponse => {
+  const randomPrice = Math.floor(Math.random() * 3000) + 500;
+  const yearLow = randomPrice * 0.8;
+  const yearHigh = randomPrice * 1.2;
+  
+  return {
+    name: `${ticker} Ltd.`,
+    company_summary: `${ticker} is a leading Indian company in its sector.`,
+    industry: "Technology",
+    price_data: {
+      nse: { yearLowPrice: yearLow, yearHighPrice: yearHigh },
+      bse: { yearLowPrice: yearLow * 0.98, yearHighPrice: yearHigh * 1.02 }
+    },
+    stats: {
+      peRatio: Math.random() * 30 + 5,
+      divYield: Math.random() * 5,
+      marketCap: Math.random() * 100000,
+      bookValue: Math.random() * 500 + 100,
+      debtToEquity: Math.random() * 2,
+      roe: Math.random() * 25
+    },
+    fundamentals: [],
+    financials: []
+  };
+};
+
+// API call to fetch historical data
 const fetchHistoricalData = async (ticker: string, period: string = '3yr'): Promise<StockDataPoint[]> => {
   try {
+    console.log(`Fetching historical data for ${ticker}...`);
     const url = `https://dev.indianapi.in/historical_data?stock_name=${ticker}&period=${period}&filter=price`;
     
     const headers = {
@@ -86,6 +144,7 @@ const fetchHistoricalData = async (ticker: string, period: string = '3yr'): Prom
     }
     
     const data: IndianAPIHistoricalResponse = await response.json();
+    console.log(`Historical data received for ${ticker}`);
     
     // Extract price data
     const priceData = data.datasets.find(dataset => dataset.metric === 'Price')?.values || [];
@@ -108,14 +167,16 @@ const fetchHistoricalData = async (ticker: string, period: string = '3yr'): Prom
     });
   } catch (error) {
     console.error('Error fetching historical data:', error);
-    toast.error('Failed to fetch historical data');
-    throw error;
+    toast.error('Falling back to sample data for historical prices');
+    // Return mock data as fallback
+    return generateMockHistoricalData(ticker);
   }
 };
 
-// Real API call to fetch stock details from Indian API
+// API call to fetch stock details
 const fetchStockDetails = async (ticker: string): Promise<IndianAPIStockDataResponse> => {
   try {
+    console.log(`Fetching stock details for ${ticker}...`);
     const url = `https://dev.indianapi.in/get_stock_data?stock_name=${ticker}`;
     
     const headers = {
@@ -129,11 +190,14 @@ const fetchStockDetails = async (ticker: string): Promise<IndianAPIStockDataResp
       throw new Error(`API error: ${response.status}`);
     }
     
-    return await response.json();
+    const data = await response.json();
+    console.log(`Stock details received for ${ticker}`);
+    return data;
   } catch (error) {
     console.error('Error fetching stock details:', error);
-    toast.error('Failed to fetch stock details');
-    throw error;
+    toast.error('Falling back to sample data for stock details');
+    // Return mock data as fallback
+    return generateMockStockDetails(ticker);
   }
 };
 
@@ -154,7 +218,7 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
     const latestPrice = historicalData.length > 0 ? historicalData[historicalData.length - 1].close : 0;
     const previousPrice = historicalData.length > 1 ? historicalData[historicalData.length - 2].close : latestPrice;
     const change = latestPrice - previousPrice;
-    const changePercent = (change / previousPrice) * 100;
+    const changePercent = previousPrice === 0 ? 0 : (change / previousPrice) * 100;
     
     // Extract relevant statistics
     const pe = typeof stockDetails.stats.peRatio === 'number' ? stockDetails.stats.peRatio : 0;
