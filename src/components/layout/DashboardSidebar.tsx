@@ -35,7 +35,7 @@ const DashboardSidebar = () => {
       <SidebarHeader className="flex items-center justify-center p-4">
         <div className="flex items-center">
           <TrendingUp className="h-6 w-6 text-primary" />
-          <span className="ml-2 text-xl font-bold">Stock Seer</span>
+          <span className="ml-2 text-xl font-bold">NeuraStock</span>
         </div>
       </SidebarHeader>
       
@@ -146,7 +146,7 @@ const DashboardSidebar = () => {
           <UserCircle2 className="h-8 w-8 text-muted-foreground" />
           <div>
             <p className="text-sm font-medium">Demo User</p>
-            <p className="text-xs text-muted-foreground">demo@stockseer.io</p>
+            <p className="text-xs text-muted-foreground">demo@NeuraStock.io</p>
           </div>
         </div>
       </SidebarFooter>

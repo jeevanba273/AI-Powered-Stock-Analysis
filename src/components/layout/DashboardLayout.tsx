@@ -144,7 +144,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             <header className="flex items-center justify-between border-b border-border h-14 px-4">
               <div className="flex items-center">
                 <SidebarTrigger />
-                <h1 className="ml-4 font-semibold text-xl">Stock Seer India</h1>
+                <h1 className="ml-4 font-semibold text-xl">NeuraStock</h1>
               </div>
             </header>
             <MarketStatus />
