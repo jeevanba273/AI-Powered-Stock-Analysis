@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, ArrowRight, Gauge, AlertCircle, Lightbulb } from 'lucide-react';
+import { TrendingUp, TrendingDown, ArrowRight, Lightbulb, CheckCircle2, AlertCircle, BarChart3, LineChart, Layers, Activity } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AIAnalysisResponse } from '@/services/aiService';
 
@@ -79,15 +79,25 @@ const FutureTrendAnalysis: React.FC<FutureTrendAnalysisProps> = ({
     );
   };
 
-  const getRiskColor = (risk: number) => {
-    switch (risk) {
-      case 1: return 'bg-emerald-500';
-      case 2: return 'bg-green-500';
-      case 3: return 'bg-yellow-500';
-      case 4: return 'bg-orange-500';
-      case 5: return 'bg-red-500';
-      default: return 'bg-secondary';
-    }
+  // Generate AI insights based on the analysis
+  const getAIInsights = () => {
+    if (!aiAnalysis) return [];
+    
+    // Create 5-6 bullet points of insights
+    const insights = [
+      `The stock is showing ${aiAnalysis.recommendation.includes('Buy') ? 'bullish' : aiAnalysis.recommendation.includes('Sell') ? 'bearish' : 'neutral'} signals with a ${aiAnalysis.riskLevel.toLowerCase()} risk profile.`,
+      `Primary technical pattern identified: ${aiAnalysis.technicalPatterns[0] || 'N/A'}.`,
+      `Key support level at ₹${aiAnalysis.supportResistance.support[0]?.toLocaleString() || 'N/A'} with secondary support at ₹${aiAnalysis.supportResistance.support[1]?.toLocaleString() || 'N/A'}.`,
+      `Immediate resistance detected at ₹${aiAnalysis.supportResistance.resistance[0]?.toLocaleString() || 'N/A'}.`,
+      `${aiAnalysis.technicalPatterns.length > 1 ? `Additional pattern: ${aiAnalysis.technicalPatterns[1]}` : 'No additional patterns detected'}.`,
+      aiAnalysis.risk <= 2 
+        ? 'Risk-reward ratio appears favorable for entry positions.'
+        : aiAnalysis.risk >= 4
+          ? 'Current risk-reward ratio suggests caution before entering new positions.'
+          : 'Risk-reward ratio is balanced, consider position sizing carefully.'
+    ];
+    
+    return insights;
   };
 
   return (
@@ -126,72 +136,17 @@ const FutureTrendAnalysis: React.FC<FutureTrendAnalysisProps> = ({
               Generate AI analysis to view detailed insights
             </p>
           ) : (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-secondary/50 rounded-lg p-3">
-                  <h3 className="text-sm font-medium flex items-center mb-2">
-                    <Gauge className="w-4 h-4 mr-1" />
-                    Risk Assessment
-                  </h3>
-                  <div className="flex items-center">
-                    <div className="w-full bg-secondary rounded-full h-2.5">
-                      <div 
-                        className={cn("h-2.5 rounded-full", getRiskColor(aiAnalysis.risk))} 
-                        style={{ width: `${aiAnalysis.risk * 20}%` }}
-                      ></div>
-                    </div>
-                    <span className="ml-2 text-sm">{aiAnalysis.riskLevel}</span>
-                  </div>
+            <div className="space-y-2">
+              {getAIInsights().map((insight, index) => (
+                <div key={index} className="flex items-start gap-2">
+                  {index % 2 === 0 ? (
+                    <CheckCircle2 className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
+                  )}
+                  <p className="text-sm">{insight}</p>
                 </div>
-
-                <div className="bg-secondary/50 rounded-lg p-3">
-                  <h3 className="text-sm font-medium flex items-center mb-2">
-                    <AlertCircle className="w-4 h-4 mr-1" />
-                    Technical Patterns
-                  </h3>
-                  <div className="space-y-1 max-h-20 overflow-y-auto">
-                    {aiAnalysis.technicalPatterns.slice(0, 3).map((pattern, idx) => (
-                      <div key={idx} className="flex items-center text-xs">
-                        <AlertCircle className="w-3 h-3 mr-1 text-primary" />
-                        <span>{pattern}</span>
-                      </div>
-                    ))}
-                    {aiAnalysis.technicalPatterns.length > 3 && (
-                      <div className="text-xs text-muted-foreground">
-                        + {aiAnalysis.technicalPatterns.length - 3} more patterns
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-medium mb-2">Support & Resistance</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-secondary/50 p-2 rounded-lg">
-                    <h4 className="text-xs font-medium text-muted-foreground mb-1 flex items-center">
-                      <TrendingDown className="w-3 h-3 mr-1 text-loss" />
-                      Support Levels
-                    </h4>
-                    <div className="text-sm">
-                      {aiAnalysis.supportResistance.support.map((level, idx) => (
-                        <span key={idx} className="mr-2">₹{level.toLocaleString()}</span>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="bg-secondary/50 p-2 rounded-lg">
-                    <h4 className="text-xs font-medium text-muted-foreground mb-1 flex items-center">
-                      <TrendingUp className="w-3 h-3 mr-1 text-profit" />
-                      Resistance Levels
-                    </h4>
-                    <div className="text-sm">
-                      {aiAnalysis.supportResistance.resistance.map((level, idx) => (
-                        <span key={idx} className="mr-2">₹{level.toLocaleString()}</span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
           )}
         </CardContent>

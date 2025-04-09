@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CircleDashed, Brain, TrendingUp, TrendingDown, Gauge, ArrowUpRight, ArrowDownRight, AlertCircle, RefreshCcw } from 'lucide-react';
+import { CircleDashed, Brain, TrendingUp, TrendingDown, Gauge, AlertCircle, RefreshCcw, Layers } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
@@ -52,6 +52,17 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
       case 'Hold': return 'bg-yellow-500';
       case 'Sell': return 'bg-red-500';
       case 'Strong Sell': return 'bg-red-700';
+      default: return 'bg-secondary';
+    }
+  };
+
+  const getRiskColor = (risk: number) => {
+    switch (risk) {
+      case 1: return 'bg-emerald-500';
+      case 2: return 'bg-green-500';
+      case 3: return 'bg-yellow-500';
+      case 4: return 'bg-orange-500';
+      case 5: return 'bg-red-500';
       default: return 'bg-secondary';
     }
   };
@@ -123,20 +134,69 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
             
             <Separator />
             
-            <div>
-              <h3 className="text-sm font-medium mb-2">Recommendation Basis</h3>
-              <div className="bg-secondary/50 p-3 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Risk-Reward Ratio:</span>
-                  <Badge className={getRecommendationColor(analysis.recommendation)}>
-                    {analysis.recommendation}
-                  </Badge>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-secondary/50 rounded-lg p-3">
+                <h3 className="text-sm font-medium flex items-center mb-2">
+                  <Gauge className="w-4 h-4 mr-1" />
+                  Risk Assessment
+                </h3>
+                <div className="flex items-center">
+                  <div className="w-full bg-secondary rounded-full h-2.5">
+                    <div 
+                      className={cn("h-2.5 rounded-full", getRiskColor(analysis.risk))} 
+                      style={{ width: `${analysis.risk * 20}%` }}
+                    ></div>
+                  </div>
+                  <span className="ml-2 text-sm">{analysis.riskLevel}</span>
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Based on {analysis.technicalPatterns.length} identified patterns, 
-                  {analysis.risk <= 2 ? ' low' : analysis.risk >= 4 ? ' high' : ' moderate'} risk profile, 
-                  and current market conditions.
-                </p>
+              </div>
+
+              <div className="bg-secondary/50 rounded-lg p-3">
+                <h3 className="text-sm font-medium flex items-center mb-2">
+                  <AlertCircle className="w-4 h-4 mr-1" />
+                  Technical Patterns
+                </h3>
+                <div className="space-y-1 max-h-20 overflow-y-auto">
+                  {analysis.technicalPatterns.slice(0, 3).map((pattern, idx) => (
+                    <div key={idx} className="flex items-center text-xs">
+                      <AlertCircle className="w-3 h-3 mr-1 text-primary" />
+                      <span>{pattern}</span>
+                    </div>
+                  ))}
+                  {analysis.technicalPatterns.length > 3 && (
+                    <div className="text-xs text-muted-foreground">
+                      + {analysis.technicalPatterns.length - 3} more patterns
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-medium mb-2">Support & Resistance</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-secondary/50 p-2 rounded-lg">
+                  <h4 className="text-xs font-medium text-muted-foreground mb-1 flex items-center">
+                    <TrendingDown className="w-3 h-3 mr-1 text-loss" />
+                    Support Levels
+                  </h4>
+                  <div className="text-sm">
+                    {analysis.supportResistance.support.map((level, idx) => (
+                      <span key={idx} className="mr-2">₹{level.toLocaleString()}</span>
+                    ))}
+                  </div>
+                </div>
+                <div className="bg-secondary/50 p-2 rounded-lg">
+                  <h4 className="text-xs font-medium text-muted-foreground mb-1 flex items-center">
+                    <TrendingUp className="w-3 h-3 mr-1 text-profit" />
+                    Resistance Levels
+                  </h4>
+                  <div className="text-sm">
+                    {analysis.supportResistance.resistance.map((level, idx) => (
+                      <span key={idx} className="mr-2">₹{level.toLocaleString()}</span>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
             
