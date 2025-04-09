@@ -1,10 +1,9 @@
 
 import { toast } from 'sonner';
 
-// API Configuration
-// Replace these with your actual API keys
-const INDIAN_API_KEY = "YOUR_INDIAN_API_KEY_HERE";
-const OPENAI_API_KEY = "YOUR_OPENAI_API_KEY_HERE";
+// API Configuration with real API keys
+export const INDIAN_API_KEY = "sk-live-ABJDNr3hqHXiB8PKvxgWwzUU123KyDyIGCq6qfW7";
+export const OPENAI_API_KEY = "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";
 
 export interface StockDataPoint {
   date: string;
@@ -70,16 +69,15 @@ interface IndianAPIStockDataResponse {
   [key: string]: any;
 }
 
-// Fetch historical data from Indian API
+// Real API call to fetch historical data from Indian API
 const fetchHistoricalData = async (ticker: string, period: string = '3yr'): Promise<StockDataPoint[]> => {
   try {
     const url = `https://dev.indianapi.in/historical_data?stock_name=${ticker}&period=${period}&filter=price`;
     
-    // If you need to add the API key to headers
-    const headers = INDIAN_API_KEY ? {
+    const headers = {
       'Authorization': `Bearer ${INDIAN_API_KEY}`,
       'Content-Type': 'application/json'
-    } : undefined;
+    };
     
     const response = await fetch(url, { headers });
     
@@ -110,20 +108,20 @@ const fetchHistoricalData = async (ticker: string, period: string = '3yr'): Prom
     });
   } catch (error) {
     console.error('Error fetching historical data:', error);
+    toast.error('Failed to fetch historical data');
     throw error;
   }
 };
 
-// Fetch stock details from Indian API
+// Real API call to fetch stock details from Indian API
 const fetchStockDetails = async (ticker: string): Promise<IndianAPIStockDataResponse> => {
   try {
     const url = `https://dev.indianapi.in/get_stock_data?stock_name=${ticker}`;
     
-    // If you need to add the API key to headers
-    const headers = INDIAN_API_KEY ? {
+    const headers = {
       'Authorization': `Bearer ${INDIAN_API_KEY}`,
       'Content-Type': 'application/json'
-    } : undefined;
+    };
     
     const response = await fetch(url, { headers });
     
@@ -134,101 +132,77 @@ const fetchStockDetails = async (ticker: string): Promise<IndianAPIStockDataResp
     return await response.json();
   } catch (error) {
     console.error('Error fetching stock details:', error);
+    toast.error('Failed to fetch stock details');
     throw error;
   }
 };
 
 export const fetchStockData = async (ticker: string): Promise<StockData> => {
   try {
-    // Simulate API call for development
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    toast.loading(`Fetching data for ${ticker}...`, { id: "fetch-stock" });
     
-    // For a real implementation, fetch both historical and stock data
-    // const [historicalData, stockDetails] = await Promise.all([
-    //   fetchHistoricalData(ticker),
-    //   fetchStockDetails(ticker)
-    // ]);
+    // Fetch both historical and stock data
+    const [historicalData, stockDetails] = await Promise.all([
+      fetchHistoricalData(ticker),
+      fetchStockDetails(ticker)
+    ]);
     
-    // Using mock data for development
+    toast.dismiss("fetch-stock");
+    toast.success(`Data loaded for ${ticker}`);
+    
+    // Get latest price and calculate change
+    const latestPrice = historicalData.length > 0 ? historicalData[historicalData.length - 1].close : 0;
+    const previousPrice = historicalData.length > 1 ? historicalData[historicalData.length - 2].close : latestPrice;
+    const change = latestPrice - previousPrice;
+    const changePercent = (change / previousPrice) * 100;
+    
+    // Extract relevant statistics
+    const pe = typeof stockDetails.stats.peRatio === 'number' ? stockDetails.stats.peRatio : 0;
+    const dividend = typeof stockDetails.stats.divYield === 'number' 
+      ? `${stockDetails.stats.divYield}%` 
+      : '0%';
+    const marketCap = typeof stockDetails.stats.marketCap === 'number'
+      ? `₹${(stockDetails.stats.marketCap).toFixed(2)}Cr`
+      : '₹0Cr';
+      
+    // Get volume from historical data
+    const volume = historicalData.length > 0 && historicalData[historicalData.length - 1].volume 
+      ? historicalData[historicalData.length - 1].volume as number 
+      : 0;
+    
+    // Create stock data object
     const stockData: StockData = {
       ticker,
-      companyName: ticker === 'TCS' ? 'Tata Consultancy Services' : 
-                   ticker === 'INFY' ? 'Infosys Limited' : 
-                   ticker === 'RELIANCE' ? 'Reliance Industries' : `${ticker} Ltd.`,
-      price: ticker === 'TCS' ? 3246.60 : 
-             ticker === 'INFY' ? 1523.45 : 
-             ticker === 'RELIANCE' ? 2854.30 : Math.random() * 5000 + 500,
-      change: (Math.random() * 50 - 25),
-      changePercent: (Math.random() * 4 - 2),
+      companyName: stockDetails.name || `${ticker} Ltd.`,
+      price: latestPrice,
+      change,
+      changePercent,
       currency: '₹',
-      marketStatus: 'open',
-      lastUpdated: '2 min ago',
+      marketStatus: 'open', // Assume market is open by default
+      lastUpdated: new Date().toLocaleTimeString(),
       stats: {
-        open: ticker === 'TCS' ? 3260.00 : Math.random() * 5000 + 500,
-        high: ticker === 'TCS' ? 3290.75 : Math.random() * 5000 + 550,
-        low: ticker === 'TCS' ? 3242.20 : Math.random() * 5000 + 450,
-        volume: ticker === 'TCS' ? 3121401 : Math.floor(Math.random() * 10000000),
-        avgVolume: ticker === 'TCS' ? 3500000 : Math.floor(Math.random() * 8000000),
-        marketCap: ticker === 'TCS' ? '₹11,91,635Cr' : `₹${Math.floor(Math.random() * 1000000)}Cr`,
-        pe: ticker === 'TCS' ? 24.44 : Math.random() * 40 + 10,
-        dividend: ticker === 'TCS' ? '2.22%' : `${(Math.random() * 4).toFixed(2)}%`,
-        bookValue: ticker === 'TCS' ? 279.87 : Math.random() * 500 + 100,
-        debtToEquity: ticker === 'TCS' ? 0.089 : Math.random() * 0.5,
-        roe: ticker === 'TCS' ? 46.74 : Math.random() * 30 + 5
+        open: historicalData.length > 0 ? latestPrice : 0, // We don't have open price in the data
+        high: stockDetails.price_data?.nse?.yearHighPrice || 0,
+        low: stockDetails.price_data?.nse?.yearLowPrice || 0,
+        volume,
+        avgVolume: volume, // We don't have average volume in the data
+        marketCap,
+        pe,
+        dividend,
+        bookValue: typeof stockDetails.stats.bookValue === 'number' ? stockDetails.stats.bookValue : 0,
+        debtToEquity: typeof stockDetails.stats.debtToEquity === 'number' ? stockDetails.stats.debtToEquity : 0,
+        roe: typeof stockDetails.stats.roe === 'number' ? stockDetails.stats.roe : 0
       },
-      stockData: generateMockIndianStockData(ticker, 30),
+      stockData: historicalData,
     };
     
     return stockData;
   } catch (error) {
     console.error('Error in fetchStockData:', error);
+    toast.dismiss("fetch-stock");
     toast.error(`Failed to fetch data for ${ticker}`);
     throw error;
   }
-};
-
-// Helper to generate mock stock data with Indian market characteristics
-const generateMockIndianStockData = (ticker: string, days: number): StockDataPoint[] => {
-  const data: StockDataPoint[] = [];
-  const today = new Date();
-  
-  // Set starting price based on ticker
-  let price = ticker === 'TCS' ? 3250 : 
-              ticker === 'INFY' ? 1500 : 
-              ticker === 'RELIANCE' ? 2800 : 
-              Math.random() * 3000 + 500;
-  
-  for (let i = days; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(today.getDate() - i);
-    
-    // Skip weekends (Saturday and Sunday)
-    if (date.getDay() === 0 || date.getDay() === 6) {
-      continue;
-    }
-    
-    const volatility = 0.02;
-    const changePercent = (Math.random() - 0.5) * volatility;
-    
-    const open = price * (1 + (Math.random() - 0.5) * 0.01);
-    const close = open * (1 + changePercent);
-    const high = Math.max(open, close) * (1 + Math.random() * 0.008);
-    const low = Math.min(open, close) * (1 - Math.random() * 0.008);
-    const volume = Math.floor(Math.random() * 5000000) + 1000000;
-    
-    data.push({
-      date: date.toISOString().split('T')[0],
-      open,
-      high,
-      low,
-      close,
-      volume
-    });
-    
-    price = close;
-  }
-  
-  return data;
 };
 
 // List of popular Indian stocks
@@ -242,13 +216,3 @@ export const popularIndianStocks = [
   { ticker: 'TATAMOTORS', name: 'Tata Motors' },
   { ticker: 'BHARTIARTL', name: 'Bharti Airtel' },
 ];
-
-export const getAIAnalysis = async (ticker: string) => {
-  // In a real app this would call the OpenAI API with your API key
-  // For now just simulate a delay
-  toast.info("AI analysis in progress...");
-  await new Promise(resolve => setTimeout(resolve, 3000));
-  
-  // Success message would be shown by the component that called this
-  return { success: true };
-};
