@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
@@ -190,32 +191,11 @@ const StockChart: React.FC<StockChartProps> = ({
     }
   };
 
-  const timeFrames = [
-    { label: '1D', value: '1D' },
-    { label: '1W', value: '1W' },
-    { label: '1M', value: '1M' },
-    { label: '1Y', value: '1Y' },
-    { label: '5Y', value: '5Y' },
-  ];
-
   return (
     <Card className={cn("", className)}>
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold flex justify-between items-center">
-          <span>{data.ticker} Stock Price Chart</span>
-          <div className="flex gap-2">
-            {timeFrames.map((timeFrame) => (
-              <Button
-                key={timeFrame.value}
-                variant={activeTimeFrame === timeFrame.value ? "default" : "secondary"}
-                size="sm"
-                onClick={() => handleTimeFrameClick(timeFrame.value)}
-                className="text-sm font-normal px-3 py-1 h-8"
-              >
-                {timeFrame.label}
-              </Button>
-            ))}
-          </div>
+        <CardTitle className="text-lg font-semibold">
+          {data.ticker} Stock Price Chart
         </CardTitle>
       </CardHeader>
       <CardContent>

@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertCircle, CircleDashed, Gem, LineChart, Lightbulb, TrendingUp, TrendingDown, Search, KeyRound, RefreshCcw } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Github, Linkedin } from 'lucide-react';
 
 const Index = () => {
   const [activeStock, setActiveStock] = useState<string>('TCS');
@@ -22,18 +23,17 @@ const Index = () => {
 
   useEffect(() => {
     // Load initial stock on mount with default timeframe
-    loadStockData(activeStock, '1M');
+    loadStockData(activeStock);
   }, []);
 
-  const loadStockData = async (ticker: string, timeFrame: string = '1M') => {
+  const loadStockData = async (ticker: string) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const data = await fetchStockData(ticker, timeFrame);
+      const data = await fetchStockData(ticker, activeTimeFrame);
       setStockData(data);
       setActiveStock(ticker);
-      setActiveTimeFrame(timeFrame);
     } catch (error: any) {
       console.error("Error fetching stock data:", error);
       setError(error.message || 'Failed to load data');
@@ -44,7 +44,7 @@ const Index = () => {
   };
 
   const handleStockSearch = (ticker: string) => {
-    loadStockData(ticker, activeTimeFrame);
+    loadStockData(ticker);
   };
 
   const handleAIAnalysis = async (): Promise<AIAnalysisResponse | undefined> => {
@@ -72,11 +72,20 @@ const Index = () => {
   };
 
   const handleRetry = () => {
-    loadStockData(activeStock, activeTimeFrame);
+    loadStockData(activeStock);
   };
 
   const handleTimeFrameChange = (timeFrame: string) => {
-    loadStockData(activeStock, timeFrame);
+    setActiveTimeFrame(timeFrame);
+    // Then reload data with new timeframe
+    fetchStockData(activeStock, timeFrame)
+      .then(data => {
+        setStockData(data);
+      })
+      .catch(error => {
+        console.error("Error fetching stock data:", error);
+        toast.error(`Failed to load data for ${activeStock}`);
+      });
   };
 
   const isApiKeyError = error && 
@@ -88,8 +97,8 @@ const Index = () => {
   return (
     <div className="p-6">
       <div className="mb-6 text-center">
-        <h1 className="text-4xl font-bold mb-2">NeuraStock</h1>
-        <p className="text-muted-foreground text-lg">
+        <h1 className="text-5xl font-bold mb-2">NeuraStock</h1>
+        <p className="text-muted-foreground text-xl">
           AI-Powered Stock Analysis Platform
         </p>
       </div>
@@ -260,6 +269,22 @@ const Index = () => {
           </Button>
         </div>
       )}
+      
+      <footer className="mt-12 py-6 border-t border-border">
+        <div className="container flex flex-col md:flex-row items-center justify-center gap-6 text-center">
+          <p className="text-muted-foreground">© 2024 NeuraStock. All rights reserved.</p>
+          <div className="flex items-center space-x-4">
+            <a href="https://github.com/jeevanba273" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors duration-300">
+              <span className="sr-only">GitHub</span>
+              <Github className="h-8 w-8" />
+            </a>
+            <a href="https://www.linkedin.com/in/jeevanba273/" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground transition-colors duration-300">
+              <span className="sr-only">LinkedIn</span>
+              <Linkedin className="h-8 w-8" />
+            </a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
