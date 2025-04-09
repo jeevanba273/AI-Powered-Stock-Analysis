@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { TrendingDown, TrendingUp, Gauge, AlertCircle, Layers, Lightbulb, CheckCircle2 } from 'lucide-react';
+import { TrendingDown, TrendingUp, Gauge, AlertCircle, Lightbulb, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AIAnalysisResponse } from '@/services/aiService';
 import FutureTrendAnalysis from './FutureTrendAnalysis';
@@ -176,12 +175,10 @@ const AIAnalysisResults: React.FC<AIAnalysisResultsProps> = ({
           aiAnalysis={analysis}
         />
         
-        <div className="md:block hidden">
-          <FutureTrendAnalysis 
-            changePercent={stockData.changePercent} 
-            aiAnalysis={analysis}
-          />
-        </div>
+        <FutureTrendAnalysis 
+          changePercent={stockData.changePercent} 
+          aiAnalysis={analysis}
+        />
       </div>
     </div>
   );
