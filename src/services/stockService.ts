@@ -3,15 +3,15 @@
 // This file is kept for backward compatibility
 
 import { toast } from 'sonner';
-import { fetchStockData as fetchIndianStockData, StockDataPoint as IndianStockDataPoint } from './indianStockService';
+import { fetchStockData as fetchIndianStockData, StockDataPoint as IndianStockDataPoint, StockData as IndianStockData } from './indianStockService';
 
 export interface StockDataPoint {
   date: string;
-  open?: number; // Making optional to match indianStockService
-  high?: number; // Making optional to match indianStockService
-  low?: number;  // Making optional to match indianStockService
+  open?: number; // Optional to match indianStockService
+  high?: number; // Optional to match indianStockService
+  low?: number;  // Optional to match indianStockService
   close: number;
-  volume?: number; // Making optional to match indianStockService
+  volume?: number; // Optional to match indianStockService
 }
 
 export interface StockData {
@@ -28,7 +28,7 @@ export interface StockData {
     high: number;
     low: number;
     volume: number;
-    avgVolume?: number; // Changed from required to optional
+    avgVolume?: number; // Optional to match indianStockService
     marketCap: string;
     pe: number;
     dividend: string;
@@ -44,7 +44,7 @@ export interface StockData {
 // API methods
 export const fetchStockData = async (ticker: string): Promise<StockData> => {
   // Redirect to Indian stock service
-  return fetchIndianStockData(ticker);
+  return fetchIndianStockData(ticker) as Promise<StockData>;
 };
 
 export const getAIAnalysis = async (ticker: string) => {

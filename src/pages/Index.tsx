@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -5,7 +6,7 @@ import StockChart from '@/components/stocks/StockChart';
 import StockSummary from '@/components/stocks/StockSummary';
 import StockAnalysis from '@/components/stocks/StockAnalysis';
 import StockSearch from '@/components/stocks/StockSearch';
-import { fetchStockData, StockData } from '@/services/stockService';
+import { fetchStockData, StockData } from '@/services/indianStockService';
 import { generateAIAnalysis } from '@/services/aiService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

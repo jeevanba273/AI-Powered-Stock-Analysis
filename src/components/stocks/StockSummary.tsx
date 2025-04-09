@@ -19,7 +19,7 @@ interface StockSummaryProps {
     high: number;
     low: number;
     volume: number;
-    avgVolume?: number; // Changed from required to optional
+    avgVolume?: number; // Optional to match service interface
     marketCap: string;
     pe: number;
     dividend: string;
