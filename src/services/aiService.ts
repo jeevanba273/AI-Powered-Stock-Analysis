@@ -35,6 +35,10 @@ export const generateAIAnalysis = async (request: AIAnalysisRequest): Promise<AI
   try {
     toast.loading("AI is analyzing stock data...", { id: "ai-analysis" });
     
+    // Create a more detailed prompt for the AI
+    const latestPrice = request.stockData.price;
+    const latestDate = new Date().toISOString().split('T')[0];
+    
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -46,11 +50,20 @@ export const generateAIAnalysis = async (request: AIAnalysisRequest): Promise<AI
         messages: [
           {
             role: 'system',
-            content: 'You are a professional Indian stock market analyst. Analyze the provided Indian stock data and return ONLY a valid JSON object with these fields: "analysis" (detailed technical analysis with key patterns and trends), "supportResistance" (object with "support" and "resistance" arrays in ₹), "risk" (number 1-5), "riskLevel" (string: "Very Low", "Low", "Moderate", "High", "Very High"), "recommendation" (string: "Strong Buy", "Buy", "Hold", "Sell", "Strong Sell"), and "technicalPatterns" (array of at least 4 identified patterns like "Double Bottom", "Head and Shoulders", "Cup and Handle", "Falling Wedge", "Rising Wedge", "Bullish Flag", "Bearish Flag", "Double Top", "Triple Top", "Triple Bottom", "Rounding Bottom", "Ascending Triangle", "Descending Triangle", "Symmetrical Triangle", "Breakout", etc). All currency values MUST be in ₹ (Indian Rupees).'
+            content: 'You are a professional Indian stock market analyst. Analyze the provided Indian stock data and return ONLY a valid JSON object with these fields: "analysis" (detailed technical analysis with key patterns and trends), "supportResistance" (object with "support" and "resistance" arrays in ₹), "risk" (number 1-5), "riskLevel" (string: "Very Low", "Low", "Moderate", "High", "Very High"), "recommendation" (string: "Strong Buy", "Buy", "Hold", "Sell", "Strong Sell"), and "technicalPatterns" (array of at least 4 identified patterns like "Double Bottom", "Head and Shoulders", "Cup and Handle", "Falling Wedge", "Rising Wedge", "Bullish Flag", "Bearish Flag", "Double Top", "Triple Top", "Triple Bottom", "Rounding Bottom", "Ascending Triangle", "Descending Triangle", "Symmetrical Triangle", "Breakout", "Golden Cross", "Death Cross", etc). All currency values MUST be in ₹ (Indian Rupees).'
           },
           {
             role: 'user',
-            content: `Analyze this ${request.ticker} stock. Price: ₹${request.stockData.price.toFixed(2)}, Change: ₹${request.stockData.change.toFixed(2)} (${request.stockData.changePercent.toFixed(2)}%). Stock data for last ${request.stockData.stockData.length} days provided. Provide detailed technical analysis with key patterns, trends, support/resistance levels in ₹, risk assessment on 1-5 scale with risk level, and investment recommendation. Include at least 4 technical patterns.`
+            content: `Analyze this ${request.ticker} stock based on the latest real-time data as of ${latestDate}. Current price: ₹${request.stockData.price.toFixed(2)}, Change: ₹${request.stockData.change.toFixed(2)} (${request.stockData.changePercent.toFixed(2)}%). 
+            
+            Latest fundamental data:
+            Market Cap: ${request.stockData.stats.marketCap}
+            P/E Ratio: ${request.stockData.stats.pe}
+            Book Value: ${request.stockData.stats.bookValue || 'N/A'}
+            ROE: ${request.stockData.stats.roe || 'N/A'}
+            Debt to Equity: ${request.stockData.stats.debtToEquity || 'N/A'}
+            
+            Provide detailed technical analysis with key patterns, trends, support/resistance levels in ₹, risk assessment on 1-5 scale with risk level (Very Low, Low, Moderate, High, Very High), and investment recommendation. Include at least 4 technical patterns.`
           }
         ],
         temperature: 0.2

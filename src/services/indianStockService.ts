@@ -32,6 +32,9 @@ export interface StockData {
     marketCap: string;
     pe: number;
     dividend: string;
+    bookValue?: number;
+    debtToEquity?: number;
+    roe?: number;
     [key: string]: any;
   };
   stockData: StockDataPoint[];
@@ -115,6 +118,7 @@ const generateMockHistoricalData = (ticker: string, days: number = 90): StockDat
   return data;
 };
 
+// Generate mock stock details based on real data format
 const generateMockStockDetails = (ticker: string): Record<string, any> => {
   const randomPrice = Math.floor(Math.random() * 3000) + 500;
   const yearLow = randomPrice * 0.8;
@@ -129,12 +133,22 @@ const generateMockStockDetails = (ticker: string): Record<string, any> => {
       bse: { yearLowPrice: yearLow * 0.98, yearHighPrice: yearHigh * 1.02 }
     },
     stats: {
+      marketCap: Math.random() * 100000,
+      pbRatio: Math.random() * 10 + 1,
       peRatio: Math.random() * 30 + 5,
       divYield: Math.random() * 5,
-      marketCap: Math.random() * 100000,
       bookValue: Math.random() * 500 + 100,
+      epsTtm: Math.random() * 100 + 10,
+      roe: Math.random() * 25,
+      industryPe: Math.random() * 30 + 5,
+      cappedType: "Large Cap",
+      dividendYieldInPercent: Math.random() * 5,
+      faceValue: 1,
       debtToEquity: Math.random() * 2,
-      roe: Math.random() * 25
+      returnOnAssets: Math.random() * 15,
+      returnOnEquity: Math.random() * 25,
+      operatingProfitMargin: Math.random() * 30,
+      netProfitMargin: Math.random() * 20
     },
     fundamentals: [
       {
@@ -156,6 +170,16 @@ const generateMockStockDetails = (ticker: string): Record<string, any> => {
         name: "EPS(TTM)",
         shortName: "EPS(TTM)",
         value: (Math.random() * 100 + 10).toFixed(2)
+      },
+      {
+        name: "P/B Ratio",
+        shortName: "P/B Ratio",
+        value: (Math.random() * 10 + 1).toFixed(2)
+      },
+      {
+        name: "Dividend Yield",
+        shortName: "Div Yield",
+        value: `${(Math.random() * 5).toFixed(2)}%`
       }
     ],
     financials: [
@@ -191,6 +215,16 @@ const generateMockStockDetails = (ticker: string): Record<string, any> => {
           "Jun '24": Math.floor(Math.random() * 5000) + 2400,
           "Sep '24": Math.floor(Math.random() * 5000) + 2600,
           "Dec '24": Math.floor(Math.random() * 5000) + 2800
+        }
+      },
+      {
+        title: "Net Worth",
+        yearly: {
+          "2020": Math.floor(Math.random() * 80000) + 40000,
+          "2021": Math.floor(Math.random() * 80000) + 45000,
+          "2022": Math.floor(Math.random() * 80000) + 50000,
+          "2023": Math.floor(Math.random() * 80000) + 55000,
+          "2024": Math.floor(Math.random() * 80000) + 60000
         }
       }
     ]
@@ -264,7 +298,7 @@ const fetchStockDetails = async (ticker: string): Promise<Record<string, any>> =
     }
     
     const data = await response.json();
-    console.log(`Stock details received for ${ticker}`);
+    console.log(`Stock details received for ${ticker}:`, data);
     return data;
   } catch (error) {
     console.error('Error fetching stock details:', error);
@@ -457,7 +491,10 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
         avgVolume: 1200000,
         marketCap: '₹10000Cr',
         pe: 15,
-        dividend: '2%'
+        dividend: '2%',
+        bookValue: 100,
+        debtToEquity: 0.5,
+        roe: 15
       },
       stockData: historicalData,
       technicalAnalysis,
