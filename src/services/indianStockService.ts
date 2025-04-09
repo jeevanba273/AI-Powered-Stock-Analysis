@@ -1,6 +1,11 @@
 
 import { toast } from 'sonner';
 
+// API Configuration
+// Replace these with your actual API keys
+const INDIAN_API_KEY = "YOUR_INDIAN_API_KEY_HERE";
+const OPENAI_API_KEY = "YOUR_OPENAI_API_KEY_HERE";
+
 export interface StockDataPoint {
   date: string;
   open?: number;
@@ -68,7 +73,15 @@ interface IndianAPIStockDataResponse {
 // Fetch historical data from Indian API
 const fetchHistoricalData = async (ticker: string, period: string = '3yr'): Promise<StockDataPoint[]> => {
   try {
-    const response = await fetch(`https://dev.indianapi.in/historical_data?stock_name=${ticker}&period=${period}&filter=price`);
+    const url = `https://dev.indianapi.in/historical_data?stock_name=${ticker}&period=${period}&filter=price`;
+    
+    // If you need to add the API key to headers
+    const headers = INDIAN_API_KEY ? {
+      'Authorization': `Bearer ${INDIAN_API_KEY}`,
+      'Content-Type': 'application/json'
+    } : undefined;
+    
+    const response = await fetch(url, { headers });
     
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
@@ -104,7 +117,15 @@ const fetchHistoricalData = async (ticker: string, period: string = '3yr'): Prom
 // Fetch stock details from Indian API
 const fetchStockDetails = async (ticker: string): Promise<IndianAPIStockDataResponse> => {
   try {
-    const response = await fetch(`https://dev.indianapi.in/get_stock_data?stock_name=${ticker}`);
+    const url = `https://dev.indianapi.in/get_stock_data?stock_name=${ticker}`;
+    
+    // If you need to add the API key to headers
+    const headers = INDIAN_API_KEY ? {
+      'Authorization': `Bearer ${INDIAN_API_KEY}`,
+      'Content-Type': 'application/json'
+    } : undefined;
+    
+    const response = await fetch(url, { headers });
     
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
@@ -223,7 +244,7 @@ export const popularIndianStocks = [
 ];
 
 export const getAIAnalysis = async (ticker: string) => {
-  // In a real app this would call the OpenAI API
+  // In a real app this would call the OpenAI API with your API key
   // For now just simulate a delay
   toast.info("AI analysis in progress...");
   await new Promise(resolve => setTimeout(resolve, 3000));
