@@ -1,20 +1,19 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   BarChart, Bar
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 interface StockDataPoint {
   date: string;
-  open?: number; // Made optional to match service interfaces
-  high?: number; // Made optional to match service interfaces
-  low?: number;  // Made optional to match service interfaces
+  open?: number;
+  high?: number;
+  low?: number;
   close: number;
-  volume?: number; // Made optional to match service interfaces
+  volume?: number;
 }
 
 interface ChartData {
@@ -30,9 +29,9 @@ interface ChartData {
 interface StockChartProps {
   data: ChartData;
   className?: string;
+  onTimeFrameChange?: (timeFrame: string) => void;
 }
 
-// Helper to format numbers
 const formatNumber = (num: number): string => {
   return new Intl.NumberFormat('en-US', { 
     style: 'decimal',
@@ -56,7 +55,6 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     
-    // Check if open exists before calculating percentage change
     const changePercent = data.open 
       ? ((data.close - data.open) / data.open * 100).toFixed(2)
       : '0.00';
@@ -179,18 +177,37 @@ const VolumeChart = ({ data }: { data: StockDataPoint[] }) => {
   );
 };
 
-const StockChart: React.FC<StockChartProps> = ({ data, className }) => {
+const StockChart: React.FC<StockChartProps> = ({ data, className, onTimeFrameChange }) => {
+  const [activeTimeFrame, setActiveTimeFrame] = useState('1M');
+
+  const handleTimeFrameClick = (timeFrame: string) => {
+    setActiveTimeFrame(timeFrame);
+    onTimeFrameChange?.(timeFrame);
+  };
+
   return (
     <Card className={cn("", className)}>
       <CardHeader className="pb-2">
         <CardTitle className="text-lg font-semibold flex justify-between items-center">
           <span>{data.ticker} Stock Price Chart</span>
           <div className="flex gap-2">
-            <span className="text-sm font-normal px-2 py-1 bg-secondary rounded-md">1D</span>
-            <span className="text-sm font-normal px-2 py-1 bg-primary rounded-md">1W</span>
-            <span className="text-sm font-normal px-2 py-1 bg-secondary rounded-md">1M</span>
-            <span className="text-sm font-normal px-2 py-1 bg-secondary rounded-md">1Y</span>
-            <span className="text-sm font-normal px-2 py-1 bg-secondary rounded-md">5Y</span>
+            {[
+              { label: '1D', value: '1D' },
+              { label: '1W', value: '1W' },
+              { label: '1M', value: '1M' },
+              { label: '1Y', value: '1Y' },
+              { label: '5Y', value: '5Y' },
+            ].map((timeFrame) => (
+              <Button
+                key={timeFrame.value}
+                variant={activeTimeFrame === timeFrame.value ? "primary" : "secondary"}
+                size="sm"
+                onClick={() => handleTimeFrameClick(timeFrame.value)}
+                className="text-sm font-normal px-3 py-1 h-8"
+              >
+                {timeFrame.label}
+              </Button>
+            ))}
           </div>
         </CardTitle>
       </CardHeader>

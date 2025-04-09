@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import DashboardLayout from '@/components/layout/DashboardLayout';
@@ -75,6 +74,17 @@ const Index = () => {
     loadStockData(activeStock);
   };
 
+  const handleTimeFrameChange = async (timeFrame: string) => {
+    try {
+      const data = await fetchStockData(activeStock, timeFrame);
+      setStockData(data);
+    } catch (error) {
+      console.error("Error fetching stock data:", error);
+      setError(error.message || 'Failed to load data');
+      toast.error(`Failed to load data for ${activeStock}`);
+    }
+  };
+
   const isApiKeyError = error && 
     (error.includes('API authentication failed') || 
      error.includes('API key') || 
@@ -82,11 +92,11 @@ const Index = () => {
      error.includes('Could not validate API key'));
 
   return (
-    <DashboardLayout>
+    <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">AI-Powered Stock Analysis</h1>
+        <h1 className="text-2xl font-bold mb-2">NeuraStock</h1>
         <p className="text-muted-foreground">
-          Analyze stocks with advanced technical indicators and AI-powered insights
+          AI-Powered Stock Analysis Platform
         </p>
       </div>
       
@@ -160,7 +170,16 @@ const Index = () => {
               stats={stockData.stats}
               stockDetails={stockData.rawStockDetails}
               className="lg:col-span-1"
-            />
+            >
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="w-full mt-4 text-lg font-semibold"
+                onClick={() => window.open(`/financials/${stockData.ticker}`, '_blank')}
+              >
+                View Detailed Financials
+              </Button>
+            </StockSummary>
             
             <StockAnalysis 
               ticker={stockData.ticker}
@@ -176,6 +195,7 @@ const Index = () => {
               stockData: stockData.stockData,
               indicators: stockData.indicators
             }}
+            onTimeFrameChange={handleTimeFrameChange}
           />
           
           <div className="grid grid-cols-1 gap-6">
@@ -252,7 +272,7 @@ const Index = () => {
           </Button>
         </div>
       )}
-    </DashboardLayout>
+    </div>
   );
 };
 
