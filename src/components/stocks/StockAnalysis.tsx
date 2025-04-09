@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { AIAnalysisResponse } from '@/services/aiService';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface StockAnalysisProps {
   ticker: string;
@@ -19,16 +20,21 @@ interface StockAnalysisProps {
 const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequestAnalysis, className }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [analysis, setAnalysis] = useState<AIAnalysisResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleRequestAnalysis = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const result = await onRequestAnalysis();
       if (result) {
         setAnalysis(result);
         toast.success("AI analysis completed successfully");
+      } else {
+        setError("Failed to generate analysis");
       }
     } catch (error) {
+      setError(error.message || "Failed to generate analysis");
       toast.error("Failed to generate analysis");
       console.error(error);
     } finally {
@@ -74,7 +80,12 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {!analysis ? (
+        {error ? (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4 mr-2" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        ) : !analysis ? (
           <div className="flex flex-col items-center justify-center py-8 space-y-4 text-center">
             <Brain className="w-12 h-12 text-muted-foreground opacity-50" />
             <div>

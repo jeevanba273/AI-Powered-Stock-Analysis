@@ -10,12 +10,15 @@ import { fetchStockData, StockData } from '@/services/indianStockService';
 import { generateAIAnalysis, AIAnalysisResponse } from '@/services/aiService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CircleDashed, Gem, LineChart, Lightbulb, TrendingUp, TrendingDown, Search } from 'lucide-react';
+import { AlertCircle, CircleDashed, Gem, LineChart, Lightbulb, TrendingUp, TrendingDown, Search } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 
 const Index = () => {
   const [activeStock, setActiveStock] = useState<string>('TCS');
   const [stockData, setStockData] = useState<StockData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Load initial stock on mount
@@ -24,12 +27,15 @@ const Index = () => {
 
   const loadStockData = async (ticker: string) => {
     setIsLoading(true);
+    setError(null);
+    
     try {
       const data = await fetchStockData(ticker);
       setStockData(data);
       setActiveStock(ticker);
     } catch (error) {
       console.error("Error fetching stock data:", error);
+      setError(error.message || 'Failed to load data');
       toast.error(`Failed to load data for ${ticker}`);
     } finally {
       setIsLoading(false);
@@ -59,8 +65,13 @@ const Index = () => {
       return analysisResult;
     } catch (error) {
       console.error("AI analysis error:", error);
+      toast.error(`Failed to generate AI analysis: ${error.message}`);
       return undefined;
     }
+  };
+
+  const handleRetry = () => {
+    loadStockData(activeStock);
   };
 
   return (
@@ -78,6 +89,21 @@ const Index = () => {
         <div className="flex flex-col items-center justify-center py-20">
           <CircleDashed className="h-12 w-12 animate-spin text-primary mb-4" />
           <p className="text-lg">Loading stock data...</p>
+        </div>
+      ) : error ? (
+        <div className="space-y-4">
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>
+              {error}. This may be due to an API issue or invalid API key.
+            </AlertDescription>
+          </Alert>
+          <div className="flex justify-center">
+            <Button onClick={handleRetry}>
+              Retry
+            </Button>
+          </div>
         </div>
       ) : stockData ? (
         <div className="space-y-6">
@@ -319,13 +345,13 @@ const Index = () => {
                     stockData.newsSentiment?.overall === 'Positive' ? 'text-profit' : 
                     stockData.newsSentiment?.overall === 'Negative' ? 'text-loss' : 'text-muted-foreground'
                   }`}>
-                    {stockData.newsSentiment?.overall || "Positive"}
+                    {stockData.newsSentiment?.overall || "Neutral"}
                   </span>
                 </div>
                 <div className="w-full bg-secondary rounded-full h-2 mb-3">
                   <div 
                     className="bg-profit h-2 rounded-full" 
-                    style={{ width: `${stockData.newsSentiment?.positivePercentage || 75}%` }}
+                    style={{ width: `${stockData.newsSentiment?.positivePercentage || 50}%` }}
                   ></div>
                 </div>
                 <div className="space-y-3 mt-2">
@@ -334,7 +360,7 @@ const Index = () => {
                       <div className="w-2 h-2 rounded-full bg-profit mr-1"></div>
                       <span className="text-muted-foreground">Positive mentions:</span>
                       <span className="ml-auto font-medium">
-                        {stockData.newsSentiment?.positivePercentage || 78}%
+                        {stockData.newsSentiment?.positivePercentage || 50}%
                       </span>
                     </div>
                   </div>
@@ -343,7 +369,7 @@ const Index = () => {
                       <div className="w-2 h-2 rounded-full bg-muted-foreground mr-1"></div>
                       <span className="text-muted-foreground">Neutral mentions:</span>
                       <span className="ml-auto font-medium">
-                        {stockData.newsSentiment?.neutralPercentage || 15}%
+                        {stockData.newsSentiment?.neutralPercentage || 30}%
                       </span>
                     </div>
                   </div>
@@ -352,7 +378,7 @@ const Index = () => {
                       <div className="w-2 h-2 rounded-full bg-loss mr-1"></div>
                       <span className="text-muted-foreground">Negative mentions:</span>
                       <span className="ml-auto font-medium">
-                        {stockData.newsSentiment?.negativePercentage || 7}%
+                        {stockData.newsSentiment?.negativePercentage || 20}%
                       </span>
                     </div>
                   </div>
@@ -363,7 +389,11 @@ const Index = () => {
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-20">
+          <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
           <p className="text-lg text-muted-foreground">No stock data available</p>
+          <Button onClick={handleRetry} className="mt-4">
+            Retry
+          </Button>
         </div>
       )}
     </DashboardLayout>
