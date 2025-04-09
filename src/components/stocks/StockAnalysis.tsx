@@ -1,14 +1,15 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CircleDashed, Brain, TrendingUp, TrendingDown, Gauge, AlertCircle, RefreshCcw, Layers, Lightbulb, CheckCircle2 } from 'lucide-react';
+import { CircleDashed, Brain } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { AIAnalysisResponse } from '@/services/aiService';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import FutureTrendAnalysis from './FutureTrendAnalysis';
+import AIAnalysisResults from './AIAnalysisResults';
+import AILoadingState from './AILoadingState';
+import AIErrorState from './AIErrorState';
 
 interface StockAnalysisProps {
   ticker: string;
@@ -55,38 +56,6 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
     }
   };
 
-  const getRiskColor = (risk: number) => {
-    switch (risk) {
-      case 1: return 'bg-emerald-500';
-      case 2: return 'bg-green-500';
-      case 3: return 'bg-yellow-500';
-      case 4: return 'bg-orange-500';
-      case 5: return 'bg-red-500';
-      default: return 'bg-secondary';
-    }
-  };
-
-  const getAIInsights = () => {
-    if (!analysis) return [];
-    
-    const insights = [
-      `The stock is showing ${analysis.recommendation.includes('Buy') ? 'bullish' : analysis.recommendation.includes('Sell') ? 'bearish' : 'neutral'} signals with a ${analysis.riskLevel.toLowerCase()} risk profile.`,
-      `Primary technical pattern identified: ${analysis.technicalPatterns[0] || 'N/A'}.`,
-      `Key support level at ₹${analysis.supportResistance.support[0]?.toLocaleString() || 'N/A'} with secondary support at ₹${analysis.supportResistance.support[1]?.toLocaleString() || 'N/A'}.`,
-      `Immediate resistance detected at ₹${analysis.supportResistance.resistance[0]?.toLocaleString() || 'N/A'}.`,
-      `${analysis.technicalPatterns.length > 1 ? `Additional pattern: ${analysis.technicalPatterns[1]}` : 'No additional patterns detected'}.`,
-      `Final recommendation: ${analysis.recommendation} - ${
-        analysis.recommendation === 'Strong Buy' ? 'Excellent opportunity for entry'
-        : analysis.recommendation === 'Buy' ? 'Good potential for positive returns'
-        : analysis.recommendation === 'Hold' ? 'Consider maintaining current positions'
-        : analysis.recommendation === 'Sell' ? 'Consider reducing exposure'
-        : 'Consider exiting positions'
-      }`
-    ];
-    
-    return insights;
-  };
-
   useEffect(() => {
     if (analysis) {
       const event = new CustomEvent('aiAnalysisUpdated', { detail: { analysis } });
@@ -111,147 +80,18 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
       </CardHeader>
       <CardContent className="space-y-4">
         {error ? (
-          <div className="space-y-4">
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4 mr-2" />
-              <AlertTitle>Analysis Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-            <div className="flex justify-center">
-              <Button 
-                variant="outline" 
-                onClick={() => setError(null)}
-                className="mr-2"
-              >
-                Dismiss
-              </Button>
-              <Button
-                onClick={handleRequestAnalysis}
-              >
-                <RefreshCcw className="h-4 w-4 mr-2" />
-                Try Again
-              </Button>
-            </div>
-          </div>
+          <AIErrorState 
+            error={error}
+            onDismiss={() => setError(null)} 
+            onRetry={handleRequestAnalysis}
+          />
         ) : !analysis ? (
-          <div className="flex flex-col items-center justify-center py-8 space-y-4 text-center">
-            <Brain className="w-12 h-12 text-muted-foreground opacity-50" />
-            <div>
-              <h3 className="font-medium text-lg">Generate AI Analysis</h3>
-              <p className="text-muted-foreground text-sm max-w-xs mx-auto mt-1">
-                Our AI will analyze {ticker} using technical indicators, price patterns, and market trends
-              </p>
-            </div>
-          </div>
+          <AILoadingState ticker={ticker} />
         ) : (
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-sm font-medium mb-2">Technical Analysis</h3>
-              <p className="text-sm text-muted-foreground">{analysis.analysis}</p>
-            </div>
-            
-            <Separator />
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-secondary/50 rounded-lg p-3 col-span-1">
-                <h3 className="text-sm font-medium flex items-center mb-2">
-                  <Gauge className="w-4 h-4 mr-1" />
-                  Risk Assessment
-                </h3>
-                <div className="flex items-center">
-                  <div className="w-full bg-secondary rounded-full h-2.5">
-                    <div 
-                      className={cn("h-2.5 rounded-full", getRiskColor(analysis.risk))} 
-                      style={{ width: `${analysis.risk * 20}%` }}
-                    ></div>
-                  </div>
-                  <span className="ml-2 text-sm">{analysis.riskLevel}</span>
-                </div>
-              </div>
-
-              <div className="bg-secondary/50 rounded-lg p-3 col-span-1">
-                <h3 className="text-sm font-medium flex items-center mb-2">
-                  <AlertCircle className="w-4 h-4 mr-1" />
-                  Technical Patterns
-                </h3>
-                <div className="space-y-1 max-h-36 overflow-y-auto pr-1">
-                  {analysis.technicalPatterns.map((pattern, idx) => (
-                    <div key={idx} className="flex items-center text-xs">
-                      <AlertCircle className="w-3 h-3 mr-1 text-primary flex-shrink-0" />
-                      <span>{pattern}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-medium mb-2">Support & Resistance</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-secondary/50 p-2 rounded-lg">
-                  <h4 className="text-xs font-medium text-muted-foreground mb-1 flex items-center">
-                    <TrendingDown className="w-3 h-3 mr-1 text-loss" />
-                    Support Levels
-                  </h4>
-                  <div className="text-sm">
-                    {analysis.supportResistance.support.map((level, idx) => (
-                      <span key={idx} className="mr-2">₹{level.toLocaleString()}</span>
-                    ))}
-                  </div>
-                </div>
-                <div className="bg-secondary/50 p-2 rounded-lg">
-                  <h4 className="text-xs font-medium text-muted-foreground mb-1 flex items-center">
-                    <TrendingUp className="w-3 h-3 mr-1 text-profit" />
-                    Resistance Levels
-                  </h4>
-                  <div className="text-sm">
-                    {analysis.supportResistance.resistance.map((level, idx) => (
-                      <span key={idx} className="mr-2">₹{level.toLocaleString()}</span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <Card className="w-full">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base font-medium flex items-center">
-                  <Lightbulb className="h-5 w-5 mr-2 text-primary" />
-                  AI Insights
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {getAIInsights().map((insight, index) => (
-                    <div key={index} className="flex items-start gap-2">
-                      {index === getAIInsights().length - 1 ? (
-                        <div className="flex items-start gap-2 w-full">
-                          <CheckCircle2 className="w-5 h-5 mt-0.5 text-primary flex-shrink-0" />
-                          <p className="text-base font-medium">{insight}</p>
-                        </div>
-                      ) : (
-                        <>
-                          {index % 2 === 0 ? (
-                            <CheckCircle2 className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
-                          ) : (
-                            <AlertCircle className="w-4 h-4 mt-0.5 text-primary flex-shrink-0" />
-                          )}
-                          <p className="text-sm">{insight}</p>
-                        </>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-            
-            <div className="md:hidden">
-              <FutureTrendAnalysis 
-                changePercent={stockData.changePercent} 
-                aiAnalysis={analysis}
-              />
-            </div>
-          </div>
+          <AIAnalysisResults 
+            analysis={analysis}
+            stockData={stockData}
+          />
         )}
       </CardContent>
       <CardFooter>
