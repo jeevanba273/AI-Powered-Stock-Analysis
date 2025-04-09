@@ -3,12 +3,12 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CircleDashed, Brain, TrendingUp, TrendingDown, Gauge, ArrowUpRight, ArrowDownRight, AlertCircle } from 'lucide-react';
+import { CircleDashed, Brain, TrendingUp, TrendingDown, Gauge, ArrowUpRight, ArrowDownRight, AlertCircle, RefreshCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { AIAnalysisResponse } from '@/services/aiService';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface StockAnalysisProps {
   ticker: string;
@@ -32,11 +32,13 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
         toast.success("AI analysis completed successfully");
       } else {
         setError("Failed to generate analysis");
+        toast.error("Failed to generate analysis");
       }
     } catch (error) {
-      setError(error.message || "Failed to generate analysis");
-      toast.error("Failed to generate analysis");
-      console.error(error);
+      const errorMessage = error.message || "Failed to generate analysis";
+      setError(errorMessage);
+      toast.error(`AI Analysis error: ${errorMessage}`);
+      console.error("AI Analysis error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -81,10 +83,28 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
       </CardHeader>
       <CardContent className="space-y-4">
         {error ? (
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4 mr-2" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
+          <div className="space-y-4">
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4 mr-2" />
+              <AlertTitle>Analysis Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+            <div className="flex justify-center">
+              <Button 
+                variant="outline" 
+                onClick={() => setError(null)}
+                className="mr-2"
+              >
+                Dismiss
+              </Button>
+              <Button
+                onClick={handleRequestAnalysis}
+              >
+                <RefreshCcw className="h-4 w-4 mr-2" />
+                Try Again
+              </Button>
+            </div>
+          </div>
         ) : !analysis ? (
           <div className="flex flex-col items-center justify-center py-8 space-y-4 text-center">
             <Brain className="w-12 h-12 text-muted-foreground opacity-50" />
