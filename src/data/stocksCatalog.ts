@@ -6,7 +6,8 @@ export interface StockInfo {
   "nse-code": string;
 }
 
-// This is a sample list. You can replace this with your full list of stocks.
+// This is a sample list of Indian stocks.
+// You can replace this with your full list of stocks.
 export const stocksCatalog: StockInfo[] = [
   {
     "bse-code": "541400",

@@ -1,11 +1,13 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { SearchIcon, TrendingUp, X, ListFilter } from 'lucide-react';
+import { SearchIcon, TrendingUp, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { popularIndianStocks } from '@/services/indianStockService';
-import StockSearchDialog from './StockSearchDialog';
+import { stocksCatalog, StockInfo } from '@/data/stocksCatalog';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface StockSearchProps {
   onSearchStock: (ticker: string) => void;
@@ -14,7 +16,28 @@ interface StockSearchProps {
 const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [searchDialogOpen, setSearchDialogOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [filteredStocks, setFilteredStocks] = useState<StockInfo[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (searchQuery.trim().length > 0) {
+      const filtered = stocksCatalog.filter(stock => {
+        const query = searchQuery.toLowerCase();
+        return (
+          stock.name.toLowerCase().includes(query) ||
+          (stock["nse-code"] && stock["nse-code"].toLowerCase().includes(query)) ||
+          (stock["bse-code"] && stock["bse-code"].toLowerCase().includes(query))
+        );
+      }).slice(0, 10); // Limit to 10 results
+      
+      setFilteredStocks(filtered);
+      setOpen(filtered.length > 0); // Open popover only if we have results
+    } else {
+      setFilteredStocks([]);
+      setOpen(false);
+    }
+  }, [searchQuery]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,51 +51,85 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
       onSearchStock(searchQuery.toUpperCase());
       setIsSearching(false);
       setSearchQuery('');
+      setOpen(false);
     }, 1000);
   };
 
   const handleQuickSearch = (ticker: string) => {
     onSearchStock(ticker);
     toast.success(`Loading ${ticker} data...`);
+    setSearchQuery('');
+    setOpen(false);
   };
 
-  const handleSelectFromCatalog = (ticker: string) => {
-    if (ticker) {
-      onSearchStock(ticker);
-    }
+  const handleSelectStock = (stock: StockInfo) => {
+    // Priority: NSE code, then BSE code
+    const ticker = stock["nse-code"] ? stock["nse-code"] : stock["bse-code"];
+    onSearchStock(ticker);
+    toast.success(`Loading ${stock.name} (${ticker}) data...`);
+    setSearchQuery('');
+    setOpen(false);
   };
 
   return (
     <div className="w-full">
       <form onSubmit={handleSearch} className="flex items-center space-x-2 mb-4">
         <div className="relative flex-1">
-          <Input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Enter stock ticker (e.g. TCS, RELIANCE)"
-            className="pl-10 pr-10"
-          />
-          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          )}
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <div className="w-full">
+                <Input
+                  ref={inputRef}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search stocks by name or code..."
+                  className="pl-10 pr-10 w-full"
+                  onClick={() => searchQuery.trim().length > 0 && setOpen(true)}
+                />
+                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setOpen(false);
+                      inputRef.current?.focus();
+                    }}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            </PopoverTrigger>
+            <PopoverContent className="p-0 w-[400px]" align="start">
+              <Command>
+                <CommandList>
+                  <CommandEmpty>No stocks found</CommandEmpty>
+                  <CommandGroup heading="Stocks">
+                    {filteredStocks.map(stock => (
+                      <CommandItem
+                        key={stock.id}
+                        value={stock.id}
+                        onSelect={() => handleSelectStock(stock)}
+                        className="flex flex-col items-start justify-between cursor-pointer hover:bg-accent"
+                      >
+                        <div className="font-medium">{stock.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {stock["nse-code"] ? `NSE: ${stock["nse-code"]}` : ''} 
+                          {stock["nse-code"] && stock["bse-code"] ? ' | ' : ''}
+                          {stock["bse-code"] ? `BSE: ${stock["bse-code"]}` : ''}
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
         <Button type="submit" disabled={isSearching}>
           {isSearching ? "Searching..." : "Search"}
-        </Button>
-        <Button 
-          type="button" 
-          variant="outline" 
-          onClick={() => setSearchDialogOpen(true)}
-        >
-          <ListFilter className="h-4 w-4 mr-2" />
-          Browse
         </Button>
       </form>
 
@@ -95,12 +152,6 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
           ))}
         </div>
       </div>
-
-      <StockSearchDialog 
-        open={searchDialogOpen}
-        onOpenChange={setSearchDialogOpen}
-        onSelectStock={handleSelectFromCatalog}
-      />
     </div>
   );
 };
