@@ -2,9 +2,10 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { SearchIcon, TrendingUp, X } from 'lucide-react';
+import { SearchIcon, TrendingUp, X, ListFilter } from 'lucide-react';
 import { toast } from 'sonner';
 import { popularIndianStocks } from '@/services/indianStockService';
+import StockSearchDialog from './StockSearchDialog';
 
 interface StockSearchProps {
   onSearchStock: (ticker: string) => void;
@@ -13,6 +14,7 @@ interface StockSearchProps {
 const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [searchDialogOpen, setSearchDialogOpen] = useState(false);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +34,12 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
   const handleQuickSearch = (ticker: string) => {
     onSearchStock(ticker);
     toast.success(`Loading ${ticker} data...`);
+  };
+
+  const handleSelectFromCatalog = (ticker: string) => {
+    if (ticker) {
+      onSearchStock(ticker);
+    }
   };
 
   return (
@@ -58,6 +66,14 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
         <Button type="submit" disabled={isSearching}>
           {isSearching ? "Searching..." : "Search"}
         </Button>
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={() => setSearchDialogOpen(true)}
+        >
+          <ListFilter className="h-4 w-4 mr-2" />
+          Browse
+        </Button>
       </form>
 
       <div className="mb-6">
@@ -79,6 +95,12 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
           ))}
         </div>
       </div>
+
+      <StockSearchDialog 
+        open={searchDialogOpen}
+        onOpenChange={setSearchDialogOpen}
+        onSelectStock={handleSelectFromCatalog}
+      />
     </div>
   );
 };

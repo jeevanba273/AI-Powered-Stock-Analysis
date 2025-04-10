@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -186,25 +187,20 @@ const AIAnalysisResults: React.FC<AIAnalysisResultsProps> = ({
         <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
           {analysis.technicalPatterns.map((pattern, idx) => {
             const isBullish = isPatternBullish(pattern);
-            const isLastItem = idx === analysis.technicalPatterns.length - 1;
             
             return (
               <div 
                 key={idx} 
-                className={cn(
-                  "flex items-center p-2 rounded-md",
-                  isLastItem && isBullish === true ? "bg-green-500/20" : 
-                  isLastItem && isBullish === false ? "bg-red-500/20" : 
-                  "bg-background/60"
-                )}
+                className="flex items-center p-2 rounded-md bg-background/60"
               >
-                {getPatternIcon(pattern)}
-                <span className={cn(
-                  "text-md font-medium",
-                  isLastItem && isBullish === true ? "text-profit" : 
-                  isLastItem && isBullish === false ? "text-loss" : 
-                  ""
-                )}>
+                {isBullish === true ? (
+                  <ArrowUp className="w-3 h-3 mr-1 text-profit flex-shrink-0" />
+                ) : isBullish === false ? (
+                  <ArrowDown className="w-3 h-3 mr-1 text-loss flex-shrink-0" />
+                ) : (
+                  <AlertCircle className="w-3 h-3 mr-1 text-primary flex-shrink-0" />
+                )}
+                <span className="text-md font-medium">
                   {pattern}
                 </span>
               </div>
