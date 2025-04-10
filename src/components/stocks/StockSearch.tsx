@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -71,6 +70,15 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
     setOpen(false);
   };
 
+  const handleItemClick = (stock: StockInfo) => {
+    handleSelectStock(stock);
+    setTimeout(() => {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, 100);
+  };
+
   return (
     <div className="w-full">
       <form onSubmit={handleSearch} className="flex items-center space-x-2 mb-4">
@@ -105,24 +113,28 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
             <PopoverContent className="p-0 w-[400px]" align="start">
               <Command>
                 <CommandList>
-                  <CommandEmpty>No stocks found</CommandEmpty>
-                  <CommandGroup heading="Stocks">
-                    {filteredStocks.map(stock => (
-                      <CommandItem
-                        key={stock.id}
-                        value={stock.id}
-                        onSelect={() => handleSelectStock(stock)}
-                        className="flex flex-col items-start justify-between cursor-pointer hover:bg-accent"
-                      >
-                        <div className="font-medium">{stock.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {stock["nse-code"] ? `NSE: ${stock["nse-code"]}` : ''} 
-                          {stock["nse-code"] && stock["bse-code"] ? ' | ' : ''}
-                          {stock["bse-code"] ? `BSE: ${stock["bse-code"]}` : ''}
-                        </div>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
+                  {searchQuery.trim() ? (
+                    <>
+                      <CommandEmpty>No stocks found</CommandEmpty>
+                      <CommandGroup heading="Stocks">
+                        {filteredStocks.map(stock => (
+                          <CommandItem
+                            key={stock.id}
+                            value={stock.id}
+                            onSelect={() => handleItemClick(stock)}
+                            className="flex flex-col items-start justify-between cursor-pointer hover:bg-accent"
+                          >
+                            <div className="font-medium">{stock.name}</div>
+                            <div className="text-xs text-muted-foreground">
+                              {stock["nse-code"] ? `NSE: ${stock["nse-code"]}` : ''} 
+                              {stock["nse-code"] && stock["bse-code"] ? ' | ' : ''}
+                              {stock["bse-code"] ? `BSE: ${stock["bse-code"]}` : ''}
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </>
+                  ) : null}
                 </CommandList>
               </Command>
             </PopoverContent>
