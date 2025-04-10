@@ -72,27 +72,46 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
 
   const handleItemClick = (stock: StockInfo) => {
     handleSelectStock(stock);
-    setTimeout(() => {
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
-    }, 100);
+  };
+
+  const handlePopoverChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (isOpen && inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+
+  const handleInputClick = () => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+    
+    if (searchQuery.trim().length > 0 && filteredStocks.length > 0) {
+      setOpen(true);
+    }
+  };
+
+  const handleInputWrapperClick = () => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
   };
 
   return (
     <div className="w-full">
       <form onSubmit={handleSearch} className="flex items-center space-x-2 mb-4">
         <div className="relative flex-1">
-          <Popover open={open} onOpenChange={setOpen}>
+          <Popover open={open} onOpenChange={handlePopoverChange}>
             <PopoverTrigger asChild>
-              <div className="w-full">
+              <div className="w-full" onClick={handleInputWrapperClick}>
                 <Input
                   ref={inputRef}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search stocks by name or code..."
                   className="pl-10 pr-10 w-full"
-                  onClick={() => searchQuery.trim().length > 0 && setOpen(true)}
+                  onClick={handleInputClick}
+                  autoComplete="off"
                 />
                 <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 {searchQuery && (
