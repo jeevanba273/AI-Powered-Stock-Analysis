@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,20 +31,18 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
       }).slice(0, 10); // Limit to 10 results
       
       setFilteredStocks(filtered);
-      setOpen(filtered.length > 0); // Open popover only if we have results
+      setOpen(filtered.length > 0);
     } else {
       setFilteredStocks([]);
       setOpen(false);
     }
   }, [searchQuery]);
 
-  // This function maintains focus on the input element
+  // This function maintains focus on the input element without causing re-renders
   const maintainFocus = () => {
+    // We don't want to use a setTimeout here as it can cause flickering
     if (inputRef.current) {
-      // Delay focus to ensure it happens after any click events are processed
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 0);
+      inputRef.current.focus();
     }
   };
 
@@ -81,33 +78,33 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
     toast.success(`Loading ${stock.name} (${ticker}) data...`);
     setSearchQuery('');
     setOpen(false);
-    maintainFocus();
   };
 
   const handleItemClick = (stock: StockInfo) => {
     handleSelectStock(stock);
   };
 
-  // Modified to prevent losing focus when popover state changes
+  // Modified to keep the focus in the input field and only update popover state
   const handlePopoverChange = (isOpen: boolean) => {
-    // Only update open state if we're closing the popover or if there are results
-    if (!isOpen || filteredStocks.length > 0) {
-      setOpen(isOpen);
-    }
+    // Only update open state, but don't re-focus if dropdown is opening
+    // This prevents the focus from being disturbed while typing
+    setOpen(isOpen && filteredStocks.length > 0);
     
-    // Always maintain focus on the input
-    maintainFocus();
+    // Always maintain focus on the input if popover is closing
+    if (!isOpen) {
+      maintainFocus();
+    }
   };
 
-  // Handle input change while maintaining focus
+  // Handle input change without disturbing focus
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-    // Ensure we don't lose focus after typing
-    maintainFocus();
   };
 
-  // Clear search while maintaining focus
-  const handleClearSearch = () => {
+  // Clear search without losing focus
+  const handleClearSearch = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setSearchQuery('');
     setOpen(false);
     maintainFocus();
@@ -119,30 +116,22 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
         <div className="relative flex-1">
           <Popover open={open} onOpenChange={handlePopoverChange}>
             <PopoverTrigger asChild>
-              <div className="relative w-full" onClick={maintainFocus}>
+              <div className="relative w-full">
                 <Input
                   ref={inputRef}
                   value={searchQuery}
                   onChange={handleInputChange}
+                  onClick={maintainFocus}
                   placeholder="Search stocks by name or code..."
                   className="pl-10 pr-10 w-full"
                   autoComplete="off"
-                  // Use onFocus to maintain focus when clicked
-                  onFocus={() => {
-                    if (searchQuery.trim() && filteredStocks.length > 0) {
-                      setOpen(true);
-                    }
-                  }}
+                  autoFocus
                 />
                 <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 {searchQuery && (
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.preventDefault(); // Prevent form submission
-                      e.stopPropagation(); // Prevent losing focus
-                      handleClearSearch();
-                    }}
+                    onClick={handleClearSearch}
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground hover:text-foreground"
                   >
                     <X className="h-4 w-4" />
