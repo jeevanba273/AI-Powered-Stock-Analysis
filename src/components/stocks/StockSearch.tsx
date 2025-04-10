@@ -38,6 +38,12 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
     }
   }, [searchQuery]);
 
+  const maintainFocus = () => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) {
@@ -51,6 +57,7 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
       setIsSearching(false);
       setSearchQuery('');
       setOpen(false);
+      maintainFocus();
     }, 1000);
   };
 
@@ -59,6 +66,7 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
     toast.success(`Loading ${ticker} data...`);
     setSearchQuery('');
     setOpen(false);
+    maintainFocus();
   };
 
   const handleSelectStock = (stock: StockInfo) => {
@@ -68,6 +76,7 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
     toast.success(`Loading ${stock.name} (${ticker}) data...`);
     setSearchQuery('');
     setOpen(false);
+    maintainFocus();
   };
 
   const handleItemClick = (stock: StockInfo) => {
@@ -76,26 +85,40 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
 
   const handlePopoverChange = (isOpen: boolean) => {
     setOpen(isOpen);
-    if (isOpen && inputRef.current) {
-      inputRef.current.focus();
+    if (isOpen) {
+      maintainFocus();
     }
   };
 
-  const handleInputClick = () => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-    
-    if (searchQuery.trim().length > 0 && filteredStocks.length > 0) {
-      setOpen(true);
-    }
-  };
-
-  const handleInputWrapperClick = () => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  };
+  const StockSearchInput = () => (
+    <div 
+      className="relative w-full" 
+      onClick={maintainFocus}
+    >
+      <Input
+        ref={inputRef}
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        placeholder="Search stocks by name or code..."
+        className="pl-10 pr-10 w-full"
+        autoComplete="off"
+      />
+      <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      {searchQuery && (
+        <button
+          type="button"
+          onClick={() => {
+            setSearchQuery('');
+            setOpen(false);
+            maintainFocus();
+          }}
+          className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground hover:text-foreground"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
+    </div>
+  );
 
   return (
     <div className="w-full">
@@ -103,30 +126,8 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
         <div className="relative flex-1">
           <Popover open={open} onOpenChange={handlePopoverChange}>
             <PopoverTrigger asChild>
-              <div className="w-full" onClick={handleInputWrapperClick}>
-                <Input
-                  ref={inputRef}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search stocks by name or code..."
-                  className="pl-10 pr-10 w-full"
-                  onClick={handleInputClick}
-                  autoComplete="off"
-                />
-                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchQuery('');
-                      setOpen(false);
-                      inputRef.current?.focus();
-                    }}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
+              <div onClick={maintainFocus}>
+                <StockSearchInput />
               </div>
             </PopoverTrigger>
             <PopoverContent className="p-0 w-[400px]" align="start">
