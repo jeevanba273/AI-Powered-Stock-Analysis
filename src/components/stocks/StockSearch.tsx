@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,7 +41,6 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
 
   // This function maintains focus on the input element without causing re-renders
   const maintainFocus = () => {
-    // We don't want to use a setTimeout here as it can cause flickering
     if (inputRef.current) {
       inputRef.current.focus();
     }
@@ -78,30 +78,31 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
     toast.success(`Loading ${stock.name} (${ticker}) data...`);
     setSearchQuery('');
     setOpen(false);
+    maintainFocus();
   };
 
   const handleItemClick = (stock: StockInfo) => {
     handleSelectStock(stock);
   };
 
-  // Modified to keep the focus in the input field and only update popover state
+  // Modified to prevent the Popover from stealing focus
   const handlePopoverChange = (isOpen: boolean) => {
-    // Only update open state, but don't re-focus if dropdown is opening
-    // This prevents the focus from being disturbed while typing
-    setOpen(isOpen && filteredStocks.length > 0);
-    
-    // Always maintain focus on the input if popover is closing
     if (!isOpen) {
+      // Only close the popover when explicitly requested
+      setOpen(false);
+      // Immediately restore focus to the input
       maintainFocus();
+    } else if (filteredStocks.length > 0) {
+      // Only open if we have results to show
+      setOpen(true);
     }
   };
 
-  // Handle input change without disturbing focus
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
+    // No need to explicitly focus here - let the input continue its natural focus
   };
 
-  // Clear search without losing focus
   const handleClearSearch = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -114,14 +115,22 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
     <div className="w-full">
       <form onSubmit={handleSearch} className="flex items-center space-x-2 mb-4">
         <div className="relative flex-1">
-          <Popover open={open} onOpenChange={handlePopoverChange}>
+          <Popover 
+            open={open} 
+            onOpenChange={handlePopoverChange}
+          >
             <PopoverTrigger asChild>
               <div className="relative w-full">
                 <Input
                   ref={inputRef}
                   value={searchQuery}
                   onChange={handleInputChange}
-                  onClick={maintainFocus}
+                  onClick={() => {
+                    // Ensure clicking the input doesn't toggle the popover
+                    if (searchQuery.trim() && filteredStocks.length > 0 && !open) {
+                      setOpen(true);
+                    }
+                  }}
                   placeholder="Search stocks by name or code..."
                   className="pl-10 pr-10 w-full"
                   autoComplete="off"
@@ -139,7 +148,19 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
                 )}
               </div>
             </PopoverTrigger>
-            <PopoverContent className="p-0 w-[400px]" align="start">
+            <PopoverContent 
+              className="p-0 w-[400px]" 
+              align="start"
+              onInteractOutside={(e) => {
+                // Prevent popover from closing when interacting with its contents
+                e.preventDefault();
+              }}
+              onEscapeKeyDown={() => {
+                // Close popover but maintain focus on escape key
+                setOpen(false);
+                maintainFocus();
+              }}
+            >
               <Command>
                 <CommandList>
                   {searchQuery.trim() ? (
