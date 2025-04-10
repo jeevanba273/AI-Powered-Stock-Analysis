@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,9 +39,13 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
     }
   }, [searchQuery]);
 
+  // This function maintains focus on the input element
   const maintainFocus = () => {
     if (inputRef.current) {
-      inputRef.current.focus();
+      // Delay focus to ensure it happens after any click events are processed
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 0);
     }
   };
 
@@ -83,42 +88,30 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
     handleSelectStock(stock);
   };
 
+  // Modified to prevent losing focus when popover state changes
   const handlePopoverChange = (isOpen: boolean) => {
-    setOpen(isOpen);
-    if (isOpen) {
-      maintainFocus();
+    // Only update open state if we're closing the popover or if there are results
+    if (!isOpen || filteredStocks.length > 0) {
+      setOpen(isOpen);
     }
+    
+    // Always maintain focus on the input
+    maintainFocus();
   };
 
-  const StockSearchInput = () => (
-    <div 
-      className="relative w-full" 
-      onClick={maintainFocus}
-    >
-      <Input
-        ref={inputRef}
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        placeholder="Search stocks by name or code..."
-        className="pl-10 pr-10 w-full"
-        autoComplete="off"
-      />
-      <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-      {searchQuery && (
-        <button
-          type="button"
-          onClick={() => {
-            setSearchQuery('');
-            setOpen(false);
-            maintainFocus();
-          }}
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground hover:text-foreground"
-        >
-          <X className="h-4 w-4" />
-        </button>
-      )}
-    </div>
-  );
+  // Handle input change while maintaining focus
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    // Ensure we don't lose focus after typing
+    maintainFocus();
+  };
+
+  // Clear search while maintaining focus
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setOpen(false);
+    maintainFocus();
+  };
 
   return (
     <div className="w-full">
@@ -126,8 +119,35 @@ const StockSearch: React.FC<StockSearchProps> = ({ onSearchStock }) => {
         <div className="relative flex-1">
           <Popover open={open} onOpenChange={handlePopoverChange}>
             <PopoverTrigger asChild>
-              <div onClick={maintainFocus}>
-                <StockSearchInput />
+              <div className="relative w-full" onClick={maintainFocus}>
+                <Input
+                  ref={inputRef}
+                  value={searchQuery}
+                  onChange={handleInputChange}
+                  placeholder="Search stocks by name or code..."
+                  className="pl-10 pr-10 w-full"
+                  autoComplete="off"
+                  // Use onFocus to maintain focus when clicked
+                  onFocus={() => {
+                    if (searchQuery.trim() && filteredStocks.length > 0) {
+                      setOpen(true);
+                    }
+                  }}
+                />
+                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault(); // Prevent form submission
+                      e.stopPropagation(); // Prevent losing focus
+                      handleClearSearch();
+                    }}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
               </div>
             </PopoverTrigger>
             <PopoverContent className="p-0 w-[400px]" align="start">
