@@ -1,4 +1,3 @@
-
 import { toast } from 'sonner';
 import { analyzeNewsSentiment } from './aiService';
 
@@ -224,6 +223,32 @@ const fetchCompanyNews = async (ticker: string): Promise<any[]> => {
   }
 };
 
+const isMarketOpenInIST = (): boolean => {
+  // Create a date object in IST
+  const now = new Date();
+  const istTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  
+  // Get day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+  const dayOfWeek = istTime.getDay();
+  
+  // Get hours and minutes in IST
+  const hours = istTime.getHours();
+  const minutes = istTime.getMinutes();
+  const currentTimeInMinutes = hours * 60 + minutes;
+  
+  // Market opens at 9:15 AM (555 minutes) and closes at 3:30 PM (930 minutes)
+  const marketOpenTime = 9 * 60 + 15;  // 9:15 AM in minutes
+  const marketCloseTime = 15 * 60 + 30; // 3:30 PM in minutes
+  
+  // Check if it's a weekday (Monday-Friday) and within market hours
+  return (
+    dayOfWeek >= 1 && // Monday
+    dayOfWeek <= 5 && // Friday
+    currentTimeInMinutes >= marketOpenTime &&
+    currentTimeInMinutes <= marketCloseTime
+  );
+};
+
 export const fetchStockData = async (ticker: string): Promise<StockData> => {
   try {
     toast.loading(`Fetching data for ${ticker}...`, { id: "fetch-stock" });
@@ -254,11 +279,7 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
       const lowPrice = liveStockData.low;
       const volume = liveStockData.volume;
       
-      const now = new Date();
-      const lastTradeTime = new Date(liveStockData.last_trade_time);
-      const timeDiffMinutes = (now.getTime() - lastTradeTime.getTime()) / (1000 * 60);
-      
-      const marketStatus = timeDiffMinutes < 30 ? 'open' : 'closed';
+      const marketStatus = isMarketOpenInIST() ? 'open' : 'closed';
       
       const pe = typeof stockDetails.stats.peRatio === 'number' ? stockDetails.stats.peRatio : 0;
       const dividend = typeof stockDetails.stats.divYield === 'number' 
@@ -279,7 +300,7 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
         changePercent,
         currency: '₹',
         marketStatus,
-        lastUpdated: new Date().toLocaleTimeString(),
+        lastUpdated: new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }),
         stats: {
           open: openPrice,
           high: highPrice,
