@@ -24,7 +24,7 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
   const [analysis, setAnalysis] = useState<AIAnalysisResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const isMobile = useIsMobile();
-  const [toastId, setToastId] = useState<string | null>(null);
+  const [toastId, setToastId] = useState<string | number | null>(null);
 
   const handleRequestAnalysis = async () => {
     // Dismiss any existing toasts to prevent multiple toasts
