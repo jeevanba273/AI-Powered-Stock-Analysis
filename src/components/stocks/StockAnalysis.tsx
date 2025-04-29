@@ -73,35 +73,24 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
     setError(null);
     setAnalysisRequested(true);
     
-    // Create loading toast and store its ID
-    const id = toast.loading("AI is analyzing stock data...");
-    setToastId(id);
-    
     try {
       const result = await onRequestAnalysis();
       
       if (result) {
         setAnalysis(result);
-        // Dismiss the loading toast and show success
-        toast.dismiss(id);
         toast.success("AI analysis completed successfully");
       } else {
         setError("Failed to generate analysis");
-        // Dismiss the loading toast and show error
-        toast.dismiss(id);
         toast.error("Failed to generate analysis");
       }
     } catch (error: any) {
       const errorMessage = error.message || "Failed to generate analysis";
       setError(errorMessage);
-      // Dismiss the loading toast and show error
-      toast.dismiss(id);
       toast.error(`AI Analysis error: ${errorMessage}`);
       console.error("AI Analysis error:", error);
     } finally {
-      // Always set loading to false and clear the toast ID
+      // Always set loading to false
       setIsLoading(false);
-      setToastId(null);
     }
   };
 
