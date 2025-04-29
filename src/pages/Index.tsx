@@ -63,8 +63,8 @@ const Index = () => {
       
       return analysisResult;
     } catch (error: any) {
-      console.error("AI analysis error:", error);
-      toast.error(`Failed to generate AI analysis: ${error.message}`);
+      console.error("Analysis error:", error);
+      toast.error(`Failed to generate analysis: ${error.message}`);
       return undefined;
     }
   };

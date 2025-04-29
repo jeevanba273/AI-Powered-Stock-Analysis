@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -78,7 +79,7 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
       
       if (result) {
         setAnalysis(result);
-        toast.success("AI analysis completed successfully");
+        toast.success("Analysis completed successfully");
       } else {
         setError("Failed to generate analysis");
         toast.error("Failed to generate analysis");
@@ -86,8 +87,8 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
     } catch (error: any) {
       const errorMessage = error.message || "Failed to generate analysis";
       setError(errorMessage);
-      toast.error(`AI Analysis error: ${errorMessage}`);
-      console.error("AI Analysis error:", error);
+      toast.error(`Analysis error: ${errorMessage}`);
+      console.error("Analysis error:", error);
     } finally {
       // Always set loading to false
       setIsLoading(false);
@@ -111,7 +112,7 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
         <CardTitle className={cn("text-lg font-semibold flex items-center justify-between", isMobile && "flex-col items-start gap-2")}>
           <div className="flex items-center">
             <Brain className="w-5 h-5 mr-2 text-primary" />
-            <span>AI-Powered Analysis</span>
+            <span>Technical Analysis</span>
           </div>
           {analysis && (
             <Badge className={cn("ml-2 text-base px-3 py-1", getRecommendationColor(analysis.recommendation))}>
@@ -131,9 +132,9 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
           <div className="flex flex-col items-center justify-center py-8 space-y-4 text-center">
             <CircleDashed className="w-12 h-12 animate-spin text-primary" />
             <div>
-              <h3 className="font-medium text-lg">Processing Request</h3>
+              <h3 className="font-medium text-lg">Processing</h3>
               <p className="text-muted-foreground text-sm max-w-xs mx-auto mt-1">
-                Gathering and analyzing market data
+                Analyzing market data
               </p>
             </div>
           </div>
@@ -155,12 +156,12 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
           {isLoading ? (
             <>
               <CircleDashed className="w-4 h-4 mr-2 animate-spin" />
-              Processing...
+              Processing
             </>
           ) : (
             <>
               <Brain className="w-4 h-4 mr-2" />
-              {analysis ? "Refresh Analysis" : "Generate AI Analysis"}
+              {analysis ? "Refresh Analysis" : "Generate Analysis"}
             </>
           )}
         </Button>
