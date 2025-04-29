@@ -16,7 +16,7 @@ const AILoadingState: React.FC<AILoadingStateProps> = ({ ticker }) => {
       <div>
         <h3 className="font-medium text-lg">Generate AI Analysis</h3>
         <p className="text-muted-foreground text-sm max-w-xs mx-auto mt-1">
-          Our AI will analyze {ticker} using technical indicators, price patterns, and market trends
+          Analyze {ticker} using technical indicators and price patterns
         </p>
       </div>
     </div>

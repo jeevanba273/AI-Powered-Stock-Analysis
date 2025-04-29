@@ -131,9 +131,9 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
           <div className="flex flex-col items-center justify-center py-8 space-y-4 text-center">
             <CircleDashed className="w-12 h-12 animate-spin text-primary" />
             <div>
-              <h3 className="font-medium text-lg">Analyzing {ticker}...</h3>
+              <h3 className="font-medium text-lg">Processing Request</h3>
               <p className="text-muted-foreground text-sm max-w-xs mx-auto mt-1">
-                Our AI is analyzing technical indicators, price patterns, and market trends
+                Gathering and analyzing market data
               </p>
             </div>
           </div>
@@ -155,7 +155,7 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
           {isLoading ? (
             <>
               <CircleDashed className="w-4 h-4 mr-2 animate-spin" />
-              Analyzing...
+              Processing...
             </>
           ) : (
             <>
