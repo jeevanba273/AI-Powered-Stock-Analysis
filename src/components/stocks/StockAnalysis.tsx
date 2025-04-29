@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,9 +26,13 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
   const [toastId, setToastId] = useState<string | number | null>(null);
 
   const handleRequestAnalysis = async () => {
+    // Only proceed if we're not already loading
+    if (isLoading) return;
+    
     // Dismiss any existing toasts to prevent multiple toasts
     if (toastId) {
       toast.dismiss(toastId);
+      setToastId(null);
     }
     
     setIsLoading(true);
@@ -41,6 +44,9 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
     
     try {
       const result = await onRequestAnalysis();
+      // Clear the toast ID before dismissing to prevent any race conditions
+      setToastId(null);
+      
       if (result) {
         setAnalysis(result);
         // Dismiss the loading toast and show success
@@ -60,9 +66,8 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
       toast.error(`AI Analysis error: ${errorMessage}`);
       console.error("AI Analysis error:", error);
     } finally {
-      // Always set loading to false and clear the toast ID
+      // Always set loading to false
       setIsLoading(false);
-      setToastId(null);
     }
   };
 
@@ -83,6 +88,25 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
       window.dispatchEvent(event);
     }
   }, [analysis]);
+
+  // Clean up any toast when unmounting or changing stocks
+  useEffect(() => {
+    return () => {
+      if (toastId) {
+        toast.dismiss(toastId);
+      }
+    };
+  }, [toastId]);
+
+  // When ticker changes, reset state but keep any existing analysis
+  useEffect(() => {
+    if (toastId) {
+      toast.dismiss(toastId);
+      setToastId(null);
+    }
+    setIsLoading(false);
+    setError(null);
+  }, [ticker]);
 
   return (
     <Card className={cn("h-full", className)}>
