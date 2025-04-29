@@ -24,6 +24,40 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
   const [error, setError] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const [toastId, setToastId] = useState<string | number | null>(null);
+  const [currentTicker, setCurrentTicker] = useState<string>(ticker);
+  const [analysisRequested, setAnalysisRequested] = useState<boolean>(false);
+
+  // When ticker changes, reset state but keep any existing analysis
+  useEffect(() => {
+    if (currentTicker !== ticker) {
+      setCurrentTicker(ticker);
+      setAnalysis(null);
+      setError(null);
+      setAnalysisRequested(false);
+      
+      // Clear any existing toast
+      if (toastId) {
+        toast.dismiss(toastId);
+        setToastId(null);
+      }
+    }
+  }, [ticker, currentTicker]);
+
+  // Clean up any toast when unmounting
+  useEffect(() => {
+    return () => {
+      if (toastId) {
+        toast.dismiss(toastId);
+      }
+    };
+  }, [toastId]);
+
+  useEffect(() => {
+    if (analysis) {
+      const event = new CustomEvent('aiAnalysisUpdated', { detail: { analysis } });
+      window.dispatchEvent(event);
+    }
+  }, [analysis]);
 
   const handleRequestAnalysis = async () => {
     // Only proceed if we're not already loading
@@ -37,6 +71,7 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
     
     setIsLoading(true);
     setError(null);
+    setAnalysisRequested(true);
     
     // Create loading toast and store its ID
     const id = toast.loading("AI is analyzing stock data...");
@@ -44,8 +79,6 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
     
     try {
       const result = await onRequestAnalysis();
-      // Clear the toast ID before dismissing to prevent any race conditions
-      setToastId(null);
       
       if (result) {
         setAnalysis(result);
@@ -58,7 +91,7 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
         toast.dismiss(id);
         toast.error("Failed to generate analysis");
       }
-    } catch (error) {
+    } catch (error: any) {
       const errorMessage = error.message || "Failed to generate analysis";
       setError(errorMessage);
       // Dismiss the loading toast and show error
@@ -66,8 +99,9 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
       toast.error(`AI Analysis error: ${errorMessage}`);
       console.error("AI Analysis error:", error);
     } finally {
-      // Always set loading to false
+      // Always set loading to false and clear the toast ID
       setIsLoading(false);
+      setToastId(null);
     }
   };
 
@@ -81,32 +115,6 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
       default: return 'bg-secondary';
     }
   };
-
-  useEffect(() => {
-    if (analysis) {
-      const event = new CustomEvent('aiAnalysisUpdated', { detail: { analysis } });
-      window.dispatchEvent(event);
-    }
-  }, [analysis]);
-
-  // Clean up any toast when unmounting or changing stocks
-  useEffect(() => {
-    return () => {
-      if (toastId) {
-        toast.dismiss(toastId);
-      }
-    };
-  }, [toastId]);
-
-  // When ticker changes, reset state but keep any existing analysis
-  useEffect(() => {
-    if (toastId) {
-      toast.dismiss(toastId);
-      setToastId(null);
-    }
-    setIsLoading(false);
-    setError(null);
-  }, [ticker]);
 
   return (
     <Card className={cn("h-full", className)}>
@@ -140,14 +148,14 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
               </p>
             </div>
           </div>
-        ) : !analysis ? (
+        ) : !analysis && !analysisRequested ? (
           <AILoadingState ticker={ticker} />
-        ) : (
+        ) : analysis ? (
           <AIAnalysisResults 
             analysis={analysis}
             stockData={stockData}
           />
-        )}
+        ) : null}
       </CardContent>
       <CardFooter>
         <Button 
