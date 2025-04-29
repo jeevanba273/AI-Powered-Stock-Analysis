@@ -19,13 +19,13 @@ interface StockAnalysisProps {
 }
 
 const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequestAnalysis, className }) => {
+  const [toastId, setToastId] = useState<string | number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [analysis, setAnalysis] = useState<AIAnalysisResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const [currentTicker, setCurrentTicker] = useState<string>(ticker);
   const [analysisRequested, setAnalysisRequested] = useState<boolean>(false);
-  const [toastId, setToastId] = useState<string | number | null>(null);
 
   // When ticker changes, reset state but keep any existing analysis
   useEffect(() => {
