@@ -43,6 +43,7 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
       toast.error(`AI Analysis error: ${errorMessage}`);
       console.error("AI Analysis error:", error);
     } finally {
+      // Ensure loading state is always set to false when the analysis is complete
       setIsLoading(false);
     }
   };
