@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,6 +26,7 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
   const isMobile = useIsMobile();
   const [toastId, setToastId] = useState<string | number | null>(null);
   const analysisRequestedRef = useRef(false);
+  const analysisTimeoutRef = useRef<number | null>(null);
   
   const handleRequestAnalysis = async () => {
     // Only proceed if we're not already loading
@@ -36,6 +38,12 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
       setToastId(null);
     }
     
+    // Clear any existing timeout
+    if (analysisTimeoutRef.current) {
+      window.clearTimeout(analysisTimeoutRef.current);
+      analysisTimeoutRef.current = null;
+    }
+    
     setIsLoading(true);
     setError(null);
     analysisRequestedRef.current = true;
@@ -44,8 +52,26 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
     const id = toast.loading("AI is analyzing stock data...");
     setToastId(id);
     
+    // Set a timeout to handle cases where the API takes too long
+    analysisTimeoutRef.current = window.setTimeout(() => {
+      if (isLoading && analysisRequestedRef.current) {
+        // If still loading after 30 seconds, abort and show timeout message
+        toast.dismiss(id);
+        toast.error("Analysis is taking too long. Using local algorithms instead.");
+        analysisRequestedRef.current = false;
+        setIsLoading(false);
+        setToastId(null);
+      }
+    }, 30000); // 30 second timeout
+    
     try {
       const result = await onRequestAnalysis();
+      
+      // Clear the timeout as we got a response
+      if (analysisTimeoutRef.current) {
+        window.clearTimeout(analysisTimeoutRef.current);
+        analysisTimeoutRef.current = null;
+      }
       
       // Only proceed with updating state if the component is still mounted for this ticker
       if (analysisRequestedRef.current) {
@@ -62,6 +88,12 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
         }
       }
     } catch (error) {
+      // Clear the timeout as we got an error response
+      if (analysisTimeoutRef.current) {
+        window.clearTimeout(analysisTimeoutRef.current);
+        analysisTimeoutRef.current = null;
+      }
+      
       if (analysisRequestedRef.current) {
         const errorMessage = error.message || "Failed to generate analysis";
         setError(errorMessage);
@@ -97,11 +129,15 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
     }
   }, [analysis]);
 
-  // Clean up any toast and reset request flag when unmounting
+  // Clean up any toast, timeout, and reset request flag when unmounting
   useEffect(() => {
     return () => {
       if (toastId) {
         toast.dismiss(toastId);
+      }
+      if (analysisTimeoutRef.current) {
+        window.clearTimeout(analysisTimeoutRef.current);
+        analysisTimeoutRef.current = null;
       }
       analysisRequestedRef.current = false;
     };
@@ -116,6 +152,12 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
     if (toastId) {
       toast.dismiss(toastId);
       setToastId(null);
+    }
+    
+    // Clear any existing timeout
+    if (analysisTimeoutRef.current) {
+      window.clearTimeout(analysisTimeoutRef.current);
+      analysisTimeoutRef.current = null;
     }
     
     // Reset loading and error states
