@@ -25,6 +25,7 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
   const isMobile = useIsMobile();
   const [currentTicker, setCurrentTicker] = useState<string>(ticker);
   const [analysisRequested, setAnalysisRequested] = useState<boolean>(false);
+  const [toastId, setToastId] = useState<string | number | null>(null);
 
   // When ticker changes, reset state but keep any existing analysis
   useEffect(() => {
@@ -40,7 +41,7 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
         setToastId(null);
       }
     }
-  }, [ticker, currentTicker]);
+  }, [ticker, currentTicker, toastId]);
 
   // Clean up any toast when unmounting
   useEffect(() => {
@@ -57,8 +58,6 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
       window.dispatchEvent(event);
     }
   }, [analysis]);
-
-  const [toastId, setToastId] = useState<string | number | null>(null);
 
   const handleRequestAnalysis = async () => {
     // Only proceed if we're not already loading
