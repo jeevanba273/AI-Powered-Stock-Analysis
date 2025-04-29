@@ -23,7 +23,6 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
   const [analysis, setAnalysis] = useState<AIAnalysisResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const isMobile = useIsMobile();
-  const [toastId, setToastId] = useState<string | number | null>(null);
   const [currentTicker, setCurrentTicker] = useState<string>(ticker);
   const [analysisRequested, setAnalysisRequested] = useState<boolean>(false);
 
@@ -58,6 +57,8 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
       window.dispatchEvent(event);
     }
   }, [analysis]);
+
+  const [toastId, setToastId] = useState<string | number | null>(null);
 
   const handleRequestAnalysis = async () => {
     // Only proceed if we're not already loading
