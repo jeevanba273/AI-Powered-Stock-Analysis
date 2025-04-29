@@ -10,6 +10,7 @@ import { AIAnalysisResponse } from '@/services/aiService';
 import AIAnalysisResults from './AIAnalysisResults';
 import AILoadingState from './AILoadingState';
 import AIErrorState from './AIErrorState';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface StockAnalysisProps {
   ticker: string;
@@ -22,6 +23,7 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
   const [isLoading, setIsLoading] = useState(false);
   const [analysis, setAnalysis] = useState<AIAnalysisResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   const handleRequestAnalysis = async () => {
     setIsLoading(true);
@@ -66,7 +68,7 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
   return (
     <Card className={cn("h-full", className)}>
       <CardHeader>
-        <CardTitle className="text-lg font-semibold flex items-center justify-between">
+        <CardTitle className={cn("text-lg font-semibold flex items-center justify-between", isMobile && "flex-col items-start gap-2")}>
           <div className="flex items-center">
             <Brain className="w-5 h-5 mr-2 text-primary" />
             <span>AI-Powered Analysis</span>
@@ -85,6 +87,16 @@ const StockAnalysis: React.FC<StockAnalysisProps> = ({ ticker, stockData, onRequ
             onDismiss={() => setError(null)} 
             onRetry={handleRequestAnalysis}
           />
+        ) : isLoading ? (
+          <div className="flex flex-col items-center justify-center py-8 space-y-4 text-center">
+            <CircleDashed className="w-12 h-12 animate-spin text-primary" />
+            <div>
+              <h3 className="font-medium text-lg">Analyzing {ticker}...</h3>
+              <p className="text-muted-foreground text-sm max-w-xs mx-auto mt-1">
+                Our AI is analyzing technical indicators, price patterns, and market trends
+              </p>
+            </div>
+          </div>
         ) : !analysis ? (
           <AILoadingState ticker={ticker} />
         ) : (
