@@ -3,7 +3,7 @@ import { analyzeNewsSentiment } from './aiService';
 
 // API Configuration
 export const INDIAN_API_KEY = "sk-live-ABJDNr3hqHXiB8PKvxgWwzUU123KyDyIGCq6qfW7";
-export const OPENAI_API_KEY = "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";
+export const OPENAI_API_KEY = "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";
 
 export interface StockDataPoint {
   date: string;
