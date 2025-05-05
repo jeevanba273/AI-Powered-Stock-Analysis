@@ -2,8 +2,8 @@
 
 import { toast } from 'sonner';
 
-// Get API key from indianStockService
-import { OPENAI_API_KEY } from './indianStockService';
+// Get API key from configuration
+import { OPENAI_API_KEY } from '@/config/apiKeys';
 
 export interface AIAnalysisRequest {
   ticker: string;
@@ -465,7 +465,7 @@ export const generateAIAnalysis = async (request: AIAnalysisRequest): Promise<AI
         messages: [
           {
             role: 'system',
-            content: 'You are a professional Indian stock market analyst. Analyze the provided Indian stock data and return ONLY a valid JSON object with these fields: "analysis" (detailed technical analysis with key patterns and trends), "supportResistance" (object with "support" and "resistance" arrays containing numbers only, NO currency symbols), "risk" (number 1-5), "riskLevel" (string: "Very Low", "Low", "Moderate", "High", "Very High"), "recommendation" (string: "Strong Buy", "Buy", "Hold", "Sell", "Strong Sell"), and "technicalPatterns" (array of at least 4 identified patterns like "Double Bottom", "Head and Shoulders", "Cup and Handle", etc). DO NOT include currency symbols in numeric values.'
+            content: 'You are a professional Indian stock market analyst. Analyze the provided Indian stock data and return ONLY a valid JSON object with these fields: "analysis" (detailed technical analysis with key patterns and trends), "supportResistance" (object with "support" and "resistance" arrays containing numbers only, NO currency symbols), "risk" (number 1-5), "riskLevel" (string: "Very Low", "Low", "Moderate", "High", "Very High"), "recommendation" (string: "Strong Buy", "Buy", "Hold", "Sell", "Strong Sell"), and "technicalPatterns" (array of at least 4 identified patterns like "Double Bottom", "Head and Shoulders", "Cup and Handle", etc.). DO NOT include currency symbols in numeric values.'
           },
           {
             role: 'user',
