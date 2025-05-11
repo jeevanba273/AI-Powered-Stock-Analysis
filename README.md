@@ -8,13 +8,13 @@
 [![shadcn/ui](https://img.shields.io/badge/shadcn%2Fui-latest-000.svg)](https://ui.shadcn.com/)
 [![Recharts](https://img.shields.io/badge/Recharts-2.12.7-22B5BF.svg)](https://recharts.org/)
 
-![NeuraStock Banner](https://i.imgur.com/XYZ123.png) <!-- Replace with your banner image URL -->
 
 ## 🚀 Overview
 
 **NeuraStock** is a cutting-edge AI-powered stock analysis platform designed specifically for the Indian stock market. It combines advanced technical analysis with machine learning to provide detailed insights, trend predictions, and intelligent recommendations for investors.
 
-### [✨ Live Demo](https://ai-powered-stock-analysis.up.railway.app/)
+## ✨ Live Demo
+[**NeuraStock**](https://ai-powered-stock-analysis.up.railway.app/)
 
 ## 📋 Key Features
 
@@ -26,16 +26,6 @@
 - **🔍 Comprehensive Stock Database**: Extensive catalog of Indian stocks (NSE & BSE)
 - **📱 Fully Responsive**: Seamless experience across desktop and mobile devices
 
-## 🖼️ Screenshots
-
-<div align="center">
-  <img src="https://i.imgur.com/example1.png" alt="NeuraStock Dashboard" width="80%"/>
-  <p><em>Main dashboard with AI analysis and stock charts</em></p>
-  
-  <img src="https://i.imgur.com/example2.png" alt="Technical Patterns" width="40%"/>
-  <img src="https://i.imgur.com/example3.png" alt="Sentiment Analysis" width="40%"/>
-  <p><em>Technical pattern detection and news sentiment analysis</em></p>
-</div>
 
 ## 🛠️ Technologies Used
 
@@ -167,9 +157,6 @@ The application is currently deployed on [Railway](https://railway.app/). To dep
 - [ ] Backtesting tools for strategy validation
 - [ ] Export/share analysis reports
 
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgements
 
@@ -177,25 +164,17 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [OpenAI API](https://openai.com/api/) for AI analysis and sentiment processing
 - [TradingView](https://www.tradingview.com/) for chart inspiration
 - [shadcn/ui](https://ui.shadcn.com/) for the beautiful UI components
-- [Alpha Vantage](https://www.alphavantage.co/) for market data API concepts
 
-## 📬 Contact
-
-For questions, suggestions, or collaborations:
-
-- **Email**: [your.email@example.com](mailto:your.email@example.com)
-- **Twitter**: [@yourusername](https://twitter.com/yourusername)
-- **LinkedIn**: [Your Name](https://linkedin.com/in/yourname)
 
 ---
 
 <p align="center">
-  Built with ❤️ by <a href="https://github.com/yourusername">Your Name</a>
+  Built with ❤️ by <a href="https://github.com/jeevanba273">JEEVAN B A</a>
 </p>
 
 <p align="center">
   <a href="https://ai-powered-stock-analysis.up.railway.app/">Visit NeuraStock</a> | 
-  <a href="https://github.com/yourusername/neurastock/issues">Report Bug</a> | 
-  <a href="https://github.com/yourusername/neurastock/issues">Request Feature</a>
+  <a href="https://github.com/jeevanba273/AI-Powered-Stock-Analysis/issues">Report Bug</a> | 
+  <a href="https://github.com/jeevanba273/AI-Powered-Stock-Analysis/issues">Request Feature</a>
 </p>
 
