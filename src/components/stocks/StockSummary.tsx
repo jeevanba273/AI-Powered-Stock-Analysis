@@ -68,6 +68,21 @@ const StockSummary: React.FC<StockSummaryProps> = ({
     }
   };
 
+  // Function to format date to dd/mm/yyyy
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      });
+    } catch (error) {
+      console.error('Date formatting error:', error);
+      return dateString; // Return original string if formatting fails
+    }
+  };
+
   return (
     <Card className={cn("h-full", className)}>
       <CardHeader className="pb-2">
@@ -83,7 +98,7 @@ const StockSummary: React.FC<StockSummaryProps> = ({
             )}></span>
             <span className="mr-2">{formatMarketStatus(marketStatus)}</span>
             <Clock className="h-3 w-3 mr-1" />
-            <span>{lastUpdated}</span>
+            <span>{formatDate(lastUpdated)}</span>
           </div>
         </CardTitle>
       </CardHeader>

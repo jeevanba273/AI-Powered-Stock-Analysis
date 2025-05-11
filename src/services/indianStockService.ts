@@ -281,6 +281,10 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
       
       const marketStatus = isMarketOpenInIST() ? 'open' : 'closed';
       
+      // Format lastUpdated consistently to ensure it can be parsed properly
+      const now = new Date();
+      const formattedDate = now.toISOString();
+      
       const pe = typeof stockDetails.stats.peRatio === 'number' ? stockDetails.stats.peRatio : 0;
       const dividend = typeof stockDetails.stats.divYield === 'number' 
         ? `${stockDetails.stats.divYield}%` 
@@ -300,7 +304,7 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
         changePercent,
         currency: '₹',
         marketStatus,
-        lastUpdated: new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }),
+        lastUpdated: formattedDate,
         stats: {
           open: openPrice,
           high: highPrice,
