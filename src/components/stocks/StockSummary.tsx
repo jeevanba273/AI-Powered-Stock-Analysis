@@ -84,7 +84,13 @@ const StockSummary: React.FC<StockSummaryProps> = ({
         hour12: true
       });
       
-      return `${formattedDate} ${formattedTime}`;
+      return (
+        <>
+          <span>{formattedDate}</span>
+          <span className="mx-2">|</span>
+          <span>{formattedTime}</span>
+        </>
+      );
     } catch (error) {
       console.error('Date formatting error:', error);
       return dateString; // Return original string if formatting fails
@@ -106,7 +112,7 @@ const StockSummary: React.FC<StockSummaryProps> = ({
             )}></span>
             <span className="mr-2">{formatMarketStatus(marketStatus)}</span>
             <Clock className="h-3 w-3 mr-1" />
-            <span>{formatDateTime(lastUpdated)}</span>
+            {formatDateTime(lastUpdated)}
           </div>
         </CardTitle>
       </CardHeader>
