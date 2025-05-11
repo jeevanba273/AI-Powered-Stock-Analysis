@@ -22,6 +22,7 @@
 - **📈 Real-time Technical Analysis**: Get support/resistance levels, technical patterns, and risk assessments
 - **🔮 Trend Prediction**: Short, medium, and long-term trend forecasting
 - **📊 Interactive Charts**: Visualize price movements and volume with responsive charts
+- **📰 News Sentiment Analysis**: AI-driven analysis of news articles to gauge market sentiment
 - **🔍 Comprehensive Stock Database**: Extensive catalog of Indian stocks (NSE & BSE)
 - **📱 Fully Responsive**: Seamless experience across desktop and mobile devices
 
@@ -32,8 +33,8 @@
   <p><em>Main dashboard with AI analysis and stock charts</em></p>
   
   <img src="https://i.imgur.com/example2.png" alt="Technical Patterns" width="40%"/>
-  <img src="https://i.imgur.com/example3.png" alt="Trend Prediction" width="40%"/>
-  <p><em>Technical pattern detection and trend prediction</em></p>
+  <img src="https://i.imgur.com/example3.png" alt="Sentiment Analysis" width="40%"/>
+  <p><em>Technical pattern detection and news sentiment analysis</em></p>
 </div>
 
 ## 🛠️ Technologies Used
@@ -50,6 +51,7 @@
 - **Technical Indicators**: Moving averages, RSI, MACD, Bollinger Bands
 - **Pattern Recognition**: Detects common chart patterns (e.g., double tops, head & shoulders)
 - **AI Integration**: Machine learning models for stock analysis and recommendations
+- **Sentiment Analysis**: Processes news content to determine market sentiment
 
 ### Data Handling
 - **React Query**: Efficient data fetching and state management
@@ -61,11 +63,13 @@
 - **AI Analysis Engine**: Processes historical data to generate insights
 - **Technical Pattern Detection**: Identifies chart patterns and their significance
 - **Support/Resistance Calculator**: Determines key price levels
+- **News Sentiment Analyzer**: Evaluates news articles for positive/negative sentiment
 
 ### Visualization
 - **Price Chart**: Interactive area chart with tooltips
 - **Volume Analysis**: Bar chart showing trading volume
 - **Trend Indicators**: Visual representation of trend directions
+- **Sentiment Indicators**: Visual breakdown of positive vs negative news
 
 ### User Interface
 - **Stock Search**: Fast search with autocomplete for Indian stocks
@@ -151,6 +155,7 @@ The application is currently deployed on [Railway](https://railway.app/). To dep
    - Support and resistance levels are calculated using local minima/maxima
 3. **AI Processing**:
    - Data is processed to generate risk assessment and trend predictions
+   - News articles are analyzed for sentiment analysis and market mood
    - Machine learning models evaluate multiple factors to provide recommendations
 4. **Visualization**: Results are displayed through interactive charts and visual components
 
@@ -159,7 +164,6 @@ The application is currently deployed on [Railway](https://railway.app/). To dep
 - [ ] Portfolio tracking and management
 - [ ] Custom watchlists and alerts
 - [ ] Advanced screener with AI-powered filters
-- [ ] Sentiment analysis of news and social media
 - [ ] Backtesting tools for strategy validation
 - [ ] Export/share analysis reports
 
