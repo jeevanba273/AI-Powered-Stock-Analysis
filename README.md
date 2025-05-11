@@ -173,9 +173,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgements
 
+- [IndianAPI](https://indianapi.in/) for market data API
+- [OpenAI API](https://openai.com/api/) for AI analysis and sentiment processing
 - [TradingView](https://www.tradingview.com/) for chart inspiration
-- [Alpha Vantage](https://www.alphavantage.co/) for market data API concepts
 - [shadcn/ui](https://ui.shadcn.com/) for the beautiful UI components
+- [Alpha Vantage](https://www.alphavantage.co/) for market data API concepts
 
 ## 📬 Contact
 
@@ -196,3 +198,4 @@ For questions, suggestions, or collaborations:
   <a href="https://github.com/yourusername/neurastock/issues">Report Bug</a> | 
   <a href="https://github.com/yourusername/neurastock/issues">Request Feature</a>
 </p>
+
