@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowUpRight, ArrowDownRight, Clock, ChevronRight, XCircle } from 'lucide-react';
@@ -68,15 +67,24 @@ const StockSummary: React.FC<StockSummaryProps> = ({
     }
   };
 
-  // Function to format date to dd/mm/yyyy
-  const formatDate = (dateString: string) => {
+  // Function to format date and time
+  const formatDateTime = (dateString: string) => {
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-GB', {
+      const formattedDate = date.toLocaleDateString('en-GB', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
       });
+      
+      const formattedTime = date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      });
+      
+      return `${formattedDate} ${formattedTime}`;
     } catch (error) {
       console.error('Date formatting error:', error);
       return dateString; // Return original string if formatting fails
@@ -98,7 +106,7 @@ const StockSummary: React.FC<StockSummaryProps> = ({
             )}></span>
             <span className="mr-2">{formatMarketStatus(marketStatus)}</span>
             <Clock className="h-3 w-3 mr-1" />
-            <span>{formatDate(lastUpdated)}</span>
+            <span>{formatDateTime(lastUpdated)}</span>
           </div>
         </CardTitle>
       </CardHeader>
