@@ -1,7 +1,5 @@
 // This service connects to the OpenAI API
 
-import { toast } from 'sonner';
-
 // Get API key from configuration
 import { OPENAI_API_KEY } from '@/config/apiKeys';
 
@@ -381,29 +379,24 @@ const generateAnalysisText = (stockData: any, patterns: string[], recommendation
 // Actual OpenAI API call
 export const generateAIAnalysis = async (request: AIAnalysisRequest): Promise<AIAnalysisResponse> => {
   try {
-    toast.loading("AI is analyzing stock data...", { id: "ai-analysis" });
-    
     // First try to generate a more accurate analysis using our own algorithms
     try {
       // Calculate risk based on stock volatility and fundamentals
       const risk = calculateRiskLevel(request.stockData);
       const riskLevel = getRiskLevelFromValue(risk);
-      
+
       // Detect patterns from price movements
       const patterns = detectTechnicalPatterns(request.stockData);
-      
+
       // Calculate support and resistance
       const supportResistance = calculateSupportResistance(request.stockData);
-      
+
       // Generate recommendation
       const recommendation = generateRecommendation(request.stockData, risk);
-      
+
       // Generate detailed analysis text
       const analysisText = generateAnalysisText(request.stockData, patterns, recommendation, risk);
-      
-      toast.dismiss("ai-analysis");
-      toast.success("AI analysis generated successfully");
-      
+
       // Return our computed analysis
       return {
         analysis: analysisText,
@@ -481,7 +474,6 @@ export const generateAIAnalysis = async (request: AIAnalysisRequest): Promise<AI
     }
     
     const data = await response.json();
-    toast.dismiss("ai-analysis");
     console.log("OpenAI response:", data.choices[0].message.content);
     
     try {
@@ -515,7 +507,6 @@ export const generateAIAnalysis = async (request: AIAnalysisRequest): Promise<AI
     } catch (parseError) {
       // If parsing fails, use our local algorithms as a fallback
       console.error("Failed to parse OpenAI response as JSON:", parseError);
-      toast.error("Could not parse AI analysis properly. Using algorithmic analysis instead.");
       
       // Calculate risk based on stock volatility and fundamentals
       const risk = calculateRiskLevel(request.stockData);
@@ -543,8 +534,6 @@ export const generateAIAnalysis = async (request: AIAnalysisRequest): Promise<AI
       };
     }
   } catch (error) {
-    toast.dismiss("ai-analysis");
-    toast.error("Failed to generate AI analysis");
     console.error("AI analysis error:", error);
     
     // Use our local algorithms as a fallback
@@ -616,8 +605,6 @@ export const analyzeNewsSentiment = async (ticker: string, newsData: any[]): Pro
   }
   
   try {
-    toast.loading("Analyzing news sentiment...", { id: "news-sentiment" });
-    
     // Format news data for the prompt
     const newsText = newsData.map((item, idx) => 
       `${idx + 1}. ${item.title} (${item.published})`
@@ -650,8 +637,7 @@ export const analyzeNewsSentiment = async (ticker: string, newsData: any[]): Pro
     }
     
     const data = await response.json();
-    toast.dismiss("news-sentiment");
-    
+
     try {
       // Try to parse the content as JSON
       const content = data.choices[0].message.content;
@@ -672,7 +658,6 @@ export const analyzeNewsSentiment = async (ticker: string, newsData: any[]): Pro
       };
     }
   } catch (error) {
-    toast.dismiss("news-sentiment");
     console.error("News sentiment analysis error:", error);
     return {
       overall: "Neutral",
