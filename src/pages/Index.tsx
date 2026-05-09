@@ -148,11 +148,11 @@ const Index = () => {
                 <div className="ns-price-block">
                   <div className="ns-price tnum">
                     <span className="ns-currency">₹</span>
-                    <span className="mono">{stockData.price.toFixed(2)}</span>
+                    <span className="mono">{Number(stockData.price).toFixed(2)}</span>
                   </div>
                   <div className={`ns-price-change ${stockData.change >= 0 ? 'pos' : 'neg'}`}>
                     {stockData.change >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-                    <span className="mono tnum">{stockData.change >= 0 ? '+' : ''}{stockData.change.toFixed(2)}</span>
+                    <span className="mono tnum">{stockData.change >= 0 ? '+' : ''}{Number(stockData.change).toFixed(2)}</span>
                     <span style={{ opacity: 0.5 }}>·</span>
                     <span className="mono tnum">{stockData.change >= 0 ? '+' : ''}{Number(stockData.changePercent).toFixed(2)}%</span>
                   </div>

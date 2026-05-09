@@ -594,7 +594,16 @@ function getRiskLevelFromValue(risk: number): string {
 }
 
 // AI-based news sentiment analysis
+// OpenAI calls from browser are blocked by CORS — return neutral defaults
+// TODO: move to server-side proxy when OpenAI key is configured
 export const analyzeNewsSentiment = async (ticker: string, newsData: any[]): Promise<any> => {
+  return {
+    overall: "Neutral",
+    positivePercentage: 50,
+    neutralPercentage: 30,
+    negativePercentage: 20
+  };
+
   if (!newsData || newsData.length === 0) {
     return {
       overall: "Neutral",
