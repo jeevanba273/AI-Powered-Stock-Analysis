@@ -53,23 +53,23 @@ const StockChart: React.FC<StockChartProps> = ({ data, className, onTimeFrameCha
     const chart = createChart(chartRef.current, {
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
-        textColor: 'oklch(0.6 0.012 240)',
+        textColor: '#8b8fa3',
         fontFamily: "'Geist Mono', monospace",
         fontSize: 10,
       },
       grid: {
-        vertLines: { color: 'oklch(0.32 0.014 240 / 0.3)' },
-        horzLines: { color: 'oklch(0.32 0.014 240 / 0.3)' },
+        vertLines: { color: 'rgba(55, 60, 80, 0.3)' },
+        horzLines: { color: 'rgba(55, 60, 80, 0.3)' },
       },
       crosshair: {
-        vertLine: { color: 'oklch(0.6 0.012 240 / 0.5)', style: 3, width: 1 },
-        horzLine: { color: 'oklch(0.6 0.012 240 / 0.5)', style: 3, width: 1 },
+        vertLine: { color: 'rgba(135, 140, 160, 0.5)', style: 3, width: 1 },
+        horzLine: { color: 'rgba(135, 140, 160, 0.5)', style: 3, width: 1 },
       },
       rightPriceScale: {
-        borderColor: 'oklch(0.32 0.014 240 / 0.5)',
+        borderColor: 'rgba(55, 60, 80, 0.5)',
       },
       timeScale: {
-        borderColor: 'oklch(0.32 0.014 240 / 0.5)',
+        borderColor: 'rgba(55, 60, 80, 0.5)',
         timeVisible: false,
       },
       handleScroll: true,
@@ -79,13 +79,13 @@ const StockChart: React.FC<StockChartProps> = ({ data, className, onTimeFrameCha
     chartApi.current = chart;
 
     const area = chart.addSeries(AreaSeries, {
-      topColor: 'oklch(0.78 0.17 155 / 0.35)',
-      bottomColor: 'oklch(0.78 0.17 155 / 0)',
-      lineColor: 'oklch(0.78 0.17 155)',
+      topColor: 'rgba(10, 216, 143, 0.35)',
+      bottomColor: 'rgba(10, 216, 143, 0)',
+      lineColor: '#0AD88F',
       lineWidth: 2,
       crosshairMarkerRadius: 5,
-      crosshairMarkerBorderColor: 'oklch(0.78 0.17 155)',
-      crosshairMarkerBackgroundColor: 'oklch(0.155 0.008 240)',
+      crosshairMarkerBorderColor: '#0AD88F',
+      crosshairMarkerBackgroundColor: '#1e2230',
       priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
     });
     areaSeries.current = area;
@@ -100,7 +100,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, className, onTimeFrameCha
     });
 
     const sma20 = chart.addSeries(LineSeries, {
-      color: 'oklch(0.82 0.13 195)',
+      color: '#5BD4E8',
       lineWidth: 1,
       lineStyle: 2,
       priceLineVisible: false,
@@ -109,7 +109,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, className, onTimeFrameCha
     sma20Series.current = sma20;
 
     const sma50 = chart.addSeries(LineSeries, {
-      color: 'oklch(0.72 0.16 270)',
+      color: '#9D8CFF',
       lineWidth: 1,
       lineStyle: 2,
       priceLineVisible: false,
@@ -148,7 +148,7 @@ const StockChart: React.FC<StockChartProps> = ({ data, className, onTimeFrameCha
       return {
         time: d.date as string,
         value: d.volume || 0,
-        color: isUp ? 'oklch(0.78 0.17 155 / 0.4)' : 'oklch(0.7 0.22 22 / 0.4)',
+        color: isUp ? 'rgba(10, 216, 143, 0.4)' : 'rgba(255, 83, 83, 0.4)',
       };
     });
     volumeSeries.current.setData(volData as any);

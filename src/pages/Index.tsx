@@ -83,32 +83,88 @@ const Index = () => {
     }
   };
 
-  // Loading skeleton
   const LoadingSkeleton = () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <div className="ns-card" style={{ padding: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-        <div>
-          <div className="ns-skeleton" style={{ width: 180, height: 20 }} />
-          <div className="ns-skeleton" style={{ width: 260, height: 14, marginTop: 8 }} />
+      {/* Stock Header skeleton */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', padding: '4px 2px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div className="ns-skeleton" style={{ width: 56, height: 56, borderRadius: 14 }} />
+          <div>
+            <div className="ns-skeleton" style={{ width: 120, height: 22 }} />
+            <div className="ns-skeleton" style={{ width: 200, height: 13, marginTop: 6 }} />
+          </div>
+          <div className="ns-skeleton" style={{ width: 180, height: 28, borderRadius: 99, marginLeft: 8 }} />
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div className="ns-skeleton" style={{ width: 140, height: 32 }} />
-          <div className="ns-skeleton" style={{ width: 100, height: 16, marginTop: 8, marginLeft: 'auto' }} />
+          <div className="ns-skeleton" style={{ width: 160, height: 38, marginLeft: 'auto' }} />
+          <div className="ns-skeleton" style={{ width: 120, height: 24, marginTop: 8, marginLeft: 'auto', borderRadius: 8 }} />
         </div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: 16 }}>
+
+      {/* Bento: Stats + AI skeleton */}
+      <div className="ns-bento">
         <div className="ns-card" style={{ padding: 18 }}>
-          <div className="ns-skeleton" style={{ width: '60%', height: 14 }} />
-          <div className="ns-skeleton" style={{ width: '100%', height: 200, marginTop: 14 }} />
+          <div className="ns-skeleton" style={{ width: '50%', height: 12 }} />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, marginTop: 14, background: 'var(--ns-border)', borderRadius: 12, overflow: 'hidden' }}>
+            {[1,2,3,4,5,6].map(i => (
+              <div key={i} style={{ background: 'var(--ns-surface)', padding: '12px 14px' }}>
+                <div className="ns-skeleton" style={{ width: '60%', height: 10 }} />
+                <div className="ns-skeleton" style={{ width: '80%', height: 14, marginTop: 6 }} />
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 14, padding: 14, borderRadius: 12, background: 'var(--ns-surface)', border: '1px solid var(--ns-border)' }}>
+            <div className="ns-skeleton" style={{ width: '40%', height: 10 }} />
+            <div className="ns-skeleton" style={{ width: '100%', height: 6, marginTop: 14, borderRadius: 99 }} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+              <div className="ns-skeleton" style={{ width: 60, height: 10 }} />
+              <div className="ns-skeleton" style={{ width: 60, height: 10 }} />
+            </div>
+          </div>
         </div>
         <div className="ns-card" style={{ padding: 22 }}>
-          <div className="ns-skeleton" style={{ width: '40%', height: 14 }} />
-          <div className="ns-skeleton" style={{ width: '100%', height: 200, marginTop: 14 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div className="ns-skeleton" style={{ width: 36, height: 36, borderRadius: '50%' }} />
+            <div style={{ flex: 1 }}>
+              <div className="ns-skeleton" style={{ width: '40%', height: 14 }} />
+              <div className="ns-skeleton" style={{ width: '60%', height: 11, marginTop: 4 }} />
+            </div>
+            <div className="ns-skeleton" style={{ width: 140, height: 34, borderRadius: 10 }} />
+          </div>
+          <div style={{ marginTop: 18, padding: '16px 18px', borderRadius: 12, background: 'var(--ns-surface)', border: '1px solid var(--ns-border)' }}>
+            <div className="ns-skeleton" style={{ width: '30%', height: 10 }} />
+            <div className="ns-skeleton" style={{ width: '50%', height: 22, marginTop: 6 }} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 14 }}>
+            {[1,2,3,4].map(i => (
+              <div key={i} style={{ padding: '12px 14px', borderRadius: 11, background: 'var(--ns-surface)', border: '1px solid var(--ns-border)', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div className="ns-skeleton" style={{ width: 32, height: 32, borderRadius: 8 }} />
+                <div style={{ flex: 1 }}>
+                  <div className="ns-skeleton" style={{ width: '70%', height: 12 }} />
+                  <div className="ns-skeleton" style={{ width: '90%', height: 10, marginTop: 4 }} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: 14, padding: '14px 16px', borderRadius: 12, background: 'var(--ns-surface)', border: '1px solid var(--ns-border)' }}>
+            <div className="ns-skeleton" style={{ width: '95%', height: 12 }} />
+            <div className="ns-skeleton" style={{ width: '85%', height: 12 }} />
+            <div className="ns-skeleton" style={{ width: '92%', height: 12 }} />
+            <div className="ns-skeleton" style={{ width: '60%', height: 12 }} />
+          </div>
         </div>
       </div>
+
+      {/* Chart skeleton */}
       <div className="ns-card" style={{ padding: 22 }}>
-        <div className="ns-skeleton" style={{ width: '30%', height: 14 }} />
-        <div className="ns-skeleton" style={{ width: '100%', height: 300, marginTop: 14 }} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
+          <div className="ns-skeleton" style={{ width: 160, height: 12 }} />
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div className="ns-skeleton" style={{ width: 120, height: 30, borderRadius: 10 }} />
+            <div className="ns-skeleton" style={{ width: 200, height: 30, borderRadius: 10 }} />
+          </div>
+        </div>
+        <div className="ns-skeleton" style={{ width: '100%', height: 420, borderRadius: 8 }} />
       </div>
     </div>
   );
