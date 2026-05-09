@@ -2,9 +2,9 @@ import { toast } from 'sonner';
 import { analyzeNewsSentiment } from './aiService';
 import { INDIAN_API_KEY, OPENAI_API_KEY } from '@/config/apiKeys';
 
-// Server configuration — dev server is primary, normal server is fallback
-const PRIMARY_BASE = 'https://dev.indianapi.in';
-const FALLBACK_BASE = 'https://stock.indianapi.in';
+// API calls go through our Express proxy to avoid CORS and hide the API key
+const PRIMARY_BASE = '/api/proxy/dev';
+const FALLBACK_BASE = '/api/proxy/fallback';
 
 export { INDIAN_API_KEY, OPENAI_API_KEY };
 
@@ -69,7 +69,6 @@ export interface MarketIndex {
 const API_TIMEOUT = 10000;
 
 const apiHeaders = () => ({
-  'X-API-Key': INDIAN_API_KEY,
   'Content-Type': 'application/json'
 });
 
@@ -128,7 +127,7 @@ const fetchLiveStockPrice = async (ticker: string): Promise<any> => {
       console.log(`[LivePrice] ${ticker} fallback OK (${Math.round(performance.now() - ft0)}ms)`);
       return {
         ltp: price, open: price, high: price, low: price, close: price,
-        volume: 0, day_change: 0, day_change_percent: data.percentChange || 0
+        volume: 0, day_change: 0, day_change_percent: parseFloat(data.percentChange) || 0
       };
     } catch (fallbackError: any) {
       console.error(`[LivePrice] ${ticker} fallback failed: ${fallbackError.message}`);

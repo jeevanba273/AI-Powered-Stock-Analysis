@@ -154,7 +154,7 @@ const Index = () => {
                     {stockData.change >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
                     <span className="mono tnum">{stockData.change >= 0 ? '+' : ''}{stockData.change.toFixed(2)}</span>
                     <span style={{ opacity: 0.5 }}>·</span>
-                    <span className="mono tnum">{stockData.change >= 0 ? '+' : ''}{stockData.changePercent.toFixed(2)}%</span>
+                    <span className="mono tnum">{stockData.change >= 0 ? '+' : ''}{Number(stockData.changePercent).toFixed(2)}%</span>
                   </div>
                 </div>
               </div>
