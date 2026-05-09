@@ -6,8 +6,8 @@ const DEV_BASE = 'https://dev.indianapi.in';
 const FALLBACK_BASE = 'https://stock.indianapi.in';
 const API_KEY = process.env.INDIAN_API_KEY || process.env.VITE_INDIAN_API_KEY || '';
 
-const proxyRequest = async (baseUrl: string, path: string, method: string, body: any, res: Response) => {
-  const url = `${baseUrl}${path}`;
+const proxyRequest = async (baseUrl: string, path: string, query: string, method: string, body: any, res: Response) => {
+  const url = `${baseUrl}${path}${query ? '?' + query : ''}`;
   const headers: Record<string, string> = {
     'X-API-Key': API_KEY,
     'Content-Type': 'application/json'
@@ -31,14 +31,19 @@ const proxyRequest = async (baseUrl: string, path: string, method: string, body:
   }
 };
 
+const buildQuery = (req: Request): string => {
+  const qs = new URLSearchParams(req.query as Record<string, string>).toString();
+  return qs;
+};
+
 router.all('/dev/{*path}', async (req: Request, res: Response) => {
   const path = '/' + (req.params as any).path;
-  await proxyRequest(DEV_BASE, path, req.method, req.body, res);
+  await proxyRequest(DEV_BASE, path, buildQuery(req), req.method, req.body, res);
 });
 
 router.all('/fallback/{*path}', async (req: Request, res: Response) => {
   const path = '/' + (req.params as any).path;
-  await proxyRequest(FALLBACK_BASE, path, req.method, req.body, res);
+  await proxyRequest(FALLBACK_BASE, path, buildQuery(req), req.method, req.body, res);
 });
 
 export default router;
