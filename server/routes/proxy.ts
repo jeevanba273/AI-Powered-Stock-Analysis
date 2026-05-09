@@ -6,41 +6,50 @@ const DEV_BASE = 'https://dev.indianapi.in';
 const FALLBACK_BASE = 'https://stock.indianapi.in';
 const API_KEY = process.env.INDIAN_API_KEY || process.env.VITE_INDIAN_API_KEY || '';
 
+const doFetch = async (url: string, method: string, body: any): Promise<{ status: number; data: string; contentType: string }> => {
+  const headers: Record<string, string> = {
+    'X-API-Key': API_KEY,
+    'Content-Type': 'application/json'
+  };
+  const options: RequestInit = { method, headers };
+  if (body && method !== 'GET') {
+    options.body = JSON.stringify(body);
+  }
+  const response = await fetch(url, options);
+  const data = await response.text();
+  return { status: response.status, data, contentType: response.headers.get('content-type') || 'application/json' };
+};
+
 const proxyRequest = async (baseUrl: string, path: string, query: string, method: string, body: any, res: Response) => {
   const url = `${baseUrl}${path}${query ? '?' + query : ''}`;
   const tag = baseUrl.includes('dev') ? 'DEV' : 'FALLBACK';
   const t0 = Date.now();
 
-  const headers: Record<string, string> = {
-    'X-API-Key': API_KEY,
-    'Content-Type': 'application/json'
-  };
-
   try {
-    const options: RequestInit = { method, headers };
-    if (body && method !== 'GET') {
-      options.body = JSON.stringify(body);
+    let result = await doFetch(url, method, body);
+
+    // Retry once on 500 (dev server has transient failures)
+    if (result.status >= 500 && tag === 'DEV') {
+      console.warn(`[Proxy:${tag}] ${method} ${path} → ${result.status}, retrying...`);
+      await new Promise(r => setTimeout(r, 300));
+      result = await doFetch(url, method, body);
     }
 
-    const response = await fetch(url, options);
-    const data = await response.text();
     const ms = Date.now() - t0;
 
-    if (!response.ok) {
-      console.error(`[Proxy:${tag}] ${method} ${path}${query ? '?' + query : ''} → ${response.status} (${ms}ms)`);
-      console.error(`[Proxy:${tag}] Response body: ${data.slice(0, 500)}`);
-      console.error(`[Proxy:${tag}] API key used: ${API_KEY ? API_KEY.slice(0, 12) + '...' : 'EMPTY'}`);
+    if (!result.status || result.status >= 400) {
+      console.error(`[Proxy:${tag}] ${method} ${path}${query ? '?' + query : ''} → ${result.status} (${ms}ms)`);
+      console.error(`[Proxy:${tag}] Response body: ${result.data.slice(0, 500)}`);
     } else {
-      console.log(`[Proxy:${tag}] ${method} ${path}${query ? '?' + query.slice(0, 60) : ''} → ${response.status} (${ms}ms) [${data.length}B]`);
+      console.log(`[Proxy:${tag}] ${method} ${path}${query ? '?' + query.slice(0, 60) : ''} → ${result.status} (${ms}ms) [${result.data.length}B]`);
     }
 
-    res.status(response.status);
-    res.setHeader('Content-Type', response.headers.get('content-type') || 'application/json');
-    res.send(data);
+    res.status(result.status);
+    res.setHeader('Content-Type', result.contentType);
+    res.send(result.data);
   } catch (error: any) {
     const ms = Date.now() - t0;
     console.error(`[Proxy:${tag}] ${method} ${path} → NETWORK ERROR (${ms}ms): ${error.message}`);
-    console.error(`[Proxy:${tag}] API key used: ${API_KEY ? API_KEY.slice(0, 12) + '...' : 'EMPTY'}`);
     res.status(502).json({ error: 'Proxy request failed', details: error.message });
   }
 };
