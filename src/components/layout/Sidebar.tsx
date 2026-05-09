@@ -1,11 +1,18 @@
 import React from 'react';
-import { Home, Layers, Activity, Newspaper, Sparkles, Star } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
+import { Home, BarChart3, Newspaper, Star } from 'lucide-react';
 import { popularIndianStocks } from '@/services/indianStockService';
 
 interface SidebarProps {
   activeStock: string;
   onSelectStock: (ticker: string) => void;
 }
+
+const navItems = [
+  { to: '/', icon: Home, label: 'Dashboard' },
+  { to: '/market', icon: BarChart3, label: 'Market' },
+  { to: '/news', icon: Newspaper, label: 'News Feed' },
+];
 
 const Sidebar: React.FC<SidebarProps> = ({ activeStock, onSelectStock }) => {
   return (
@@ -26,11 +33,17 @@ const Sidebar: React.FC<SidebarProps> = ({ activeStock, onSelectStock }) => {
       <div>
         <div className="ns-nav-label">Workspace</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <div className="ns-nav-item active"><Home size={16} /> Dashboard</div>
-          <div className="ns-nav-item"><Layers size={16} /> Portfolio</div>
-          <div className="ns-nav-item"><Activity size={16} /> Screener</div>
-          <div className="ns-nav-item"><Newspaper size={16} /> News Feed</div>
-          <div className="ns-nav-item"><Sparkles size={16} /> AI Insights <span className="ns-nav-badge">NEW</span></div>
+          {navItems.map(item => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.to === '/'}
+              className={({ isActive }) => `ns-nav-item ${isActive ? 'active' : ''}`}
+              style={{ textDecoration: 'none' }}
+            >
+              <item.icon size={16} /> {item.label}
+            </NavLink>
+          ))}
         </div>
       </div>
 

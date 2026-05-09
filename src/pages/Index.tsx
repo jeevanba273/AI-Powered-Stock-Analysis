@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { CircleDashed, AlertCircle, KeyRound, RefreshCcw, Search, ArrowUpRight, ArrowDownRight, Clock } from 'lucide-react';
+import { CircleDashed, AlertCircle, KeyRound, RefreshCcw, Search, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { fetchStockData, StockData, INDIAN_API_KEY } from '@/services/indianStockService';
@@ -10,18 +11,21 @@ import TopBar from '@/components/layout/TopBar';
 import StockChart from '@/components/stocks/StockChart';
 import StockSummary from '@/components/stocks/StockSummary';
 import StockAnalysis from '@/components/stocks/StockAnalysis';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import PeerStrip from '@/components/stocks/PeerStrip';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 const Index = () => {
-  const [activeStock, setActiveStock] = useState<string>('TCS');
+  const { ticker: urlTicker } = useParams<{ ticker: string }>();
+  const navigate = useNavigate();
+  const [activeStock, setActiveStock] = useState<string>(urlTicker || 'TCS');
   const [stockData, setStockData] = useState<StockData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTimeFrame, setActiveTimeFrame] = useState<string>('1M');
 
   useEffect(() => {
-    loadStockData(activeStock);
-  }, []);
+    loadStockData(urlTicker || 'TCS');
+  }, [urlTicker]);
 
   const loadStockData = async (ticker: string) => {
     setIsLoading(true);
@@ -39,19 +43,18 @@ const Index = () => {
   };
 
   const handleStockSearch = (ticker: string) => {
-    loadStockData(ticker);
+    navigate(`/stock/${ticker}`);
   };
 
   const handleAIAnalysis = async (): Promise<AIAnalysisResponse | undefined> => {
     if (!stockData) return;
     try {
-      const analysisResult = await generateAIAnalysis({
+      return await generateAIAnalysis({
         ticker: activeStock,
         stockData: stockData,
         indicators: { sma: true, rsi: true, macd: true },
         newsData: stockData.newsData
       });
-      return analysisResult;
     } catch (error: any) {
       console.error("Analysis error:", error);
       toast.error(`Failed to generate analysis: ${error.message}`);
@@ -59,25 +62,16 @@ const Index = () => {
     }
   };
 
-  const handleRetry = () => {
-    loadStockData(activeStock);
-  };
+  const handleRetry = () => loadStockData(activeStock);
 
   const handleTimeFrameChange = (timeFrame: string) => {
     setActiveTimeFrame(timeFrame);
-    fetchStockData(activeStock)
-      .then(data => setStockData(data))
-      .catch(error => {
-        console.error("Error fetching stock data:", error);
-        toast.error(`Failed to load data for ${activeStock}`);
-      });
   };
 
   const isApiKeyError = error &&
     (error.includes('API authentication failed') ||
      error.includes('API key') ||
-     error.includes('Invalid or expired API key') ||
-     error.includes('Could not validate API key'));
+     error.includes('Invalid or expired API key'));
 
   const formatDateTime = (dateString: string) => {
     try {
@@ -89,17 +83,44 @@ const Index = () => {
     }
   };
 
+  // Loading skeleton
+  const LoadingSkeleton = () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div className="ns-card" style={{ padding: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <div>
+          <div className="ns-skeleton" style={{ width: 180, height: 20 }} />
+          <div className="ns-skeleton" style={{ width: 260, height: 14, marginTop: 8 }} />
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div className="ns-skeleton" style={{ width: 140, height: 32 }} />
+          <div className="ns-skeleton" style={{ width: 100, height: 16, marginTop: 8, marginLeft: 'auto' }} />
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: 16 }}>
+        <div className="ns-card" style={{ padding: 18 }}>
+          <div className="ns-skeleton" style={{ width: '60%', height: 14 }} />
+          <div className="ns-skeleton" style={{ width: '100%', height: 200, marginTop: 14 }} />
+        </div>
+        <div className="ns-card" style={{ padding: 22 }}>
+          <div className="ns-skeleton" style={{ width: '40%', height: 14 }} />
+          <div className="ns-skeleton" style={{ width: '100%', height: 200, marginTop: 14 }} />
+        </div>
+      </div>
+      <div className="ns-card" style={{ padding: 22 }}>
+        <div className="ns-skeleton" style={{ width: '30%', height: 14 }} />
+        <div className="ns-skeleton" style={{ width: '100%', height: 300, marginTop: 14 }} />
+      </div>
+    </div>
+  );
+
   return (
     <div className="ns-app">
       <Sidebar activeStock={activeStock} onSelectStock={handleStockSearch} />
       <main className="ns-main">
-        <TopBar onSelectStock={handleStockSearch} onRefresh={() => loadStockData(activeStock)} />
+        <TopBar onSelectStock={handleStockSearch} onRefresh={handleRetry} />
         <div className="ns-content">
           {isLoading ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 0' }}>
-              <CircleDashed className="animate-spin" size={48} style={{ color: 'var(--ns-accent)', marginBottom: 16 }} />
-              <p style={{ fontSize: 16, color: 'var(--ns-text-2)' }}>Loading stock data...</p>
-            </div>
+            <LoadingSkeleton />
           ) : error ? (
             <div style={{ maxWidth: 600, margin: '40px auto' }}>
               <Alert variant="destructive">
@@ -114,10 +135,7 @@ const Index = () => {
                     <span style={{ fontWeight: 600 }}>API Key Issue Detected</span>
                   </div>
                   <p style={{ fontSize: 13, color: 'var(--ns-text-2)', lineHeight: 1.6 }}>
-                    The API key has expired, is invalid, or the API service is temporarily unavailable.
-                  </p>
-                  <p style={{ fontSize: 12, color: 'var(--ns-text-3)', marginTop: 8 }} className="mono">
-                    Key: {INDIAN_API_KEY.slice(0, 10)}...{INDIAN_API_KEY.slice(-5)}
+                    The API key has expired, is invalid, or the service is temporarily unavailable.
                   </p>
                 </div>
               )}
@@ -161,42 +179,51 @@ const Index = () => {
 
               {/* Bento: Stats + AI */}
               <div className="ns-bento">
-                <StockSummary
-                  ticker={stockData.ticker}
-                  companyName={stockData.companyName}
-                  price={stockData.price}
-                  change={stockData.change}
-                  changePercent={stockData.changePercent}
-                  currency={stockData.currency}
-                  marketStatus={stockData.marketStatus}
-                  lastUpdated={stockData.lastUpdated}
-                  stats={stockData.stats}
-                  stockDetails={stockData.rawStockDetails}
-                />
-                <StockAnalysis
-                  ticker={stockData.ticker}
-                  stockData={stockData}
-                  onRequestAnalysis={handleAIAnalysis}
-                />
+                <ErrorBoundary fallbackMessage="Failed to load stock stats">
+                  <StockSummary
+                    ticker={stockData.ticker}
+                    companyName={stockData.companyName}
+                    price={stockData.price}
+                    change={stockData.change}
+                    changePercent={stockData.changePercent}
+                    currency={stockData.currency}
+                    marketStatus={stockData.marketStatus}
+                    lastUpdated={stockData.lastUpdated}
+                    stats={stockData.stats}
+                    stockDetails={stockData.rawStockDetails}
+                  />
+                </ErrorBoundary>
+                <ErrorBoundary fallbackMessage="Failed to load AI analysis">
+                  <StockAnalysis
+                    ticker={stockData.ticker}
+                    stockData={stockData}
+                    onRequestAnalysis={handleAIAnalysis}
+                  />
+                </ErrorBoundary>
               </div>
 
               {/* Chart */}
-              <StockChart
-                data={{
-                  ticker: stockData.ticker,
-                  stockData: stockData.stockData,
-                  indicators: stockData.indicators
-                }}
-                onTimeFrameChange={handleTimeFrameChange}
-                activeTimeFrame={activeTimeFrame}
-              />
+              <ErrorBoundary fallbackMessage="Failed to load chart">
+                <StockChart
+                  data={{
+                    ticker: stockData.ticker,
+                    stockData: stockData.stockData,
+                    indicators: stockData.indicators
+                  }}
+                  onTimeFrameChange={handleTimeFrameChange}
+                  activeTimeFrame={activeTimeFrame}
+                />
+              </ErrorBoundary>
+
+              {/* Peer Comparison */}
+              <ErrorBoundary fallbackMessage="Failed to load peer comparison">
+                <PeerStrip stockDetails={stockData.rawStockDetails} />
+              </ErrorBoundary>
 
               {/* News Sentiment */}
               <div className="ns-card">
                 <div className="ns-card-header">
-                  <div className="ns-card-title">
-                    <Search size={14} /> News Sentiment
-                  </div>
+                  <div className="ns-card-title"><Search size={14} /> News Sentiment</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                   <span style={{ fontSize: 12, color: 'var(--ns-text-3)' }}>Overall Sentiment</span>
@@ -209,12 +236,7 @@ const Index = () => {
                   </span>
                 </div>
                 <div style={{ width: '100%', background: 'var(--ns-surface)', borderRadius: 99, height: 6, marginBottom: 12 }}>
-                  <div
-                    style={{
-                      width: `${stockData.newsSentiment?.positivePercentage || 50}%`,
-                      background: 'var(--ns-profit)', height: 6, borderRadius: 99
-                    }}
-                  />
+                  <div style={{ width: `${stockData.newsSentiment?.positivePercentage || 50}%`, background: 'var(--ns-profit)', height: 6, borderRadius: 99 }} />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {[
