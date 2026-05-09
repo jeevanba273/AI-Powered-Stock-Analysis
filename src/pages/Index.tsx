@@ -93,7 +93,7 @@ const Index = () => {
     <div className="ns-app">
       <Sidebar activeStock={activeStock} onSelectStock={handleStockSearch} />
       <main className="ns-main">
-        <TopBar onSelectStock={handleStockSearch} />
+        <TopBar onSelectStock={handleStockSearch} onRefresh={() => loadStockData(activeStock)} />
         <div className="ns-content">
           {isLoading ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 0' }}>

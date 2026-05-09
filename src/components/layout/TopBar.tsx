@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Bell, Settings, X, LogOut } from 'lucide-react';
+import { Search, Bell, X, LogOut, RefreshCcw } from 'lucide-react';
+import { toast } from 'sonner';
 import { stocksCatalog, StockInfo } from '@/data/stocksCatalog';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface TopBarProps {
   onSelectStock: (ticker: string) => void;
+  onRefresh?: () => void;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ onSelectStock }) => {
+const TopBar: React.FC<TopBarProps> = ({ onSelectStock, onRefresh }) => {
   const { username, logout } = useAuth();
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
@@ -107,6 +109,22 @@ const TopBar: React.FC<TopBarProps> = ({ onSelectStock }) => {
       </div>
 
       <div className="ns-topbar-right">
+        <button
+          className="ns-refresh-btn"
+          onClick={async () => {
+            try {
+              await fetch('/api/proxy/clear-cache', { method: 'POST' });
+              toast.success('Cache cleared — refreshing data');
+              onRefresh?.();
+            } catch {
+              toast.error('Failed to clear cache');
+            }
+          }}
+          title="Clear cache and refresh all data"
+        >
+          <RefreshCcw size={14} />
+          <span>Refresh</span>
+        </button>
         <div className="ns-icon-btn"><Bell size={16} /></div>
         <div className="ns-avatar">{username ? username.slice(0, 2).toUpperCase() : 'U'}</div>
         <div className="ns-icon-btn" onClick={logout} title="Logout" style={{ cursor: 'pointer' }}><LogOut size={16} /></div>
