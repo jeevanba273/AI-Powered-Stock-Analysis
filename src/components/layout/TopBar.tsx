@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Bell, Settings, X } from 'lucide-react';
+import { Search, Bell, Settings, X, LogOut } from 'lucide-react';
 import { stocksCatalog, StockInfo } from '@/data/stocksCatalog';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface TopBarProps {
   onSelectStock: (ticker: string) => void;
 }
 
 const TopBar: React.FC<TopBarProps> = ({ onSelectStock }) => {
+  const { username, logout } = useAuth();
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const [filtered, setFiltered] = useState<StockInfo[]>([]);
@@ -106,8 +108,8 @@ const TopBar: React.FC<TopBarProps> = ({ onSelectStock }) => {
 
       <div className="ns-topbar-right">
         <div className="ns-icon-btn"><Bell size={16} /></div>
-        <div className="ns-icon-btn"><Settings size={16} /></div>
-        <div className="ns-avatar">JB</div>
+        <div className="ns-avatar">{username ? username.slice(0, 2).toUpperCase() : 'U'}</div>
+        <div className="ns-icon-btn" onClick={logout} title="Logout" style={{ cursor: 'pointer' }}><LogOut size={16} /></div>
       </div>
     </header>
   );
