@@ -289,47 +289,29 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
   toast.loading(`Fetching data for ${ticker}...`, { id: "fetch-stock" });
 
   try {
-    // All 4 calls fire in parallel
-    const [liveResult, historyResult, detailsResult, newsResult] = await Promise.allSettled([
-      fetchLiveStockPrice(ticker),
-      fetchHistoricalData(ticker),
-      fetchStockDetails(ticker),
-      fetchCompanyNews(ticker)
+    // Critical calls (price, history, details) must ALL succeed — they include fallback logic internally
+    // News is optional — runs in parallel but failure won't block
+    const [criticalData, companyNews] = await Promise.all([
+      Promise.all([
+        fetchLiveStockPrice(ticker),
+        fetchHistoricalData(ticker),
+        fetchStockDetails(ticker)
+      ]),
+      fetchCompanyNews(ticker).catch(() => [] as any[])
     ]);
 
-    // Live price is mandatory — can't show anything without it
-    if (liveResult.status === 'rejected') {
-      throw liveResult.reason;
-    }
-    const liveStockData = liveResult.value;
-
-    // Historical & details degrade gracefully
-    const historicalData = historyResult.status === 'fulfilled' ? historyResult.value : [];
-    if (historyResult.status === 'rejected') {
-      console.error(`[fetchStockData] Historical data unavailable for ${ticker}: ${historyResult.reason?.message}`);
-    }
-
-    const stockDetails = detailsResult.status === 'fulfilled' ? detailsResult.value : {};
-    if (detailsResult.status === 'rejected') {
-      console.error(`[fetchStockData] Stock details unavailable for ${ticker}: ${detailsResult.reason?.message}`);
-    }
-
-    const companyNews = newsResult.status === 'fulfilled' ? newsResult.value : [];
+    const [liveStockData, historicalData, stockDetails] = criticalData;
 
     // Sentiment — fire and forget, don't block the UI
     let newsSentiment: StockData['newsSentiment'] | undefined;
     if (companyNews.length > 0 && OPENAI_API_KEY) {
       analyzeNewsSentiment(ticker, companyNews)
-        .then(sentiment => {
-          console.log(`[Sentiment] ${ticker} OK:`, sentiment.overall);
-        })
-        .catch(err => {
-          console.warn(`[Sentiment] ${ticker} failed: ${err.message}`);
-        });
+        .then(sentiment => console.log(`[Sentiment] ${ticker} OK:`, sentiment.overall))
+        .catch(err => console.warn(`[Sentiment] ${ticker} failed: ${err.message}`));
     }
 
     const totalMs = Math.round(performance.now() - t0);
-    console.log(`[fetchStockData] ${ticker} complete in ${totalMs}ms — history:${historicalData.length}pts details:${detailsResult.status} news:${companyNews.length}`);
+    console.log(`[fetchStockData] ${ticker} complete in ${totalMs}ms — history:${historicalData.length}pts news:${companyNews.length}`);
     toast.success(`Data loaded for ${ticker}`, { id: "fetch-stock" });
 
     const pe = typeof stockDetails.stats?.peRatio === 'number' ? stockDetails.stats.peRatio : 0;
