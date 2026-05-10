@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { CircleDashed, AlertCircle, KeyRound, RefreshCcw, Search, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { fetchStockData, StockData, INDIAN_API_KEY } from '@/services/indianStockService';
+import { fetchStockData, fetchHistoricalData, StockData, INDIAN_API_KEY } from '@/services/indianStockService';
 import { generateAIAnalysis, AIAnalysisResponse } from '@/services/aiService';
 import Sidebar from '@/components/layout/Sidebar';
 import TopBar from '@/components/layout/TopBar';
@@ -64,8 +64,29 @@ const Index = () => {
 
   const handleRetry = () => loadStockData(activeStock);
 
-  const handleTimeFrameChange = (timeFrame: string) => {
+  const TF_TO_PERIOD: Record<string, string> = {
+    '1W': '1m', '1M': '1m', '3M': '6m', '6M': '1yr',
+    '1Y': '1yr', '3Y': '3yr', '5Y': '5yr', 'MAX': 'max'
+  };
+
+  const TF_TO_DAYS: Record<string, number> = {
+    '1W': 5, '1M': 22, '3M': 66, '6M': 132,
+    '1Y': 252, '3Y': 756, '5Y': 1260, 'MAX': 99999
+  };
+
+  const handleTimeFrameChange = async (timeFrame: string) => {
     setActiveTimeFrame(timeFrame);
+    const period = TF_TO_PERIOD[timeFrame] || '1yr';
+    try {
+      const history = await fetchHistoricalData(activeStock, period);
+      const days = TF_TO_DAYS[timeFrame] || history.length;
+      const sliced = history.slice(-days);
+      if (stockData) {
+        setStockData({ ...stockData, stockData: sliced });
+      }
+    } catch (err) {
+      console.error(`[TimeFrame] Failed to fetch ${period} data:`, err);
+    }
   };
 
   const isApiKeyError = error &&

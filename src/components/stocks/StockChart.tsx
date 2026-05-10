@@ -24,7 +24,7 @@ interface StockChartProps {
   activeTimeFrame?: string;
 }
 
-const TFS = ['1W', '1M', '3M', '6M', '1Y'];
+const TFS = ['1W', '1M', '3M', '6M', '1Y', '3Y', '5Y', 'MAX'];
 
 const StockChart: React.FC<StockChartProps> = ({ data, className, onTimeFrameChange, activeTimeFrame }) => {
   const chartRef = useRef<HTMLDivElement>(null);

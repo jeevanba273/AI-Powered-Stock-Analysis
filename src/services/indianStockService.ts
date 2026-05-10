@@ -141,9 +141,9 @@ const fetchLiveStockPrice = async (ticker: string): Promise<any> => {
 // Primary:  GET /historical_data (dev)
 // Fallback: GET /historical_data (normal — same endpoint)
 // ---------------------------------------------------------------------------
-const fetchHistoricalData = async (ticker: string): Promise<StockDataPoint[]> => {
+export const fetchHistoricalData = async (ticker: string, period: string = '1yr'): Promise<StockDataPoint[]> => {
   const headers = apiHeaders();
-  const path = `/historical_data?stock_name=${ticker}&period=1yr&filter=price`;
+  const path = `/historical_data?stock_name=${ticker}&period=${period}&filter=price`;
   const t0 = performance.now();
 
   const parse = (data: any): StockDataPoint[] => {
