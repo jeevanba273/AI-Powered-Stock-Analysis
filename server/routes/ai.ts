@@ -225,4 +225,91 @@ Provide your comprehensive analysis as the specified JSON object.`;
   }
 });
 
+router.post('/sentiment', async (req: Request, res: Response) => {
+  const apiKey = OPENAI_KEY();
+  if (!apiKey) {
+    res.status(500).json({ error: 'OpenAI API key not configured' });
+    return;
+  }
+
+  try {
+    const { ticker, newsArticles } = req.body;
+
+    if (!newsArticles || newsArticles.length === 0) {
+      res.json({ overall: 'Neutral', positivePercentage: 50, neutralPercentage: 30, negativePercentage: 20 });
+      return;
+    }
+
+    const newsText = newsArticles.map((n: any, i: number) =>
+      `${i + 1}. ${n.title || ''} (${n.source || ''}, ${n.published || n.pub_date || ''})`
+    ).join('\n');
+
+    const totalArticles = newsArticles.length;
+
+    const prompt = `You are an expert financial news sentiment analyst. Analyze the sentiment of these ${totalArticles} recent news articles about ${ticker} (Indian stock market).
+
+NEWS ARTICLES:
+${newsText}
+
+INSTRUCTIONS:
+1. Read each headline carefully and classify it as Positive, Negative, or Neutral for the stock
+2. Count the number of articles in each category
+3. Calculate the percentage for each category (must add up to 100%)
+4. Determine the overall sentiment based on which category has the most articles
+
+Return ONLY a valid JSON object:
+{
+  "overall": "Positive" | "Negative" | "Neutral",
+  "positivePercentage": <number 0-100>,
+  "neutralPercentage": <number 0-100>,
+  "negativePercentage": <number 0-100>,
+  "positiveCount": <number>,
+  "neutralCount": <number>,
+  "negativeCount": <number>,
+  "totalArticles": ${totalArticles},
+  "summary": "One sentence explaining the overall sentiment"
+}
+
+The percentages MUST add up to 100. Base them on actual article counts, not estimates.`;
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: 'You are a financial news sentiment classifier. Return ONLY valid JSON. No markdown, no explanation.' },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.1,
+        max_tokens: 300,
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      console.error(`[AI] Sentiment error ${response.status}: ${err.slice(0, 200)}`);
+      res.status(response.status).json({ error: 'OpenAI API error' });
+      return;
+    }
+
+    const data: any = await response.json();
+    const content = data.choices?.[0]?.message?.content || '';
+    console.log(`[AI] Sentiment for ${ticker} — ${totalArticles} articles, ${data.usage?.total_tokens} tokens`);
+
+    let jsonStr = content;
+    if (jsonStr.includes('```json')) jsonStr = jsonStr.split('```json')[1].split('```')[0].trim();
+    else if (jsonStr.includes('```')) jsonStr = jsonStr.split('```')[1].split('```')[0].trim();
+
+    const sentiment = JSON.parse(jsonStr);
+    res.json(sentiment);
+  } catch (error: any) {
+    console.error(`[AI] Sentiment error: ${error.message}`);
+    res.status(500).json({ error: 'Failed to analyze sentiment', details: error.message });
+  }
+});
+
 export default router;

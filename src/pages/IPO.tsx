@@ -93,6 +93,7 @@ const IPO: React.FC = () => {
   const [ipos, setIpos] = useState<IPOEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const ipoCache = useRef<Record<string, IPOEntry[]>>({});
 
   // IPO detail state
   const [selectedIPOId, setSelectedIPOId] = useState<string | null>(null);
@@ -113,6 +114,14 @@ const IPO: React.FC = () => {
   useEffect(() => {
     setSelectedIPOId(null);
     setIpoDetail(null);
+
+    // Return cached data instantly if available
+    if (ipoCache.current[activeTab]) {
+      setIpos(ipoCache.current[activeTab]);
+      setLoading(false);
+      return;
+    }
+
     const fetchIPOs = async () => {
       setLoading(true);
       setError('');
@@ -135,6 +144,7 @@ const IPO: React.FC = () => {
             if (Array.isArray(arr)) entries = arr as IPOEntry[];
           }
         }
+        ipoCache.current[activeTab] = entries;
         setIpos(entries);
       } catch (err) {
         console.error('[IPO] Fetch error:', err);
@@ -153,16 +163,17 @@ const IPO: React.FC = () => {
   const getIssueType = (ipo: IPOEntry): string =>
     ipo.issueType || ipo.issue_type || '-';
 
-  const getOpenDate = (ipo: IPOEntry): string =>
-    ipo.openDate || ipo.open_date || '-';
+  const getOpenDate = (ipo: any): string =>
+    ipo.biddingStartDate || ipo.openDate || ipo.open_date || '-';
 
-  const getCloseDate = (ipo: IPOEntry): string =>
-    ipo.closeDate || ipo.close_date || '-';
+  const getCloseDate = (ipo: any): string =>
+    ipo.biddingEndDate || ipo.closeDate || ipo.close_date || '-';
 
-  const getListingDate = (ipo: IPOEntry): string =>
-    ipo.listingDate || ipo.listing_date || '-';
+  const getListingDate = (ipo: any): string =>
+    ipo.listingDate || ipo.listing_date || ipo.timeline?.listingDate || '-';
 
-  const getPriceBand = (ipo: IPOEntry): string => {
+  const getPriceBand = (ipo: any): string => {
+    if (ipo.minimumPrice && ipo.maximumPrice) return `₹${ipo.minimumPrice} - ₹${ipo.maximumPrice}`;
     if (ipo.priceBand || ipo.price_band) return ipo.priceBand || ipo.price_band || '-';
     if (ipo.minPrice && ipo.maxPrice) return `₹${ipo.minPrice} - ₹${ipo.maxPrice}`;
     return '-';
@@ -522,9 +533,8 @@ const IPO: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--ns-text-3)' }}>
             <Calendar size={12} />
             <span>
-              {activeTab === 'listed'
-                ? `Listed: ${formatDate(getListingDate(ipo))}`
-                : `${formatDate(getOpenDate(ipo))} - ${formatDate(getCloseDate(ipo))}`}
+              {`${formatDate(getOpenDate(ipo))} - ${formatDate(getCloseDate(ipo))}`}
+              {activeTab === 'listed' && (ipo as any).totalSubscription ? ` · ${(ipo as any).totalSubscription}x subscribed` : ''}
             </span>
           </div>
 

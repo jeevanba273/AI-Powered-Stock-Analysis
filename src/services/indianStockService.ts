@@ -329,12 +329,15 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
 
     const [liveStockData, historicalData, stockDetails] = criticalData;
 
-    // Sentiment — fire and forget, don't block the UI
+    // Sentiment — call server-side AI
     let newsSentiment: StockData['newsSentiment'] | undefined;
-    if (companyNews.length > 0 && OPENAI_API_KEY) {
-      analyzeNewsSentiment(ticker, companyNews)
-        .then(sentiment => console.log(`[Sentiment] ${ticker} OK:`, sentiment.overall))
-        .catch(err => console.warn(`[Sentiment] ${ticker} failed: ${err.message}`));
+    if (companyNews.length > 0) {
+      try {
+        newsSentiment = await analyzeNewsSentiment(ticker, companyNews);
+        console.log(`[Sentiment] ${ticker} OK:`, newsSentiment?.overall);
+      } catch (err: any) {
+        console.warn(`[Sentiment] ${ticker} failed: ${err.message}`);
+      }
     }
 
     const totalMs = Math.round(performance.now() - t0);

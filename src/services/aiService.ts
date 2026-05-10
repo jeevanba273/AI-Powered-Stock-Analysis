@@ -426,17 +426,7 @@ function getRiskLevelFromValue(risk: number): string {
   }
 }
 
-// AI-based news sentiment analysis
-// OpenAI calls from browser are blocked by CORS — return neutral defaults
-// TODO: move to server-side proxy when OpenAI key is configured
 export const analyzeNewsSentiment = async (ticker: string, newsData: any[]): Promise<any> => {
-  return {
-    overall: "Neutral",
-    positivePercentage: 50,
-    neutralPercentage: 30,
-    negativePercentage: 20
-  };
-
   if (!newsData || newsData.length === 0) {
     return {
       overall: "Neutral",
@@ -447,58 +437,24 @@ export const analyzeNewsSentiment = async (ticker: string, newsData: any[]): Pro
   }
   
   try {
-    // Format news data for the prompt
-    const newsText = newsData.map((item, idx) => 
-      `${idx + 1}. ${item.title} (${item.published})`
-    ).join('\n');
-    
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const res = await fetch('/api/ai/sentiment', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an expert financial news analyst. Analyze the sentiment of these news articles about a stock and return ONLY a valid JSON object with these fields: "overall" (string: "Positive", "Neutral", or "Negative"), "positivePercentage" (number 0-100), "neutralPercentage" (number 0-100), "negativePercentage" (number 0-100). The percentages should add up to 100.'
-          },
-          {
-            role: 'user',
-            content: `Analyze the sentiment of these recent news articles about ${ticker}:\n\n${newsText}`
-          }
-        ],
-        temperature: 0.1
+        ticker,
+        newsArticles: newsData.slice(0, 50).map((n: any) => ({
+          title: n.title,
+          source: n.source || n.src,
+          published: n.published || n.pub_date,
+        })),
       }),
     });
-    
-    if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
-    }
-    
-    const data = await response.json();
 
-    try {
-      // Try to parse the content as JSON
-      const content = data.choices[0].message.content;
-      const jsonContent = content.includes("```json") 
-        ? content.split("```json")[1].split("```")[0].trim()
-        : content.includes("```") 
-          ? content.split("```")[1].split("```")[0].trim()
-          : content;
-          
-      return JSON.parse(jsonContent);
-    } catch (parseError) {
-      console.error("Failed to parse sentiment analysis:", parseError);
-      return {
-        overall: "Neutral",
-        positivePercentage: 50,
-        neutralPercentage: 30,
-        negativePercentage: 20
-      };
-    }
+    if (!res.ok) throw new Error(`Sentiment API error: ${res.status}`);
+
+    const data = await res.json();
+    console.log(`[Sentiment] ${ticker}: ${data.overall} (${data.totalArticles || newsData.length} articles)`);
+    return data;
   } catch (error) {
     console.error("News sentiment analysis error:", error);
     return {
