@@ -109,18 +109,42 @@ const Market: React.FC = () => {
     </div>
   );
 
+  const TableSkeleton = () => (
+    <div className="ns-card" style={{ padding: 18 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 14 }}>
+        <div className="ns-skeleton" style={{ width: 120, height: 12 }} />
+        <div className="ns-skeleton" style={{ width: 60, height: 12 }} />
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px 80px', gap: 0 }}>
+        {/* Header row */}
+        <div style={{ padding: '8px 10px', borderBottom: '1px solid var(--ns-border)' }}><div className="ns-skeleton" style={{ width: 40, height: 10 }} /></div>
+        <div style={{ padding: '8px 10px', borderBottom: '1px solid var(--ns-border)' }}><div className="ns-skeleton" style={{ width: 40, height: 10, marginLeft: 'auto' }} /></div>
+        <div style={{ padding: '8px 10px', borderBottom: '1px solid var(--ns-border)' }}><div className="ns-skeleton" style={{ width: 50, height: 10, marginLeft: 'auto' }} /></div>
+        <div style={{ padding: '8px 10px', borderBottom: '1px solid var(--ns-border)' }}><div className="ns-skeleton" style={{ width: 50, height: 10, marginLeft: 'auto' }} /></div>
+        {/* Data rows */}
+        {[1,2,3,4,5,6,7,8].map(i => (
+          <React.Fragment key={i}>
+            <div style={{ padding: '10px 10px', borderBottom: '1px solid var(--ns-border)' }}><div className="ns-skeleton" style={{ width: `${60 + (i % 3) * 15}%`, height: 13 }} /></div>
+            <div style={{ padding: '10px 10px', borderBottom: '1px solid var(--ns-border)' }}><div className="ns-skeleton" style={{ width: 55, height: 13, marginLeft: 'auto' }} /></div>
+            <div style={{ padding: '10px 10px', borderBottom: '1px solid var(--ns-border)' }}><div className="ns-skeleton" style={{ width: 50, height: 13, marginLeft: 'auto' }} /></div>
+            <div style={{ padding: '10px 10px', borderBottom: '1px solid var(--ns-border)' }}><div className="ns-skeleton" style={{ width: 45, height: 13, marginLeft: 'auto' }} /></div>
+          </React.Fragment>
+        ))}
+      </div>
+    </div>
+  );
+
   const content = loading ? (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div className="ns-fade-up">
         <h1 style={{ fontSize: 24, fontWeight: 600, letterSpacing: '-0.02em' }}>Market Overview</h1>
         <p style={{ fontSize: 13, color: 'var(--ns-text-3)', marginTop: 4 }}>Loading market data...</p>
       </div>
-      {[1, 2, 3].map(i => (
-        <div key={i} className="ns-card" style={{ padding: 18 }}>
-          <div className="ns-skeleton" style={{ width: '40%', height: 14 }} />
-          <div className="ns-skeleton" style={{ width: '100%', height: 200, marginTop: 14 }} />
-        </div>
-      ))}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <TableSkeleton />
+        <TableSkeleton />
+      </div>
+      <TableSkeleton />
     </div>
   ) : (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>

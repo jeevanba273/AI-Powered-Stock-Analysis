@@ -15,10 +15,10 @@ interface NewsArticle {
 }
 
 const CATEGORIES = [
-  { key: '', label: 'All' },
   { key: 'stock_market', label: 'Stocks' },
   { key: 'mutual_funds', label: 'Mutual Funds' },
   { key: 'ipo', label: 'IPO' },
+  { key: 'investing', label: 'Investing' },
   { key: 'economy', label: 'Economy' },
   { key: 'commodities', label: 'Commodities' },
 ];
@@ -28,7 +28,7 @@ const News: React.FC = () => {
   const handleSelectStock = (ticker: string) => navigate(`/stock/${ticker}`);
   const [news, setNews] = useState<NewsArticle[]>([]);
   const [aiNews, setAiNews] = useState<NewsArticle[]>([]);
-  const [aiCategory, setAiCategory] = useState('');
+  const [aiCategory, setAiCategory] = useState('stock_market');
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -46,12 +46,19 @@ const News: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const url = aiCategory
-      ? `/api/proxy/dev/ai_news?category=${aiCategory}`
-      : '/api/proxy/dev/ai_news';
-    fetch(url)
+    fetch(`/api/proxy/dev/ai_news?category=${aiCategory}`)
       .then(r => r.json())
-      .then(data => setAiNews(Array.isArray(data) ? data : []))
+      .then(data => {
+        const articles = data?.articles || (Array.isArray(data) ? data : []);
+        setAiNews(articles.map((a: any) => ({
+          title: a.headline || a.title || '',
+          summary: a.summary || '',
+          url: a.url || '',
+          pub_date: a.published_at || a.pub_date || '',
+          source: a.source || '',
+          topics: a.topics || [],
+        })));
+      })
       .catch(err => console.error('[AI News] Fetch error:', err));
   }, [aiCategory]);
 
