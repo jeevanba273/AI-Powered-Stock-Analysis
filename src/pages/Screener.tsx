@@ -21,7 +21,7 @@ interface ScreenerResult {
   activeStockTrends?: StockTrends;
 }
 
-const PRESETS = ['IT', 'Banking', 'Pharma', 'Auto', 'FMCG', 'Energy'];
+const PRESETS = ['Software', 'Bank', 'Pharma', 'Automobile', 'Consumer', 'Oil'];
 
 const Screener: React.FC = () => {
   const navigate = useNavigate();

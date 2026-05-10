@@ -5,18 +5,19 @@ import Sidebar from '@/components/layout/Sidebar';
 import TopBar from '@/components/layout/TopBar';
 
 interface Commodity {
-  commoditySymbol?: string;
-  lastTradedPrice?: number | string;
-  openingPrice?: number | string;
-  highPrice?: number | string;
-  lowPrice?: number | string;
-  closingPrice?: number | string;
-  totalVolume?: number | string;
-  openInterest?: number | string;
-  priceChange?: number | string;
-  percentageChange?: number | string;
-  expiryDate?: string;
-  contractMonth?: string;
+  product?: string;
+  expiry?: string;
+  last_traded_price?: string;
+  last_traded_quantity?: string;
+  average_traded_price?: string;
+  total_quantity_traded?: string;
+  open_interest?: string;
+  open_price?: string;
+  high_price?: string;
+  low_price?: string;
+  closing_price?: string;
+  buy_price?: string;
+  sell_price?: string;
 }
 
 const Commodities: React.FC = () => {
@@ -34,14 +35,19 @@ const Commodities: React.FC = () => {
       try {
         const res = await fetch('/api/proxy/dev/commodities');
         const data = await res.json();
+        let arr: Commodity[] = [];
         if (Array.isArray(data)) {
-          setCommodities(data);
+          arr = data;
         } else if (data && typeof data === 'object') {
-          const arr = Object.values(data).find(v => Array.isArray(v));
-          setCommodities(Array.isArray(arr) ? (arr as Commodity[]) : []);
-        } else {
-          setCommodities([]);
+          const found = Object.values(data).find(v => Array.isArray(v));
+          arr = Array.isArray(found) ? (found as Commodity[]) : [];
         }
+        // Filter out entries where last_traded_price is 0 or "0.00"
+        arr = arr.filter(c => {
+          const ltp = Number(c.last_traded_price);
+          return !isNaN(ltp) && ltp !== 0;
+        });
+        setCommodities(arr);
       } catch (err) {
         console.error('[Commodities] Fetch error:', err);
         setError('Failed to load commodity data. Please try again later.');
@@ -177,9 +183,12 @@ const Commodities: React.FC = () => {
               </thead>
               <tbody>
                 {commodities.map((c, i) => {
-                  const pctChange = Number(c.percentageChange);
-                  const isUp = pctChange >= 0;
-                  const changeColor = isNaN(pctChange)
+                  const ltp = Number(c.last_traded_price);
+                  const close = Number(c.closing_price);
+                  const priceChange = (!isNaN(ltp) && !isNaN(close) && close !== 0) ? ltp - close : NaN;
+                  const pctChange = (!isNaN(priceChange) && close !== 0) ? (priceChange / close) * 100 : NaN;
+                  const isUp = priceChange >= 0;
+                  const changeColor = isNaN(priceChange)
                     ? 'var(--ns-text-2)'
                     : isUp
                       ? 'var(--ns-profit)'
@@ -188,25 +197,23 @@ const Commodities: React.FC = () => {
                   return (
                     <tr key={i} style={{ borderBottom: '1px solid var(--ns-border)' }}>
                       <td style={{ ...tdStyle, textAlign: 'left', fontWeight: 600 }}>
-                        {c.commoditySymbol || '-'}
+                        {c.product || '-'}
                       </td>
                       <td className="mono tnum" style={{ ...tdStyle, fontWeight: 600 }}>
-                        {formatNum(c.lastTradedPrice)}
+                        {formatNum(c.last_traded_price)}
                       </td>
                       <td className="mono tnum" style={{ ...tdStyle, fontWeight: 600, color: changeColor }}>
-                        {formatNum(c.priceChange)}
+                        {!isNaN(priceChange) ? (priceChange >= 0 ? '+' : '') + priceChange.toFixed(2) : '-'}
                       </td>
                       <td className="mono tnum" style={{ ...tdStyle, fontWeight: 600, color: changeColor }}>
-                        {c.percentageChange !== undefined && c.percentageChange !== null && c.percentageChange !== ''
-                          ? (Number(c.percentageChange) >= 0 ? '+' : '') + formatNum(c.percentageChange) + '%'
-                          : '-'}
+                        {!isNaN(pctChange) ? (pctChange >= 0 ? '+' : '') + pctChange.toFixed(2) + '%' : '-'}
                       </td>
-                      <td className="mono tnum" style={tdStyle}>{formatNum(c.openingPrice)}</td>
-                      <td className="mono tnum" style={tdStyle}>{formatNum(c.highPrice)}</td>
-                      <td className="mono tnum" style={tdStyle}>{formatNum(c.lowPrice)}</td>
-                      <td className="mono tnum" style={tdStyle}>{formatNum(c.closingPrice)}</td>
-                      <td className="mono tnum" style={tdStyle}>{formatVol(c.totalVolume)}</td>
-                      <td className="mono tnum" style={tdStyle}>{formatVol(c.openInterest)}</td>
+                      <td className="mono tnum" style={tdStyle}>{formatNum(c.open_price)}</td>
+                      <td className="mono tnum" style={tdStyle}>{formatNum(c.high_price)}</td>
+                      <td className="mono tnum" style={tdStyle}>{formatNum(c.low_price)}</td>
+                      <td className="mono tnum" style={tdStyle}>{formatNum(c.closing_price)}</td>
+                      <td className="mono tnum" style={tdStyle}>{formatVol(c.total_quantity_traded)}</td>
+                      <td className="mono tnum" style={tdStyle}>{formatVol(c.open_interest)}</td>
                     </tr>
                   );
                 })}

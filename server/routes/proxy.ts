@@ -94,12 +94,14 @@ router.get('/cache-stats', (_req: Request, res: Response) => {
 });
 
 router.all('/dev/{*path}', async (req: Request, res: Response) => {
-  const path = '/' + (req.params as any).path;
+  const raw = (req.params as any).path;
+  const path = '/' + (Array.isArray(raw) ? raw.join('/') : raw);
   await proxyRequest(DEV_BASE, path, buildQuery(req), req.method, req.body, res);
 });
 
 router.all('/fallback/{*path}', async (req: Request, res: Response) => {
-  const path = '/' + (req.params as any).path;
+  const raw = (req.params as any).path;
+  const path = '/' + (Array.isArray(raw) ? raw.join('/') : raw);
   await proxyRequest(FALLBACK_BASE, path, buildQuery(req), req.method, req.body, res);
 });
 

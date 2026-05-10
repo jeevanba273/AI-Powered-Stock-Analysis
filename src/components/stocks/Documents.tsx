@@ -12,6 +12,14 @@ interface DocItem {
   link?: string;
   pdfLink?: string;
   attachment_url?: string;
+  // concall fields
+  transcript?: string;
+  'ai summary'?: string;
+  ppt?: string;
+  rec?: string;
+  // annual report fields
+  year?: string;
+  source?: string;
   [key: string]: any;
 }
 
@@ -33,16 +41,35 @@ const formatDate = (dateStr: string | undefined): string => {
   }
 };
 
-const getTitle = (item: DocItem): string => {
+const getTitle = (item: DocItem, tab: TabKey): string => {
+  if (tab === 'concalls') {
+    return item.date || 'Untitled';
+  }
+  if (tab === 'annual') {
+    const year = item.year || '';
+    const source = item.source || '';
+    if (year) return `Annual Report ${year}${source ? ` (${source})` : ''}`;
+    return 'Untitled';
+  }
   return String(item.title || item.name || item.subject || item.description || item.heading || 'Untitled');
 };
 
-const getDate = (item: DocItem): string => {
+const getDate = (item: DocItem, tab: TabKey): string => {
+  // For concalls and annual reports, date/year is already in the title
+  if (tab === 'concalls' || tab === 'annual') return '';
   return item.date || item.publishedDate || item.filingDate || item.created_at || item.an_dt || '';
 };
 
 const getUrl = (item: DocItem): string | null => {
   return item.url || item.link || item.pdfLink || item.attachment_url || item.attchmntFile || null;
+};
+
+const getConcallLinks = (item: DocItem): { label: string; url: string }[] => {
+  const links: { label: string; url: string }[] = [];
+  if (item.transcript) links.push({ label: 'Transcript', url: item.transcript });
+  if (item.ppt) links.push({ label: 'PPT', url: item.ppt });
+  if (item.rec) links.push({ label: 'Recording', url: item.rec });
+  return links;
 };
 
 const parseItems = (json: any): DocItem[] => {
@@ -189,23 +216,25 @@ const Documents: React.FC<DocumentsProps> = ({ ticker, className }) => {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {activeItems.slice(0, 20).map((item, i) => {
-              const title = getTitle(item);
-              const date = getDate(item);
+              const title = getTitle(item, activeTab);
+              const date = getDate(item, activeTab);
               const url = getUrl(item);
+              const concallLinks = activeTab === 'concalls' ? getConcallLinks(item) : [];
+              const hasConcallLinks = concallLinks.length > 0;
 
               return (
                 <div
                   key={i}
-                  onClick={() => { if (url) window.open(url, '_blank'); }}
+                  onClick={() => { if (!hasConcallLinks && url) window.open(url, '_blank'); }}
                   style={{
                     padding: '10px 12px', borderRadius: 10,
                     background: 'var(--ns-surface)', border: '1px solid var(--ns-border)',
-                    cursor: url ? 'pointer' : 'default',
+                    cursor: (!hasConcallLinks && url) ? 'pointer' : 'default',
                     transition: 'all 0.15s ease',
                     animation: `ns-fade-up 0.4s ${0.03 * i}s backwards`,
                   }}
                   onMouseEnter={e => {
-                    if (url) {
+                    if (!hasConcallLinks && url) {
                       (e.currentTarget as HTMLElement).style.borderColor = 'var(--ns-border-strong)';
                       (e.currentTarget as HTMLElement).style.background = 'var(--ns-surface-2)';
                     }
@@ -228,8 +257,29 @@ const Documents: React.FC<DocumentsProps> = ({ ticker, className }) => {
                           {formatDate(date)}
                         </div>
                       )}
+                      {hasConcallLinks && (
+                        <div style={{ display: 'flex', gap: 8, marginTop: 5, flexWrap: 'wrap' }}>
+                          {concallLinks.map((link, j) => (
+                            <a
+                              key={j}
+                              href={link.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={e => e.stopPropagation()}
+                              style={{
+                                fontSize: 10.5, fontWeight: 600, color: 'var(--ns-accent)',
+                                textDecoration: 'none', padding: '2px 8px', borderRadius: 6,
+                                background: 'var(--ns-accent-soft)', display: 'inline-flex',
+                                alignItems: 'center', gap: 3,
+                              }}
+                            >
+                              {link.label} <ExternalLink size={9} />
+                            </a>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    {url && (
+                    {!hasConcallLinks && url && (
                       <ExternalLink size={12} style={{ color: 'var(--ns-text-4)', flexShrink: 0, marginTop: 2 }} />
                     )}
                   </div>

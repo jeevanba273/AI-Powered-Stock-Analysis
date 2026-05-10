@@ -69,6 +69,7 @@ const MutualFunds: React.FC = () => {
 
   // Detail state
   const [selectedFund, setSelectedFund] = useState<string | null>(null);
+  const [selectedFundRow, setSelectedFundRow] = useState<MutualFund | null>(null);
   const [fundDetail, setFundDetail] = useState<FundDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
@@ -88,7 +89,12 @@ const MutualFunds: React.FC = () => {
         if (data && typeof data === 'object' && !Array.isArray(data)) {
           setCategories(data as CategoryData);
           const keys = Object.keys(data);
-          if (keys.length > 0) setActiveCategory(keys[0]);
+          // Default to "Equity" if it exists, otherwise the first key
+          if (keys.includes('Equity')) {
+            setActiveCategory('Equity');
+          } else if (keys.length > 0) {
+            setActiveCategory(keys[0]);
+          }
         } else {
           console.warn('[MutualFunds] Unexpected data format:', data);
           setError('Unexpected data format from server.');
@@ -144,13 +150,29 @@ const MutualFunds: React.FC = () => {
 
   /* ---------- Fund detail ---------- */
 
-  const openFundDetail = async (fundName: string) => {
+  /** Check if a detail response has meaningful data beyond just a fund_name */
+  const isDetailEmpty = (data: FundDetail): boolean => {
+    const meaningfulKeys = [
+      'category', 'sub_category', 'risk_level', 'fund_manager', 'fund_house',
+      'launch_date', 'expense_ratio', 'aum', 'exit_load', 'benchmark',
+      'min_investment', 'min_sip',
+      '1_month_return', '3_month_return', '1_year_return', '3_year_return', '5_year_return',
+    ];
+    return !meaningfulKeys.some(k => {
+      const v = data[k];
+      return v !== undefined && v !== null && v !== '' && v !== 'N/A' && v !== '-';
+    });
+  };
+
+  const openFundDetail = async (fundName: string, fundRow?: MutualFund) => {
     if (selectedFund === fundName) {
       setSelectedFund(null);
+      setSelectedFundRow(null);
       setFundDetail(null);
       return;
     }
     setSelectedFund(fundName);
+    setSelectedFundRow(fundRow || null);
     setFundDetail(null);
     setDetailLoading(true);
     try {
@@ -262,7 +284,21 @@ const MutualFunds: React.FC = () => {
 
   /* ---------- Fund Detail Panel ---------- */
 
-  const DetailPanel: React.FC<{ detail: FundDetail }> = ({ detail }) => {
+  const DetailPanel: React.FC<{ detail: FundDetail; fundRow?: MutualFund | null }> = ({ detail, fundRow }) => {
+    const detailEmpty = isDetailEmpty(detail);
+
+    // For returns, prefer detail data but fall back to fundRow data from the main listing
+    const getReturn = (key: string): unknown => {
+      const detailVal = detail[key];
+      if (detailVal !== undefined && detailVal !== null && detailVal !== '' && detailVal !== 'N/A' && detailVal !== '-') {
+        return detailVal;
+      }
+      if (fundRow) {
+        return fundRow[key];
+      }
+      return detailVal;
+    };
+
     const infoRows: [string, string][] = [
       ['Category', String(detail.category || '--')],
       ['Sub Category', String(detail.sub_category || '--')],
@@ -280,24 +316,27 @@ const MutualFunds: React.FC = () => {
     ];
 
     const returnRows: [string, unknown][] = [
-      ['1M Return', detail['1_month_return']],
-      ['3M Return', detail['3_month_return']],
-      ['1Y Return', detail['1_year_return']],
-      ['3Y Return', detail['3_year_return']],
-      ['5Y Return', detail['5_year_return']],
+      ['1M Return', getReturn('1_month_return')],
+      ['3M Return', getReturn('3_month_return')],
+      ['1Y Return', getReturn('1_year_return')],
+      ['3Y Return', getReturn('3_year_return')],
+      ['5Y Return', getReturn('5_year_return')],
     ];
+
+    // Use star rating from detail, falling back to fundRow
+    const starRating = detail.star_rating || (fundRow ? fundRow.star_rating : undefined);
 
     return (
       <div style={{ padding: '16px 20px', background: 'var(--ns-surface)', borderTop: '1px solid var(--ns-border)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
           <div>
             <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>{detail.fund_name || selectedFund}</div>
-            {detail.star_rating && (
-              <div style={{ marginTop: 4 }}>{renderStars(detail.star_rating)}</div>
+            {starRating && (
+              <div style={{ marginTop: 4 }}>{renderStars(starRating)}</div>
             )}
           </div>
           <button
-            onClick={() => { setSelectedFund(null); setFundDetail(null); }}
+            onClick={() => { setSelectedFund(null); setSelectedFundRow(null); setFundDetail(null); }}
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
               color: 'var(--ns-text-3)', padding: 4
@@ -307,25 +346,38 @@ const MutualFunds: React.FC = () => {
           </button>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 16 }}>
-          {/* Fund Info */}
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ns-text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
-              Fund Information
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 12px', fontSize: 12 }}>
-              {infoRows.map(([label, value]) => (
-                value !== '--' ? (
-                  <React.Fragment key={label}>
-                    <div style={{ color: 'var(--ns-text-4)' }}>{label}</div>
-                    <div style={{ fontWeight: 600 }}>{value}</div>
-                  </React.Fragment>
-                ) : null
-              ))}
-            </div>
+        {/* Show notice when detail API returned no useful data */}
+        {detailEmpty && (
+          <div style={{
+            padding: '10px 14px', marginBottom: 14, borderRadius: 6,
+            background: 'rgba(255,255,255,0.03)', border: '1px solid var(--ns-border)',
+            fontSize: 12, color: 'var(--ns-text-3)',
+          }}>
+            Detailed fund information not available. Showing returns from the fund listing.
           </div>
+        )}
 
-          {/* Returns */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: 16 }}>
+          {/* Fund Info - only show section if detail has meaningful info */}
+          {!detailEmpty && (
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ns-text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                Fund Information
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 12px', fontSize: 12 }}>
+                {infoRows.map(([label, value]) => (
+                  value !== '--' ? (
+                    <React.Fragment key={label}>
+                      <div style={{ color: 'var(--ns-text-4)' }}>{label}</div>
+                      <div style={{ fontWeight: 600 }}>{value}</div>
+                    </React.Fragment>
+                  ) : null
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Returns - always show, using fallback from fundRow when detail is empty */}
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ns-text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
               Returns
@@ -394,7 +446,7 @@ const MutualFunds: React.FC = () => {
                           background: isSelected ? 'var(--ns-accent-soft)' : 'transparent',
                           transition: 'background 0.15s ease',
                         }}
-                        onClick={() => openFundDetail(fund.fund_name)}
+                        onClick={() => openFundDetail(fund.fund_name, fund)}
                         onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; }}
                         onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
                       >
@@ -458,7 +510,7 @@ const MutualFunds: React.FC = () => {
                                 </div>
                               </div>
                             ) : fundDetail ? (
-                              <DetailPanel detail={fundDetail} />
+                              <DetailPanel detail={fundDetail} fundRow={selectedFundRow} />
                             ) : null}
                           </td>
                         </tr>
@@ -519,7 +571,16 @@ const MutualFunds: React.FC = () => {
 
   /* ---------- Content ---------- */
 
-  const categoryKeys = Object.keys(categories);
+  const PREFERRED_TAB_ORDER = ['Equity', 'Hybrid', 'Debt', 'Index Funds', 'Solutions Oriented', 'Global Fund of Funds', 'Other'];
+  const categoryKeys = Object.keys(categories).sort((a, b) => {
+    const idxA = PREFERRED_TAB_ORDER.indexOf(a);
+    const idxB = PREFERRED_TAB_ORDER.indexOf(b);
+    // Items in the preferred list come first, in order; unlisted items go to the end
+    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+    if (idxA !== -1) return -1;
+    if (idxB !== -1) return 1;
+    return a.localeCompare(b);
+  });
   const subCategoryEntries = getCategoryEntries();
 
   const content = loading ? (
@@ -618,7 +679,7 @@ const MutualFunds: React.FC = () => {
       {/* Search result detail (when selected from search) */}
       {selectedFund && !activeCategory && fundDetail && (
         <div className="ns-card" style={{ padding: 0, overflow: 'hidden' }}>
-          <DetailPanel detail={fundDetail} />
+          <DetailPanel detail={fundDetail} fundRow={selectedFundRow} />
         </div>
       )}
 
@@ -636,7 +697,7 @@ const MutualFunds: React.FC = () => {
           {categoryKeys.map(cat => (
             <button
               key={cat}
-              onClick={() => { setActiveCategory(cat); setSelectedFund(null); setFundDetail(null); }}
+              onClick={() => { setActiveCategory(cat); setSelectedFund(null); setSelectedFundRow(null); setFundDetail(null); }}
               style={{
                 padding: '6px 16px', borderRadius: 8, fontSize: 12, fontWeight: 600,
                 cursor: 'pointer', border: '1px solid var(--ns-border)', fontFamily: 'inherit',
