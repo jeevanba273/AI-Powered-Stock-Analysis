@@ -148,12 +148,14 @@ const CorporateActions: React.FC<CorporateActionsProps> = ({ ticker, className }
                         <tr>
                           {headers.map((h, hi) => {
                             const isLast = hi === headers.length - 1;
+                            const isDate = h.toLowerCase().includes('date');
                             return (
                               <th key={hi} style={{
                                 fontSize: 10, fontWeight: 600, color: 'var(--ns-text-4)', textTransform: 'uppercase',
-                                letterSpacing: '0.06em', padding: '5px 8px', textAlign: 'left',
+                                letterSpacing: '0.06em', padding: '5px 8px',
+                                textAlign: isLast ? 'center' : 'left',
                                 borderBottom: '1px solid var(--ns-border)', whiteSpace: 'nowrap',
-                                width: isLast ? undefined : 110,
+                                width: isDate ? 95 : isLast ? undefined : 'auto',
                               }}>
                                 {h}
                               </th>
@@ -175,6 +177,7 @@ const CorporateActions: React.FC<CorporateActionsProps> = ({ ticker, className }
                                 whiteSpace: isLast ? 'normal' : 'nowrap',
                                 lineHeight: isLast ? 1.4 : undefined,
                                 wordBreak: isLast ? 'break-word' : undefined,
+                                textAlign: isLast ? 'center' : 'left',
                                 verticalAlign: 'top',
                               }}>
                                 {isLast && text.length > 120 ? text.slice(0, 120) + '...' : text}
