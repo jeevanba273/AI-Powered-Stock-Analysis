@@ -41,29 +41,33 @@ const parseForecasts = (json: any): ForecastRow[] => {
 
     let actual: number | null = null;
     let surprise: number | null = null;
-    let numEstimatesActual = 0;
-    if (p.Actuals && p.Actuals.Actual && Array.isArray(p.Actuals.Actual) && p.Actuals.Actual.length > 0) {
+    let estimate: number | null = null;
+    let numEst = 0;
+
+    if (p.Actuals?.Actual?.[0]) {
       const a = p.Actuals.Actual[0];
       actual = a.Reported != null ? Number(a.Reported) : null;
       surprise = a.SurprisePercent != null ? Number(a.SurprisePercent) : null;
-      numEstimatesActual = Number(a.NumberOfEstimates || 0);
+      numEst = Number(a.NumberOfEstimates || 0);
+      if (a.SurpriseMean != null) estimate = Number(a.SurpriseMean);
     }
 
-    let estimate: number | null = null;
-    let numEstimatesEst = 0;
-    if (p.Estimates) {
-      estimate = p.Estimates.EstimateMean != null ? Number(p.Estimates.EstimateMean) : null;
-      numEstimatesEst = Number(p.Estimates.NumberOfEstimates || 0);
+    if (p.Estimates?.Estimate?.[0]) {
+      const e = p.Estimates.Estimate[0];
+      estimate = e.Mean != null ? Number(e.Mean) : estimate;
+      numEst = numEst || Number(e.NumberOfEstimates || 0);
     }
+
+    if (!actual && !estimate) return null;
 
     return {
-      year,
+      year: numEst > 0 ? `${year}(${numEst}est)` : year,
       actual,
       estimate,
       surprise,
-      numEstimates: numEstimatesEst || numEstimatesActual,
+      numEstimates: numEst,
     };
-  });
+  }).filter(Boolean) as ForecastRow[];
 };
 
 const formatNum = (v: number | null): string => {
@@ -119,9 +123,6 @@ const ForecastTable: React.FC<{ title: string; data: ForecastRow[] }> = ({ title
                 <tr key={i} style={{ animation: `ns-fade-up 0.4s ${0.04 * i}s backwards` }}>
                   <td style={{ ...tdStyle, textAlign: 'left', fontWeight: 600, color: 'var(--ns-text-3)' }}>
                     <span className="mono">{row.year}</span>
-                    {row.numEstimates > 0 && (
-                      <span style={{ fontSize: 9.5, color: 'var(--ns-text-4)', marginLeft: 4 }}>({row.numEstimates}est)</span>
-                    )}
                   </td>
                   <td className="mono tnum" style={{ ...tdStyle, fontWeight: 600, color: row.actual != null ? 'var(--ns-text-2)' : 'var(--ns-text-4)' }}>
                     {formatNum(row.actual)}
