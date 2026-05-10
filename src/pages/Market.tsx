@@ -22,6 +22,9 @@ const Market: React.FC = () => {
   const navigate = useNavigate();
   const [trending, setTrending] = useState<{ top_gainers: MarketStock[]; top_losers: MarketStock[] } | null>(null);
   const [mostActive, setMostActive] = useState<MarketStock[]>([]);
+  const [bseActive, setBseActive] = useState<MarketStock[]>([]);
+  const [shockers, setShockers] = useState<any>(null);
+  const [week52, setWeek52] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const handleSelectStock = (ticker: string) => navigate(`/stock/${ticker}`);
 
@@ -29,9 +32,12 @@ const Market: React.FC = () => {
     const fetchAll = async () => {
       setLoading(true);
       try {
-        const [trendRes, activeRes] = await Promise.allSettled([
+        const [trendRes, activeRes, bseRes, shockerRes, w52Res] = await Promise.allSettled([
           fetch('/api/proxy/dev/trending').then(r => r.json()),
           fetch('/api/proxy/dev/NSE_most_active').then(r => r.json()),
+          fetch('/api/proxy/dev/BSE_most_active').then(r => r.json()),
+          fetch('/api/proxy/dev/price_shockers').then(r => r.json()),
+          fetch('/api/proxy/dev/fetch_52_week_high_low_data').then(r => r.json()),
         ]);
 
         if (trendRes.status === 'fulfilled' && trendRes.value?.trending_stocks) {
@@ -39,6 +45,15 @@ const Market: React.FC = () => {
         }
         if (activeRes.status === 'fulfilled' && Array.isArray(activeRes.value)) {
           setMostActive(activeRes.value.slice(0, 10));
+        }
+        if (bseRes.status === 'fulfilled' && Array.isArray(bseRes.value)) {
+          setBseActive(bseRes.value.slice(0, 10));
+        }
+        if (shockerRes.status === 'fulfilled') {
+          setShockers(shockerRes.value);
+        }
+        if (w52Res.status === 'fulfilled') {
+          setWeek52(w52Res.value);
         }
       } catch (err) {
         console.error('[Market] Fetch error:', err);
@@ -164,11 +179,113 @@ const Market: React.FC = () => {
           icon={<TrendingDown size={14} style={{ color: 'var(--ns-loss)' }} />}
         />
       </div>
-      <StockTable
-        stocks={mostActive}
-        title="Most Active (NSE)"
-        icon={<Activity size={14} />}
-      />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <StockTable
+          stocks={mostActive}
+          title="Most Active (NSE)"
+          icon={<Activity size={14} />}
+        />
+        <StockTable
+          stocks={bseActive}
+          title="Most Active (BSE)"
+          icon={<Activity size={14} />}
+        />
+      </div>
+
+      {/* Price Shockers */}
+      {shockers && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          {shockers.NSE_PriceShocker && (
+            <div className="ns-card" style={{ padding: 18 }}>
+              <div className="ns-card-header">
+                <div className="ns-card-title"><TrendingDown size={14} style={{ color: 'var(--ns-loss)' }} /> NSE Price Shockers</div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {(Array.isArray(shockers.NSE_PriceShocker) ? shockers.NSE_PriceShocker : []).slice(0, 8).map((s: any, i: number) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', borderRadius: 8, background: 'var(--ns-surface)', border: '1px solid var(--ns-border)' }}>
+                    <div>
+                      <div style={{ fontSize: 12.5, fontWeight: 600 }}>{s.displayName?.slice(0, 25) || s.company || 'N/A'}</div>
+                      <div style={{ fontSize: 10.5, color: 'var(--ns-text-4)' }}>Deviation: {Number(s.deviation || 0).toFixed(1)}%</div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div className="mono tnum" style={{ fontSize: 12.5, fontWeight: 600 }}>₹{Number(s.price).toFixed(2)}</div>
+                      <div className="mono" style={{ fontSize: 11, color: Number(s.percentChange) >= 0 ? 'var(--ns-profit)' : 'var(--ns-loss)' }}>
+                        {Number(s.percentChange) >= 0 ? '+' : ''}{Number(s.percentChange).toFixed(2)}%
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {shockers.BSE_PriceShocker && (
+            <div className="ns-card" style={{ padding: 18 }}>
+              <div className="ns-card-header">
+                <div className="ns-card-title"><TrendingDown size={14} style={{ color: 'var(--ns-loss)' }} /> BSE Price Shockers</div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {(Array.isArray(shockers.BSE_PriceShocker) ? shockers.BSE_PriceShocker : []).slice(0, 8).map((s: any, i: number) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', borderRadius: 8, background: 'var(--ns-surface)', border: '1px solid var(--ns-border)' }}>
+                    <div>
+                      <div style={{ fontSize: 12.5, fontWeight: 600 }}>{s.displayName?.slice(0, 25) || s.company || 'N/A'}</div>
+                      <div style={{ fontSize: 10.5, color: 'var(--ns-text-4)' }}>Deviation: {Number(s.deviation || 0).toFixed(1)}%</div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div className="mono tnum" style={{ fontSize: 12.5, fontWeight: 600 }}>₹{Number(s.price).toFixed(2)}</div>
+                      <div className="mono" style={{ fontSize: 11, color: Number(s.percentChange) >= 0 ? 'var(--ns-profit)' : 'var(--ns-loss)' }}>
+                        {Number(s.percentChange) >= 0 ? '+' : ''}{Number(s.percentChange).toFixed(2)}%
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 52-Week High/Low */}
+      {week52 && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          {['NSE', 'BSE'].map(exch => {
+            const key = `${exch}_52WeekHighLow`;
+            const data = week52[key];
+            if (!data) return null;
+            return (
+              <div key={exch} className="ns-card" style={{ padding: 18 }}>
+                <div className="ns-card-header">
+                  <div className="ns-card-title">{exch} 52-Week Extremes</div>
+                </div>
+                {data.high52Week && data.high52Week.length > 0 && (
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 11, color: 'var(--ns-profit)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 6 }}>New 52W Highs</div>
+                    {data.high52Week.slice(0, 5).map((s: any, i: number) => (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--ns-border)', fontSize: 12 }}>
+                        <span style={{ fontWeight: 600 }}>{s.company?.slice(0, 25) || 'N/A'}</span>
+                        <span className="mono tnum" style={{ color: 'var(--ns-profit)' }}>₹{Number(s.price || s['52_week_high'] || 0).toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {data.low52Week && data.low52Week.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: 11, color: 'var(--ns-loss)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 6 }}>New 52W Lows</div>
+                    {data.low52Week.slice(0, 5).map((s: any, i: number) => (
+                      <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--ns-border)', fontSize: 12 }}>
+                        <span style={{ fontWeight: 600 }}>{s.company?.slice(0, 25) || 'N/A'}</span>
+                        <span className="mono tnum" style={{ color: 'var(--ns-loss)' }}>₹{Number(s.price || s['52_week_low'] || 0).toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {(!data.high52Week?.length && !data.low52Week?.length) && (
+                  <div style={{ padding: 16, textAlign: 'center', color: 'var(--ns-text-3)', fontSize: 13 }}>No data — market may be closed</div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 

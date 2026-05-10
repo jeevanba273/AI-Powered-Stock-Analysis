@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, BarChart3, Newspaper, Star } from 'lucide-react';
+import { Home, BarChart3, Newspaper, Star, Search, Rocket, PiggyBank, ShoppingCart } from 'lucide-react';
 import { popularIndianStocks } from '@/services/indianStockService';
 
 interface SidebarProps {
@@ -11,7 +11,11 @@ interface SidebarProps {
 const navItems = [
   { to: '/', icon: Home, label: 'Dashboard' },
   { to: '/market', icon: BarChart3, label: 'Market' },
-  { to: '/news', icon: Newspaper, label: 'News Feed' },
+  { to: '/screener', icon: Search, label: 'Screener' },
+  { to: '/ipo', icon: Rocket, label: 'IPO' },
+  { to: '/mutual-funds', icon: PiggyBank, label: 'Mutual Funds' },
+  { to: '/commodities', icon: ShoppingCart, label: 'Commodities' },
+  { to: '/news', icon: Newspaper, label: 'News' },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ activeStock, onSelectStock }) => {

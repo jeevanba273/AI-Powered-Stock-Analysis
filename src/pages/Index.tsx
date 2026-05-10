@@ -12,6 +12,10 @@ import StockChart from '@/components/stocks/StockChart';
 import StockSummary from '@/components/stocks/StockSummary';
 import StockAnalysis from '@/components/stocks/StockAnalysis';
 import PeerStrip from '@/components/stocks/PeerStrip';
+import AnalystTargets from '@/components/stocks/AnalystTargets';
+import CorporateActions from '@/components/stocks/CorporateActions';
+import Forecasts from '@/components/stocks/Forecasts';
+import Documents from '@/components/stocks/Documents';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
 const Index = () => {
@@ -290,6 +294,26 @@ const Index = () => {
                   onTimeFrameChange={handleTimeFrameChange}
                   activeTimeFrame={activeTimeFrame}
                 />
+              </ErrorBoundary>
+
+              {/* Analyst Price Targets */}
+              <ErrorBoundary fallbackMessage="Failed to load analyst targets">
+                <AnalystTargets ticker={stockData.ticker} />
+              </ErrorBoundary>
+
+              {/* Stock Forecasts */}
+              <ErrorBoundary fallbackMessage="Failed to load forecasts">
+                <Forecasts ticker={stockData.ticker} />
+              </ErrorBoundary>
+
+              {/* Corporate Actions */}
+              <ErrorBoundary fallbackMessage="Failed to load corporate actions">
+                <CorporateActions ticker={stockData.ticker} />
+              </ErrorBoundary>
+
+              {/* Documents & Filings */}
+              <ErrorBoundary fallbackMessage="Failed to load documents">
+                <Documents ticker={stockData.ticker} />
               </ErrorBoundary>
 
               {/* Peer Comparison */}
