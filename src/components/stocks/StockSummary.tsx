@@ -157,7 +157,7 @@ const StockSummary: React.FC<StockSummaryProps> = ({
               <ChevronRight size={14} />
             </button>
           </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto" style={{ width: '90vw' }}>
             <DialogHeader>
               <DialogTitle>{ticker} - Detailed Financials</DialogTitle>
             </DialogHeader>
@@ -211,10 +211,11 @@ const StockSummary: React.FC<StockSummaryProps> = ({
                 ) : quarterResults && Object.keys(quarterResults).length > 0 ? (
                   <div style={{ background: 'var(--ns-surface)', border: '1px solid var(--ns-border)', borderRadius: 12, padding: 16 }}>
                     <h3 style={{ fontWeight: 600, marginBottom: 12 }}>Quarterly Results (in Cr)</h3>
-                    <div style={{ overflowX: 'auto' }}>
+                    <div style={{ overflowX: 'auto', maxHeight: '50vh', overflowY: 'auto' }}>
                       {(() => {
                         const metrics = Object.keys(quarterResults);
-                        const periods = metrics.length > 0 ? Object.keys(quarterResults[metrics[0]]) : [];
+                        const allPeriods = metrics.length > 0 ? Object.keys(quarterResults[metrics[0]]) : [];
+                        const periods = allPeriods.slice(-8);
                         return (
                           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                             <thead>
