@@ -243,8 +243,34 @@ const IPO: React.FC = () => {
     try {
       const res = await fetch(`/api/proxy/dev/ipo/${encodeURIComponent(ipoId)}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      setIpoDetail(data);
+      const raw = await res.json();
+      const d = raw?.data || raw;
+      setIpoDetail({
+        name: d.basic?.name || d.name,
+        industry: d.basic?.industry || d.industry,
+        symbol: d.basic?.symbol || d.symbol,
+        priceBand: d.pricing?.priceRange ? `₹${d.pricing.priceRange.min} - ₹${d.pricing.priceRange.max}` : undefined,
+        cutOffPrice: d.pricing?.priceRange?.cutOff || d.pricing?.cutOff,
+        faceValue: d.pricing?.faceValue,
+        lotSize: d.issue?.lotSize || d.lotSize,
+        issueSize: d.issue?.size || d.issueSize,
+        minimumInvestment: d.issue?.minimumInvestment,
+        openDate: d.dates?.bidding?.start,
+        closeDate: d.dates?.bidding?.end,
+        listingDate: d.dates?.listing,
+        allotmentDate: d.dates?.allotment,
+        rhpUrl: d.documents?.rhp || d.rhpUrl || raw.rhpUrl,
+        drhpUrl: d.documents?.drhp || d.drhpUrl,
+        allotmentLinkUrl: d.documents?.allotmentStatus || d.allotmentLinkUrl || raw.allotmentLinkUrl,
+        totalSubscription: d.subscription?.overallFormatted || d.subscription?.overall,
+        retailSubscription: d.subscription?.daily?.[d.subscription.daily.length - 1]?.categories?.retailIndividual?.timesFormatted,
+        niiSubscription: d.subscription?.daily?.[d.subscription.daily.length - 1]?.categories?.nonInstitutional?.timesFormatted,
+        qibSubscription: d.subscription?.daily?.[d.subscription.daily.length - 1]?.categories?.qualifiedInstitutional?.timesFormatted,
+        listingPrice: d.listing?.listingPrice,
+        listingGain: d.listing?.listingGainPercent || d.listing?.gainPercent,
+        timeline: d.timeline || {},
+        exchanges: d.exchanges?.primary,
+      } as any);
     } catch (err) {
       console.error('[IPO] Detail fetch error:', err);
       setIpoDetail({});
@@ -343,7 +369,8 @@ const IPO: React.FC = () => {
     const closeDate = (detail as any).biddingEndDate || detail.closeDate || detail.close_date;
     const timeline = (detail as any).timeline || {};
 
-    const hasAnyInfo = name || industry || priceBand || lotSize || issueSize || subs || listing || rhpLink || drhpLink;
+    const minInvestment = (detail as any).minimumInvestment || '';
+    const hasAnyInfo = name || industry || priceBand || lotSize || issueSize || subs || listing || rhpLink || drhpLink || minInvestment;
 
     return (
       <div className="ns-card" style={{ padding: 0, overflow: 'hidden', marginTop: -2 }}>
@@ -398,6 +425,12 @@ const IPO: React.FC = () => {
                 <div>
                   <div style={{ color: 'var(--ns-text-4)', marginBottom: 2 }}>Close Date</div>
                   <div style={{ fontWeight: 600 }}>{formatDate(String(closeDate))}</div>
+                </div>
+              )}
+              {minInvestment && (
+                <div>
+                  <div style={{ color: 'var(--ns-text-4)', marginBottom: 2 }}>Min Investment</div>
+                  <div style={{ fontWeight: 600, color: 'var(--ns-accent)' }}>{minInvestment}</div>
                 </div>
               )}
             </div>
@@ -583,13 +616,16 @@ const IPO: React.FC = () => {
             </span>
           </div>
 
-          {/* Issue size + face value */}
+          {/* Issue size + face value + min investment */}
           {getIssueSize(ipo) !== '-' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--ns-text-3)' }}>
               <BarChart3 size={12} />
               <span>
                 Issue: ₹{getIssueSize(ipo)} Cr
                 {(ipo as any).faceValue ? ` · FV: ₹${(ipo as any).faceValue}` : ''}
+                {(ipo as any).minimumQuantity && (ipo as any).maximumPrice
+                  ? ` · Min: ₹${((ipo as any).minimumQuantity * (ipo as any).maximumPrice).toLocaleString('en-IN')}`
+                  : ''}
               </span>
             </div>
           )}
@@ -606,7 +642,7 @@ const IPO: React.FC = () => {
           )}
 
           {/* Listing price and gain for listed IPOs */}
-          {activeTab === 'listed' && (
+          {activeTab === 'listed' && (getListingPrice(ipo) !== '-' || gain.text !== '-') && (
             <div style={{
               marginTop: 4, padding: '6px 10px', borderRadius: 8,
               background: 'var(--ns-surface)', border: '1px solid var(--ns-border)', fontSize: 11.5,
