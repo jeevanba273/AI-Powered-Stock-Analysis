@@ -180,7 +180,11 @@ const CorporateActions: React.FC<CorporateActionsProps> = ({ ticker, className }
                                 textAlign: 'left',
                                 verticalAlign: 'top',
                               }}>
-                                {isLast && text.length > 120 ? text.slice(0, 120) + '...' : text}
+                                {(() => {
+                                  if (!isLast) return text;
+                                  const limit = catKey === 'board_meetings' ? 140 : 110;
+                                  return text.length > limit ? text.slice(0, limit) + '...' : text;
+                                })()}
                               </td>
                             );
                           })}
