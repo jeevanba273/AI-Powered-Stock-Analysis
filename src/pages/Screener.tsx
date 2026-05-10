@@ -225,46 +225,46 @@ const Screener: React.FC = () => {
                 onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; }}
                 onMouseLeave={e => { e.currentTarget.style.transform = 'none'; }}
               >
-                <div style={{ fontWeight: 600, fontSize: 13.5, marginBottom: 4 }}>
-                  {item.commonName || 'Unknown'}
-                </div>
-
-                <div style={{ fontSize: 11.5, color: 'var(--ns-text-3)', marginBottom: 2 }}>
-                  {item.mgIndustry || '-'}
-                </div>
-                <div style={{ fontSize: 11, color: 'var(--ns-text-4)', marginBottom: 10 }}>
-                  {item.mgSector || '-'}
-                </div>
-
-                {/* Exchange codes */}
-                <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13.5, marginBottom: 6 }}>
+                      {item.commonName || 'Unknown'}
+                    </div>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {nseCode && (
+                        <span style={{
+                          fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 99,
+                          background: 'var(--ns-accent-soft)', color: 'var(--ns-accent)',
+                        }}>
+                          NSE: {nseCode}
+                        </span>
+                      )}
+                      {bseCode && (
+                        <span style={{
+                          fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 99,
+                          background: 'var(--ns-surface)', color: 'var(--ns-text-2)',
+                          border: '1px solid var(--ns-border)',
+                        }}>
+                          BSE: {bseCode}
+                        </span>
+                      )}
+                      <span style={{
+                        fontSize: 10, fontWeight: 500, padding: '2px 8px', borderRadius: 99,
+                        color: 'var(--ns-text-4)', border: '1px solid var(--ns-border)',
+                      }}>
+                        {item.stockType || 'Equity'}
+                      </span>
+                    </div>
+                  </div>
                   {nseCode && (
                     <span style={{
-                      fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 99,
-                      background: 'var(--ns-accent-soft)', color: 'var(--ns-accent)',
+                      fontSize: 11, fontWeight: 600, color: 'var(--ns-accent)',
+                      whiteSpace: 'nowrap', marginTop: 2,
                     }}>
-                      NSE: {nseCode}
-                    </span>
-                  )}
-                  {bseCode && (
-                    <span style={{
-                      fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 99,
-                      background: 'var(--ns-surface-hi, var(--ns-surface))', color: 'var(--ns-text-2)',
-                      border: '1px solid var(--ns-border)',
-                    }}>
-                      BSE: {bseCode}
+                      View →
                     </span>
                   )}
                 </div>
-
-                {/* Trend ratings */}
-                {trends && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                    <TrendBadge label="Short" value={trends.shortTermTrends} />
-                    <TrendBadge label="Long" value={trends.longTermTrends} />
-                    <TrendBadge label="Overall" value={trends.overallRating} />
-                  </div>
-                )}
               </div>
             );
           })}
