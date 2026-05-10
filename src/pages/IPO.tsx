@@ -93,6 +93,7 @@ const IPO: React.FC = () => {
   const [ipos, setIpos] = useState<IPOEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [visibleCount, setVisibleCount] = useState(20);
   const ipoCache = useRef<Record<string, IPOEntry[]>>({});
 
   // IPO detail state
@@ -114,6 +115,7 @@ const IPO: React.FC = () => {
   useEffect(() => {
     setSelectedIPOId(null);
     setIpoDetail(null);
+    setVisibleCount(20);
 
     // Return cached data instantly if available
     if (ipoCache.current[activeTab]) {
@@ -317,11 +319,14 @@ const IPO: React.FC = () => {
     };
   };
 
-  const getDetailRHPLink = (d: IPODetail): string =>
-    d.rhpLink || d.rhp_link || d.rhp || '';
+  const getDetailRHPLink = (d: any): string =>
+    d.rhpUrl || d.rhpLink || d.rhp_link || d.rhp || '';
 
-  const getDetailDRHPLink = (d: IPODetail): string =>
-    d.drhpLink || d.drhp_link || d.drhp || '';
+  const getDetailDRHPLink = (d: any): string =>
+    d.drhpUrl || d.drhpLink || d.drhp_link || d.drhp || '';
+
+  const getDetailAllotmentLink = (d: any): string =>
+    d.allotmentLinkUrl || d.allotmentLink || '';
 
   const IPODetailPanel: React.FC<{ detail: IPODetail; onClose: () => void }> = ({ detail, onClose }) => {
     const name = getDetailName(detail);
@@ -333,8 +338,10 @@ const IPO: React.FC = () => {
     const listing = getDetailListingInfo(detail);
     const rhpLink = getDetailRHPLink(detail);
     const drhpLink = getDetailDRHPLink(detail);
-    const openDate = detail.openDate || detail.open_date;
-    const closeDate = detail.closeDate || detail.close_date;
+    const allotmentLink = getDetailAllotmentLink(detail);
+    const openDate = (detail as any).biddingStartDate || detail.openDate || detail.open_date;
+    const closeDate = (detail as any).biddingEndDate || detail.closeDate || detail.close_date;
+    const timeline = (detail as any).timeline || {};
 
     const hasAnyInfo = name || industry || priceBand || lotSize || issueSize || subs || listing || rhpLink || drhpLink;
 
@@ -446,39 +453,55 @@ const IPO: React.FC = () => {
             </div>
           )}
 
-          {/* RHP / DRHP links */}
-          {(rhpLink || drhpLink) && (
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          {/* Timeline */}
+          {Object.keys(timeline).length > 0 && (
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--ns-text-3)', letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 8 }}>Timeline</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 8 }}>
+                {[
+                  { key: 'applicationStartDate', label: 'Open Date' },
+                  { key: 'applicationEndDate', label: 'Close Date' },
+                  { key: 'allotmentDate', label: 'Allotment' },
+                  { key: 'refundInitiationDate', label: 'Refund' },
+                  { key: 'listingDate', label: 'Listing' },
+                ].map(({ key, label }) => timeline[key] ? (
+                  <div key={key} style={{ padding: '6px 10px', borderRadius: 8, background: 'var(--ns-surface)', border: '1px solid var(--ns-border)' }}>
+                    <div style={{ fontSize: 10, color: 'var(--ns-text-4)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</div>
+                    <div className="mono" style={{ fontSize: 12, fontWeight: 600, marginTop: 2 }}>{formatDate(timeline[key])}</div>
+                  </div>
+                ) : null)}
+              </div>
+            </div>
+          )}
+
+          {/* Document links */}
+          {(rhpLink || drhpLink || allotmentLink) && (
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               {rhpLink && (
-                <a
-                  href={rhpLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 4,
-                    fontSize: 12, fontWeight: 600, color: 'var(--ns-accent)',
-                    textDecoration: 'none', padding: '6px 12px', borderRadius: 6,
-                    border: '1px solid var(--ns-border)', background: 'var(--ns-surface)',
-                    transition: 'opacity 0.15s ease',
-                  }}
-                >
-                  <ExternalLink size={12} /> RHP Document
+                <a href={rhpLink} target="_blank" rel="noopener noreferrer" style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 600,
+                  color: 'var(--ns-accent)', textDecoration: 'none', padding: '6px 12px', borderRadius: 6,
+                  border: '1px solid var(--ns-border)', background: 'var(--ns-surface)',
+                }}>
+                  <ExternalLink size={12} /> RHP
                 </a>
               )}
               {drhpLink && (
-                <a
-                  href={drhpLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 4,
-                    fontSize: 12, fontWeight: 600, color: 'var(--ns-accent)',
-                    textDecoration: 'none', padding: '6px 12px', borderRadius: 6,
-                    border: '1px solid var(--ns-border)', background: 'var(--ns-surface)',
-                    transition: 'opacity 0.15s ease',
-                  }}
-                >
-                  <ExternalLink size={12} /> DRHP Document
+                <a href={drhpLink} target="_blank" rel="noopener noreferrer" style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 600,
+                  color: 'var(--ns-accent)', textDecoration: 'none', padding: '6px 12px', borderRadius: 6,
+                  border: '1px solid var(--ns-border)', background: 'var(--ns-surface)',
+                }}>
+                  <ExternalLink size={12} /> DRHP
+                </a>
+              )}
+              {allotmentLink && (
+                <a href={allotmentLink} target="_blank" rel="noopener noreferrer" style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 600,
+                  color: 'var(--ns-profit)', textDecoration: 'none', padding: '6px 12px', borderRadius: 6,
+                  border: '1px solid var(--ns-border)', background: 'var(--ns-surface)',
+                }}>
+                  <ExternalLink size={12} /> Check Allotment
                 </a>
               )}
             </div>
@@ -519,47 +542,66 @@ const IPO: React.FC = () => {
           {getName(ipo)}
         </div>
 
-        {getIssueType(ipo) !== '-' && (
-          <span style={{
-            display: 'inline-block', fontSize: 10, fontWeight: 600, padding: '2px 8px',
-            borderRadius: 99, background: 'var(--ns-accent-soft)', color: 'var(--ns-accent)', marginBottom: 10,
-          }}>
-            {getIssueType(ipo)}
-          </span>
-        )}
+        {/* Badges row */}
+        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 8 }}>
+          {getIssueType(ipo) !== '-' && (
+            <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 99, background: 'var(--ns-accent-soft)', color: 'var(--ns-accent)' }}>
+              {getIssueType(ipo)}
+            </span>
+          )}
+          {(ipo as any).industry && (ipo as any).industry !== 'Not specified' && (
+            <span style={{ fontSize: 10, fontWeight: 500, padding: '2px 8px', borderRadius: 99, color: 'var(--ns-text-3)', border: '1px solid var(--ns-border)' }}>
+              {(ipo as any).industry}
+            </span>
+          )}
+          {(ipo as any).listingExchange && (
+            <span style={{ fontSize: 10, fontWeight: 500, padding: '2px 8px', borderRadius: 99, color: 'var(--ns-text-4)', border: '1px solid var(--ns-border)' }}>
+              {(ipo as any).listingExchange}
+            </span>
+          )}
+          {(ipo as any).symbol && (
+            <span className="mono" style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 99, color: 'var(--ns-text-2)', background: 'var(--ns-surface)' }}>
+              {(ipo as any).symbol}
+            </span>
+          )}
+        </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12, marginTop: 6 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 5, fontSize: 12 }}>
           {/* Dates */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--ns-text-3)' }}>
             <Calendar size={12} />
+            <span>{formatDate(getOpenDate(ipo))} - {formatDate(getCloseDate(ipo))}</span>
+          </div>
+
+          {/* Price band + lot size */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--ns-text-3)' }}>
+            <DollarSign size={12} />
             <span>
-              {`${formatDate(getOpenDate(ipo))} - ${formatDate(getCloseDate(ipo))}`}
-              {activeTab === 'listed' && (ipo as any).totalSubscription ? ` · ${(ipo as any).totalSubscription}x subscribed` : ''}
+              {getPriceBand(ipo)}
+              {(ipo as any).lotSize ? ` · Lot: ${(ipo as any).lotSize}` : ''}
+              {(ipo as any).cutOffPrice ? ` · Cut-off: ₹${(ipo as any).cutOffPrice}` : ''}
             </span>
           </div>
 
-          {/* Price band */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--ns-text-3)' }}>
-            <DollarSign size={12} />
-            <span>Price Band: {getPriceBand(ipo)}</span>
-          </div>
-
-          {/* Issue size */}
+          {/* Issue size + face value */}
           {getIssueSize(ipo) !== '-' && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--ns-text-3)' }}>
               <BarChart3 size={12} />
-              <span>Issue Size: {getIssueSize(ipo)}</span>
+              <span>
+                Issue: ₹{getIssueSize(ipo)} Cr
+                {(ipo as any).faceValue ? ` · FV: ₹${(ipo as any).faceValue}` : ''}
+              </span>
             </div>
           )}
 
-          {/* Subscription status for open IPOs */}
-          {activeTab === 'open' && getSubscription(ipo) !== '-' && (
+          {/* Subscription — show on all tabs when available */}
+          {(ipo as any).totalSubscription && (
             <div style={{
-              marginTop: 4, padding: '6px 10px', borderRadius: 8,
+              marginTop: 2, padding: '5px 10px', borderRadius: 8,
               background: 'var(--ns-surface)', border: '1px solid var(--ns-border)', fontSize: 11.5,
             }}>
               <span style={{ color: 'var(--ns-text-4)', marginRight: 6 }}>Subscription:</span>
-              <span style={{ fontWeight: 600, color: 'var(--ns-accent)' }}>{getSubscription(ipo)}</span>
+              <span style={{ fontWeight: 600, color: 'var(--ns-accent)' }}>{(ipo as any).totalSubscription}x</span>
             </div>
           )}
 
@@ -634,7 +676,7 @@ const IPO: React.FC = () => {
       ) : !error && ipos.length > 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 12 }}>
-            {ipos.map((ipo, i) => {
+            {ipos.slice(0, visibleCount).map((ipo, i) => {
               const ipoId = getIPOId(ipo);
               const isSelected = selectedIPOId === ipoId;
               return (
@@ -665,6 +707,18 @@ const IPO: React.FC = () => {
               );
             })}
           </div>
+          {visibleCount < ipos.length && (
+            <div style={{ textAlign: 'center', marginTop: 12 }}>
+              <button className="ns-ai-cta" onClick={() => setVisibleCount(c => c + 20)}>
+                Load More ({ipos.length - visibleCount} remaining)
+              </button>
+            </div>
+          )}
+          {ipos.length > 0 && (
+            <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--ns-text-4)', marginTop: 4 }}>
+              Showing {Math.min(visibleCount, ipos.length)} of {ipos.length} IPOs
+            </div>
+          )}
         </div>
       ) : !error && !loading ? (
         <div className="ns-card" style={{ padding: 32, textAlign: 'center', color: 'var(--ns-text-3)', fontSize: 13 }}>
