@@ -46,7 +46,7 @@ const TopBar: React.FC<TopBarProps> = ({ onSelectStock, onRefresh }) => {
       const res = await fetch('/api/proxy/dev/usage');
       const data = await res.json();
       if (data && typeof data.total_requests === 'number') {
-        setUsage({ used: data.total_requests, limit: data.hard_limit });
+        setUsage({ used: data.total_requests, limit: data.remaining_requests });
       }
     } catch {
       // silently ignore
