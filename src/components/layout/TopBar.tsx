@@ -170,20 +170,32 @@ const TopBar: React.FC<TopBarProps> = ({ onSelectStock, onRefresh }) => {
       </div>
 
       <div className="ns-topbar-right">
-        <span
+        <button
           onClick={checkPing}
-          title={apiOnline === true ? 'API Online' : apiOnline === false ? 'API Offline' : 'Checking API...'}
+          title={apiOnline === true ? 'API Online — click to recheck' : apiOnline === false ? 'API Offline — click to retry' : 'Checking API...'}
           style={{
-            display: 'inline-block',
-            width: 12,
-            height: 12,
-            borderRadius: '50%',
-            background: apiOnline === true ? '#22c55e' : apiOnline === false ? '#ef4444' : '#a3a3a3',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '5px 12px',
+            borderRadius: 10,
+            background: 'var(--ns-surface)',
+            border: '1px solid var(--ns-border)',
             cursor: 'pointer',
+            fontSize: 11,
+            fontWeight: 600,
+            fontFamily: 'inherit',
+            color: apiOnline === true ? '#22c55e' : apiOnline === false ? '#ef4444' : 'var(--ns-text-3)',
+            transition: 'all 0.18s ease',
             flexShrink: 0,
-            transition: 'background 0.2s'
           }}
-        />
+        >
+          <span style={{
+            width: 8, height: 8, borderRadius: '50%',
+            background: apiOnline === true ? '#22c55e' : apiOnline === false ? '#ef4444' : '#a3a3a3',
+          }} />
+          {apiOnline === true ? 'Online' : apiOnline === false ? 'Offline' : '...'}
+        </button>
         {usage && (
           <span
             style={{

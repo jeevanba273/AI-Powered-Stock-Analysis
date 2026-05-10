@@ -29,10 +29,13 @@ interface StockSummaryProps {
 
 const n = (v: any) => Number(v) || 0;
 
+const inr = (v: number) => v.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 const formatVolume = (v: number) => {
+  if (v >= 1_000_000_000) return (v / 1_000_000_000).toFixed(2) + 'B';
   if (v >= 1_000_000) return (v / 1_000_000).toFixed(2) + 'M';
   if (v >= 1_000) return (v / 1_000).toFixed(2) + 'K';
-  return v.toString();
+  return v.toLocaleString('en-IN');
 };
 
 const StockSummary: React.FC<StockSummaryProps> = ({
@@ -82,11 +85,19 @@ const StockSummary: React.FC<StockSummaryProps> = ({
       <div className="ns-stat-stack">
         <div className="ns-stat">
           <div className="ns-stat-label">Prev Close</div>
-          <div className="ns-stat-val mono tnum">{currency}{n(stats.prevClose || stats.close).toFixed(2)}</div>
+          <div className="ns-stat-val mono tnum">{currency}{inr(n(stats.prevClose || stats.close))}</div>
         </div>
         <div className="ns-stat">
           <div className="ns-stat-label">Open</div>
-          <div className="ns-stat-val mono tnum">{currency}{n(stats.open).toFixed(2)}</div>
+          <div className="ns-stat-val mono tnum">{currency}{inr(n(stats.open))}</div>
+        </div>
+        <div className="ns-stat">
+          <div className="ns-stat-label">Day High</div>
+          <div className="ns-stat-val mono tnum">{currency}{inr(n(stats.high))}</div>
+        </div>
+        <div className="ns-stat">
+          <div className="ns-stat-label">Day Low</div>
+          <div className="ns-stat-val mono tnum">{currency}{inr(n(stats.low))}</div>
         </div>
         <div className="ns-stat">
           <div className="ns-stat-label">Volume</div>
@@ -105,10 +116,6 @@ const StockSummary: React.FC<StockSummaryProps> = ({
           <div className="ns-stat-label">Dividend</div>
           <div className="ns-stat-val mono" style={{ fontSize: 13 }}>{stats.dividend}</div>
         </div>
-        <div className="ns-stat">
-          <div className="ns-stat-label">Day High</div>
-          <div className="ns-stat-val mono tnum">{currency}{n(stats.high).toFixed(2)}</div>
-        </div>
       </div>
 
       {/* Day Range */}
@@ -122,8 +129,8 @@ const StockSummary: React.FC<StockSummaryProps> = ({
           <div className="ns-range-marker" style={{ left: `${Math.max(2, Math.min(98, dayRangePct))}%` }} />
         </div>
         <div className="ns-range-labels">
-          <span className="mono">{currency}{n(stats.low).toFixed(2)}</span>
-          <span className="mono">{currency}{n(stats.high).toFixed(2)}</span>
+          <span className="mono">{currency}{inr(n(stats.low))}</span>
+          <span className="mono">{currency}{inr(n(stats.high))}</span>
         </div>
 
         {/* 52-Week Range */}
@@ -136,8 +143,8 @@ const StockSummary: React.FC<StockSummaryProps> = ({
           <div className="ns-range-marker" style={{ left: `${Math.max(2, Math.min(98, yearPct))}%` }} />
         </div>
         <div className="ns-range-labels">
-          <span className="mono">{currency}{n(yearLow).toFixed(2)}</span>
-          <span className="mono">{currency}{n(yearHigh).toFixed(2)}</span>
+          <span className="mono">{currency}{inr(n(yearLow))}</span>
+          <span className="mono">{currency}{inr(n(yearHigh))}</span>
         </div>
       </div>
 
