@@ -21,7 +21,7 @@ const Index = () => {
   const [stockData, setStockData] = useState<StockData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTimeFrame, setActiveTimeFrame] = useState<string>('1M');
+  const [activeTimeFrame, setActiveTimeFrame] = useState<string>('1Y');
 
   useEffect(() => {
     loadStockData(urlTicker || 'TCS');

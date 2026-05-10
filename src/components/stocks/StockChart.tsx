@@ -26,6 +26,14 @@ interface StockChartProps {
 
 const TFS = ['1W', '1M', '3M', '6M', '1Y', '3Y', '5Y', 'MAX'];
 
+const formatVol = (v: number) => {
+  if (v >= 1e9) return (v / 1e9).toFixed(2) + 'B';
+  if (v >= 1e7) return (v / 1e7).toFixed(2) + 'Cr';
+  if (v >= 1e5) return (v / 1e5).toFixed(2) + 'L';
+  if (v >= 1e3) return (v / 1e3).toFixed(1) + 'K';
+  return v.toString();
+};
+
 const StockChart: React.FC<StockChartProps> = ({ data, className, onTimeFrameChange, activeTimeFrame }) => {
   const chartRef = useRef<HTMLDivElement>(null);
   const chartApi = useRef<IChartApi | null>(null);
@@ -33,10 +41,11 @@ const StockChart: React.FC<StockChartProps> = ({ data, className, onTimeFrameCha
   const volumeSeries = useRef<ISeriesApi<'Histogram'> | null>(null);
   const sma20Series = useRef<ISeriesApi<'Line'> | null>(null);
   const sma50Series = useRef<ISeriesApi<'Line'> | null>(null);
-  const [activeTf, setActiveTf] = useState(activeTimeFrame || '1M');
+  const [activeTf, setActiveTf] = useState(activeTimeFrame || '1Y');
   const [activeInd, setActiveInd] = useState<string[]>(['SMA20']);
   const tabsRef = useRef<HTMLDivElement>(null);
   const [pill, setPill] = useState({ left: 0, width: 0 });
+  const [legend, setLegend] = useState<{ price: string; sma20: string; sma50: string; vol: string; date: string } | null>(null);
 
   useEffect(() => {
     const el = tabsRef.current?.querySelector('.ns-chart-tab.active') as HTMLElement | null;
@@ -116,6 +125,24 @@ const StockChart: React.FC<StockChartProps> = ({ data, className, onTimeFrameCha
       lastValueVisible: false,
     });
     sma50Series.current = sma50;
+
+    chart.subscribeCrosshairMove((param: any) => {
+      if (!param.time || !param.seriesData) {
+        setLegend(null);
+        return;
+      }
+      const priceVal = param.seriesData.get(area);
+      const sma20Val = param.seriesData.get(sma20);
+      const sma50Val = param.seriesData.get(sma50);
+      const volVal = param.seriesData.get(volume);
+      setLegend({
+        date: String(param.time),
+        price: priceVal?.value != null ? '₹' + Number(priceVal.value).toFixed(2) : '',
+        sma20: sma20Val?.value != null ? Number(sma20Val.value).toFixed(2) : '',
+        sma50: sma50Val?.value != null ? Number(sma50Val.value).toFixed(2) : '',
+        vol: volVal?.value != null ? formatVol(volVal.value) : '',
+      });
+    });
 
     const resizeObserver = new ResizeObserver(entries => {
       for (const entry of entries) {
@@ -245,7 +272,28 @@ const StockChart: React.FC<StockChartProps> = ({ data, className, onTimeFrameCha
         </div>
       </div>
 
-      <div ref={chartRef} style={{ width: '100%', height: 420 }} />
+      <div style={{ position: 'relative' }}>
+        {legend && (
+          <div style={{
+            position: 'absolute', top: 8, left: 8, zIndex: 10,
+            display: 'flex', gap: 16, padding: '6px 12px',
+            background: 'rgba(30, 34, 48, 0.9)', backdropFilter: 'blur(8px)',
+            borderRadius: 8, border: '1px solid var(--ns-border)',
+            fontSize: 11.5, fontWeight: 600, alignItems: 'center',
+          }}>
+            <span style={{ color: 'var(--ns-text-3)' }} className="mono">{legend.date}</span>
+            <span style={{ color: '#0AD88F' }} className="mono">Price {legend.price}</span>
+            {activeInd.includes('SMA20') && legend.sma20 && (
+              <span style={{ color: '#5BD4E8' }} className="mono">SMA20 ₹{legend.sma20}</span>
+            )}
+            {activeInd.includes('SMA50') && legend.sma50 && (
+              <span style={{ color: '#9D8CFF' }} className="mono">SMA50 ₹{legend.sma50}</span>
+            )}
+            {legend.vol && <span style={{ color: 'var(--ns-text-3)' }} className="mono">Vol {legend.vol}</span>}
+          </div>
+        )}
+        <div ref={chartRef} style={{ width: '100%', height: 420 }} />
+      </div>
     </div>
   );
 };
