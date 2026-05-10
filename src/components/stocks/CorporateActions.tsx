@@ -121,7 +121,7 @@ const CorporateActions: React.FC<CorporateActionsProps> = ({ ticker, className }
             const category = data![catKey];
             const config = categoryConfig[catKey] || { color: 'var(--ns-text-3)', bg: 'var(--ns-surface)' };
             const sectionTitle = category.title || catKey.replace(/_/g, ' ');
-            const headers = category.header || [];
+            const headers = (category.header || []).map((h: string) => h === 'Dividend Percentage' ? 'Dividend %' : h);
             const rows = category.data || [];
 
             return (
@@ -152,7 +152,7 @@ const CorporateActions: React.FC<CorporateActionsProps> = ({ ticker, className }
                               <th key={hi} style={{
                                 fontSize: 10, fontWeight: 600, color: 'var(--ns-text-4)', textTransform: 'uppercase',
                                 letterSpacing: '0.06em', padding: '5px 8px',
-                                textAlign: isLast ? 'center' : 'left',
+                                textAlign: (isLast && catKey !== 'bonus') ? 'center' : 'left',
                                 borderBottom: '1px solid var(--ns-border)',
                                 whiteSpace: 'nowrap',
                                 width: isLast ? undefined : 110,
@@ -182,7 +182,7 @@ const CorporateActions: React.FC<CorporateActionsProps> = ({ ticker, className }
                               }}>
                                 {(() => {
                                   if (!isLast) return text;
-                                  const limit = catKey === 'board_meetings' ? 140 : 110;
+                                  const limit = catKey === 'board_meetings' ? 160 : 120;
                                   return text.length > limit ? text.slice(0, limit) + '...' : text;
                                 })()}
                               </td>
