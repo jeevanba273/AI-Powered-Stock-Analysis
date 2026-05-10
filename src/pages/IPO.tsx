@@ -266,9 +266,17 @@ const IPO: React.FC = () => {
         retailSubscription: d.subscription?.daily?.[d.subscription.daily.length - 1]?.categories?.retailIndividual?.timesFormatted,
         niiSubscription: d.subscription?.daily?.[d.subscription.daily.length - 1]?.categories?.nonInstitutional?.timesFormatted,
         qibSubscription: d.subscription?.daily?.[d.subscription.daily.length - 1]?.categories?.qualifiedInstitutional?.timesFormatted,
-        listingPrice: d.listing?.listingPrice,
-        listingGain: d.listing?.listingGainPercent || d.listing?.gainPercent,
-        timeline: d.timeline || {},
+        listingPrice: d.performance?.price?.listing,
+        listingGain: d.performance?.gain?.formatted || (d.performance?.gain?.percentage != null ? `${d.performance.gain.percentage >= 0 ? '+' : ''}${Number(d.performance.gain.percentage).toFixed(2)}%` : undefined),
+        ipoPrice: d.performance?.price?.ipo,
+        timeline: {
+          applicationStartDate: d.timeline?.biddingStart,
+          applicationEndDate: d.timeline?.biddingEnd,
+          allotmentDate: d.timeline?.allotmentFinalization || d.timeline?.allotmentProcessStart,
+          refundInitiationDate: d.timeline?.refundInitiation,
+          listingDate: d.timeline?.listingDay,
+          mandateEndDate: d.timeline?.mandateEnd,
+        },
         exchanges: d.exchanges?.primary,
       } as any);
     } catch (err) {
@@ -331,17 +339,17 @@ const IPO: React.FC = () => {
     return null;
   };
 
-  const getDetailListingInfo = (d: IPODetail): { date: string; price: string; gain: string; gainPositive: boolean } | null => {
-    const lDate = d.listingDate || d.listing_date;
+  const getDetailListingInfo = (d: any): { date: string; price: string; gain: string; gainPositive: boolean } | null => {
+    const lDate = d.timeline?.listingDate || d.listingDate || d.listing_date;
     const lPrice = d.listingPrice || d.listing_price;
     const lGain = d.listingGain || d.listing_gain;
     if (!lDate && !lPrice && !lGain) return null;
-    const gainNum = lGain ? Number(lGain) : NaN;
+    const gainStr = typeof lGain === 'string' && lGain.includes('%') ? lGain : (lGain != null ? `${Number(lGain) >= 0 ? '+' : ''}${Number(lGain).toFixed(2)}%` : '--');
     return {
       date: lDate ? formatDate(String(lDate)) : '--',
       price: lPrice ? '₹' + Number(lPrice).toFixed(2) : '--',
-      gain: !isNaN(gainNum) ? ((gainNum >= 0 ? '+' : '') + gainNum.toFixed(2) + '%') : '--',
-      gainPositive: isNaN(gainNum) || gainNum >= 0,
+      gain: gainStr,
+      gainPositive: !gainStr.startsWith('-'),
     };
   };
 
