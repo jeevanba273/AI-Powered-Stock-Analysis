@@ -80,6 +80,31 @@ const Index = () => {
 
   const handleTimeFrameChange = async (timeFrame: string) => {
     setActiveTimeFrame(timeFrame);
+
+    if (timeFrame === '1D') {
+      try {
+        const catalogRes = await fetch('/api/stocks/catalog');
+        const catalog = await catalogRes.json();
+        const entry = catalog.find((s: any) =>
+          s['nse-code'] === activeStock || s['bse-code'] === activeStock || s.name === activeStock
+        );
+        if (entry) {
+          const res = await fetch(`/api/proxy/dev/1D_intraday_data?stock_id=${entry.id}`, { method: 'POST' });
+          const data = await res.json();
+          if (Array.isArray(data) && data[0]?.values) {
+            const points = data[0].values.map((v: any) => ({
+              date: v.timeStamp,
+              close: Number(v.price)
+            }));
+            if (stockData) setStockData({ ...stockData, stockData: points });
+          }
+        }
+      } catch (err) {
+        console.error('[TimeFrame] Failed to fetch 1D intraday data:', err);
+      }
+      return;
+    }
+
     const period = TF_TO_PERIOD[timeFrame] || '1yr';
     try {
       const history = await fetchHistoricalData(activeStock, period);
@@ -229,7 +254,11 @@ const Index = () => {
               {/* Stock Header */}
               <div className="ns-stock-header ns-fade-up">
                 <div className="ns-stock-id">
-                  <div className="ns-stock-logo">{stockData.ticker.slice(0, 3)}</div>
+                  {stockData.logo ? (
+                    <img src={`data:image/png;base64,${stockData.logo}`} alt={stockData.ticker} style={{ width: 56, height: 56, borderRadius: 14, objectFit: 'contain', border: '1px solid var(--ns-border-strong)' }} />
+                  ) : (
+                    <div className="ns-stock-logo">{stockData.ticker.slice(0, 3)}</div>
+                  )}
                   <div className="ns-stock-meta">
                     <h1>
                       <span>{stockData.ticker}</span>

@@ -52,6 +52,7 @@ export interface StockData {
   };
   rawStockDetails?: any;
   newsData?: any[];
+  logo?: string;
 }
 
 export interface MarketIndex {
@@ -131,6 +132,26 @@ const fetchLiveStockPrice = async (ticker: string): Promise<any> => {
       };
     } catch (fallbackError: any) {
       console.error(`[LivePrice] ${ticker} fallback failed: ${fallbackError.message}`);
+
+      // BSE fallback — if ticker is all digits (BSE code), try BSE batch endpoint
+      if (/^\d+$/.test(ticker)) {
+        const bt0 = performance.now();
+        try {
+          const bseRes = await fetchWithTimeout(`${PRIMARY_BASE}/bse_stock_batch_live_price`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ stock_symbols: [ticker] })
+          });
+          const bseData = await handleResponse(bseRes, `LivePrice:${ticker}:bse`);
+          if (bseData?.[ticker]) {
+            console.log(`[LivePrice] ${ticker} BSE fallback OK (${Math.round(performance.now() - bt0)}ms)`);
+            return bseData[ticker];
+          }
+        } catch (bseError: any) {
+          console.error(`[LivePrice] ${ticker} BSE fallback failed: ${bseError.message}`);
+        }
+      }
+
       throw error;
     }
   }
@@ -290,14 +311,20 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
 
   try {
     // Critical calls (price, history, details) must ALL succeed — they include fallback logic internally
-    // News is optional — runs in parallel but failure won't block
-    const [criticalData, companyNews] = await Promise.all([
+    // News and logo are optional — run in parallel but failure won't block
+    const logoPromise = fetch(`/api/proxy/dev/logo?stock_name=${ticker}`)
+      .then(r => r.json())
+      .then(data => data?.base64_image || '')
+      .catch(() => '');
+
+    const [criticalData, companyNews, logoResult] = await Promise.all([
       Promise.all([
         fetchLiveStockPrice(ticker),
         fetchHistoricalData(ticker),
         fetchStockDetails(ticker)
       ]),
-      fetchCompanyNews(ticker).catch(() => [] as any[])
+      fetchCompanyNews(ticker).catch(() => [] as any[]),
+      logoPromise
     ]);
 
     const [liveStockData, historicalData, stockDetails] = criticalData;
@@ -330,6 +357,7 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
       marketStatus: isMarketOpenInIST() ? 'open' : 'closed',
       lastUpdated: new Date().toISOString(),
       stats: {
+        prevClose: liveStockData.close,
         open: liveStockData.open,
         high: liveStockData.high,
         low: liveStockData.low,
@@ -345,7 +373,8 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
       stockData: historicalData,
       newsSentiment,
       rawStockDetails: stockDetails,
-      newsData: companyNews
+      newsData: companyNews,
+      logo: logoResult
     };
   } catch (error: any) {
     const totalMs = Math.round(performance.now() - t0);

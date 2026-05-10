@@ -44,6 +44,20 @@ interface FundDetail {
   [key: string]: unknown;
 }
 
+interface NavHistoryPoint {
+  date: string;
+  nav: number;
+}
+
+interface FundHolding {
+  stock_name?: string;
+  name?: string;
+  weight?: number | string;
+  percentage?: number | string;
+  sector?: string;
+  [key: string]: unknown;
+}
+
 // Data from the API can be nested in various ways
 type CategoryData = Record<string, Record<string, MutualFund[]> | MutualFund[]>;
 
@@ -72,6 +86,12 @@ const MutualFunds: React.FC = () => {
   const [selectedFundRow, setSelectedFundRow] = useState<MutualFund | null>(null);
   const [fundDetail, setFundDetail] = useState<FundDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+
+  // NAV history + holdings state
+  const [navHistory, setNavHistory] = useState<NavHistoryPoint[]>([]);
+  const [navHistoryLoading, setNavHistoryLoading] = useState(false);
+  const [holdings, setHoldings] = useState<FundHolding[]>([]);
+  const [holdingsLoading, setHoldingsLoading] = useState(false);
 
   /* ---------- Fetch categories ---------- */
 
@@ -169,23 +189,62 @@ const MutualFunds: React.FC = () => {
       setSelectedFund(null);
       setSelectedFundRow(null);
       setFundDetail(null);
+      setNavHistory([]);
+      setHoldings([]);
       return;
     }
     setSelectedFund(fundName);
     setSelectedFundRow(fundRow || null);
     setFundDetail(null);
     setDetailLoading(true);
-    try {
-      const res = await fetch(`/api/proxy/dev/mutual_funds_details?stock_name=${encodeURIComponent(fundName)}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      setFundDetail(data);
-    } catch (err) {
-      console.error('[MutualFunds] Detail error:', err);
+    setNavHistory([]);
+    setNavHistoryLoading(true);
+    setHoldings([]);
+    setHoldingsLoading(true);
+
+    const encodedName = encodeURIComponent(fundName);
+
+    const [detailResult, navResult, holdingsResult] = await Promise.allSettled([
+      fetch(`/api/proxy/dev/mutual_funds_details?stock_name=${encodedName}`).then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      }),
+      fetch(`/api/proxy/dev/get_mf_historical_data?stock_id=${encodedName}&stats=1Y`).then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      }),
+      fetch(`/api/proxy/dev/mf_holdings?stock_id=${encodedName}`).then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      }),
+    ]);
+
+    // Detail
+    if (detailResult.status === 'fulfilled') {
+      setFundDetail(detailResult.value);
+    } else {
+      console.error('[MutualFunds] Detail error:', detailResult.reason);
       setFundDetail({ fund_name: fundName });
-    } finally {
-      setDetailLoading(false);
     }
+    setDetailLoading(false);
+
+    // NAV history
+    if (navResult.status === 'fulfilled' && Array.isArray(navResult.value) && navResult.value.length > 0) {
+      setNavHistory(navResult.value);
+    } else {
+      if (navResult.status === 'rejected') console.error('[MutualFunds] NAV history error:', navResult.reason);
+      setNavHistory([]);
+    }
+    setNavHistoryLoading(false);
+
+    // Holdings
+    if (holdingsResult.status === 'fulfilled' && Array.isArray(holdingsResult.value)) {
+      setHoldings(holdingsResult.value);
+    } else {
+      if (holdingsResult.status === 'rejected') console.error('[MutualFunds] Holdings error:', holdingsResult.reason);
+      setHoldings([]);
+    }
+    setHoldingsLoading(false);
   };
 
   /* ---------- Helpers ---------- */
@@ -284,7 +343,14 @@ const MutualFunds: React.FC = () => {
 
   /* ---------- Fund Detail Panel ---------- */
 
-  const DetailPanel: React.FC<{ detail: FundDetail; fundRow?: MutualFund | null }> = ({ detail, fundRow }) => {
+  const DetailPanel: React.FC<{
+    detail: FundDetail;
+    fundRow?: MutualFund | null;
+    navData: NavHistoryPoint[];
+    navLoading: boolean;
+    holdingsData: FundHolding[];
+    holdingsLoadingProp: boolean;
+  }> = ({ detail, fundRow, navData, navLoading, holdingsData, holdingsLoadingProp }) => {
     const detailEmpty = isDetailEmpty(detail);
 
     // For returns, prefer detail data but fall back to fundRow data from the main listing
@@ -336,7 +402,7 @@ const MutualFunds: React.FC = () => {
             )}
           </div>
           <button
-            onClick={() => { setSelectedFund(null); setSelectedFundRow(null); setFundDetail(null); }}
+            onClick={() => { setSelectedFund(null); setSelectedFundRow(null); setFundDetail(null); setNavHistory([]); setHoldings([]); }}
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
               color: 'var(--ns-text-3)', padding: 4
@@ -393,6 +459,96 @@ const MutualFunds: React.FC = () => {
               ))}
             </div>
           </div>
+        </div>
+
+        {/* NAV History (1Y) */}
+        <div style={{ marginTop: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ns-text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+            NAV History (1Y)
+          </div>
+          {navLoading ? (
+            <div className="ns-skeleton" style={{ width: '100%', height: 60, borderRadius: 6 }} />
+          ) : navData.length > 0 ? (
+            (() => {
+              const navs = navData.map(d => d.nav);
+              const minNav = Math.min(...navs);
+              const maxNav = Math.max(...navs);
+              const range = maxNav - minNav || 1;
+              const w = 300;
+              const h = 60;
+              const padding = 2;
+              const len = navData.length;
+              const points = navData.map((d, i) => {
+                const x = len > 1 ? (i / (len - 1)) * w : w / 2;
+                const y = h - padding - ((d.nav - minNav) / range) * (h - padding * 2);
+                return `${x},${y}`;
+              });
+              const linePath = 'M' + points.join(' L');
+              const areaPath = linePath + ` L${w},${h} L0,${h} Z`;
+              const isPositive = navs[navs.length - 1] >= navs[0];
+              const color = isPositive ? '#0AD88F' : '#FF5252';
+              const fillColor = isPositive ? 'rgba(10, 216, 143, 0.2)' : 'rgba(255, 82, 82, 0.2)';
+              return (
+                <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" style={{ width: '100%', height: 60, display: 'block' }}>
+                  <path d={areaPath} fill={fillColor} />
+                  <path d={linePath} fill="none" stroke={color} strokeWidth="1.5" />
+                </svg>
+              );
+            })()
+          ) : (
+            <div style={{ fontSize: 12, color: 'var(--ns-text-4)', padding: '8px 0' }}>
+              NAV history not available
+            </div>
+          )}
+        </div>
+
+        {/* Top Holdings */}
+        <div style={{ marginTop: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--ns-text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+            Top Holdings
+          </div>
+          {holdingsLoadingProp ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {[1, 2, 3, 4, 5].map(j => (
+                <div key={j} style={{ display: 'flex', gap: 12 }}>
+                  <div className="ns-skeleton" style={{ width: 160, height: 11 }} />
+                  <div className="ns-skeleton" style={{ width: 50, height: 11 }} />
+                  <div className="ns-skeleton" style={{ width: 80, height: 11 }} />
+                </div>
+              ))}
+            </div>
+          ) : holdingsData.length > 0 ? (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--ns-border)' }}>
+                    <th style={{ textAlign: 'left', padding: '6px 8px', color: 'var(--ns-text-4)', fontSize: 10.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Stock Name</th>
+                    <th style={{ textAlign: 'right', padding: '6px 8px', color: 'var(--ns-text-4)', fontSize: 10.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Weight %</th>
+                    <th style={{ textAlign: 'left', padding: '6px 8px', color: 'var(--ns-text-4)', fontSize: 10.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Sector</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {holdingsData.slice(0, 10).map((h, idx) => {
+                    const stockName = h.stock_name || h.name || '--';
+                    const weight = h.weight ?? h.percentage;
+                    const weightStr = weight !== undefined && weight !== null ? Number(weight).toFixed(2) + '%' : '--';
+                    const sector = h.sector || '--';
+                    return (
+                      <tr key={idx} style={{ borderBottom: '1px solid var(--ns-border)' }}>
+                        <td style={{ padding: '6px 8px', fontWeight: 600 }}>{stockName}</td>
+                        <td className="mono tnum" style={{ padding: '6px 8px', textAlign: 'right' }}>{weightStr}</td>
+                        <td style={{ padding: '6px 8px', color: 'var(--ns-text-3)' }}>{sector}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div style={{ fontSize: 12, color: 'var(--ns-text-4)', padding: '8px 0' }}>
+              Holdings data not available
+            </div>
+          )}
         </div>
       </div>
     );
@@ -510,7 +666,7 @@ const MutualFunds: React.FC = () => {
                                 </div>
                               </div>
                             ) : fundDetail ? (
-                              <DetailPanel detail={fundDetail} fundRow={selectedFundRow} />
+                              <DetailPanel detail={fundDetail} fundRow={selectedFundRow} navData={navHistory} navLoading={navHistoryLoading} holdingsData={holdings} holdingsLoadingProp={holdingsLoading} />
                             ) : null}
                           </td>
                         </tr>
@@ -679,7 +835,7 @@ const MutualFunds: React.FC = () => {
       {/* Search result detail (when selected from search) */}
       {selectedFund && !activeCategory && fundDetail && (
         <div className="ns-card" style={{ padding: 0, overflow: 'hidden' }}>
-          <DetailPanel detail={fundDetail} fundRow={selectedFundRow} />
+          <DetailPanel detail={fundDetail} fundRow={selectedFundRow} navData={navHistory} navLoading={navHistoryLoading} holdingsData={holdings} holdingsLoadingProp={holdingsLoading} />
         </div>
       )}
 
@@ -697,7 +853,7 @@ const MutualFunds: React.FC = () => {
           {categoryKeys.map(cat => (
             <button
               key={cat}
-              onClick={() => { setActiveCategory(cat); setSelectedFund(null); setSelectedFundRow(null); setFundDetail(null); }}
+              onClick={() => { setActiveCategory(cat); setSelectedFund(null); setSelectedFundRow(null); setFundDetail(null); setNavHistory([]); setHoldings([]); }}
               style={{
                 padding: '6px 16px', borderRadius: 8, fontSize: 12, fontWeight: 600,
                 cursor: 'pointer', border: '1px solid var(--ns-border)', fontFamily: 'inherit',

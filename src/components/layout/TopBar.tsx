@@ -25,6 +25,41 @@ const TopBar: React.FC<TopBarProps> = ({ onSelectStock, onRefresh }) => {
   const [catalogCount, setCatalogCount] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Ping indicator state
+  const [apiOnline, setApiOnline] = useState<boolean | null>(null);
+
+  // Usage counter state
+  const [usage, setUsage] = useState<{ used: number; limit: number } | null>(null);
+
+  const checkPing = async () => {
+    try {
+      const res = await fetch('/api/proxy/dev/ping');
+      const data = await res.json();
+      setApiOnline(res.ok && Array.isArray(data) ? data[1] === 200 : res.ok);
+    } catch {
+      setApiOnline(false);
+    }
+  };
+
+  const fetchUsage = async () => {
+    try {
+      const res = await fetch('/api/proxy/dev/usage');
+      const data = await res.json();
+      if (data && typeof data.total_requests === 'number') {
+        setUsage({ used: data.total_requests, limit: data.hard_limit });
+      }
+    } catch {
+      // silently ignore
+    }
+  };
+
+  useEffect(() => {
+    checkPing();
+    fetchUsage();
+    const interval = setInterval(fetchUsage, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     if (cachedCatalog.length > 0) {
       setCatalogCount(cachedCatalog.length);
@@ -135,6 +170,37 @@ const TopBar: React.FC<TopBarProps> = ({ onSelectStock, onRefresh }) => {
       </div>
 
       <div className="ns-topbar-right">
+        <span
+          onClick={checkPing}
+          title={apiOnline === true ? 'API Online' : apiOnline === false ? 'API Offline' : 'Checking API...'}
+          style={{
+            display: 'inline-block',
+            width: 12,
+            height: 12,
+            borderRadius: '50%',
+            background: apiOnline === true ? '#22c55e' : apiOnline === false ? '#ef4444' : '#a3a3a3',
+            cursor: 'pointer',
+            flexShrink: 0,
+            transition: 'background 0.2s'
+          }}
+        />
+        {usage && (
+          <span
+            style={{
+              background: 'var(--ns-surface)',
+              border: '1px solid var(--ns-border)',
+              borderRadius: 99,
+              padding: '4px 12px',
+              fontSize: 11,
+              whiteSpace: 'nowrap',
+              flexShrink: 0
+            }}
+          >
+            <span className="mono tnum">{usage.used.toLocaleString()}</span>
+            <span style={{ color: 'var(--ns-text-4)', margin: '0 3px' }}>/</span>
+            <span className="mono tnum">{usage.limit.toLocaleString()}</span>
+          </span>
+        )}
         <button
           className="ns-refresh-btn"
           onClick={async () => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileStack, Mic, BookOpen, Bell, ExternalLink } from 'lucide-react';
+import { FileStack, Mic, BookOpen, Bell, ShieldCheck, ExternalLink } from 'lucide-react';
 
 interface DocItem {
   title?: string;
@@ -28,7 +28,7 @@ interface DocumentsProps {
   className?: string;
 }
 
-type TabKey = 'concalls' | 'annual' | 'announcements';
+type TabKey = 'concalls' | 'annual' | 'announcements' | 'regulatory';
 
 const formatDate = (dateStr: string | undefined): string => {
   if (!dateStr) return '--';
@@ -82,15 +82,17 @@ const parseItems = (json: any): DocItem[] => {
 };
 
 const tabMeta: Record<TabKey, { label: string; icon: React.ReactNode }> = {
-  concalls:      { label: 'Conference Calls', icon: <Mic size={12} /> },
-  annual:        { label: 'Annual Reports',   icon: <BookOpen size={12} /> },
-  announcements: { label: 'Announcements',    icon: <Bell size={12} /> },
+  concalls:      { label: 'Conference Calls',  icon: <Mic size={12} /> },
+  annual:        { label: 'Annual Reports',    icon: <BookOpen size={12} /> },
+  announcements: { label: 'Announcements',     icon: <Bell size={12} /> },
+  regulatory:    { label: 'Regulatory Filings', icon: <ShieldCheck size={12} /> },
 };
 
 const Documents: React.FC<DocumentsProps> = ({ ticker, className }) => {
   const [concalls, setConcalls] = useState<DocItem[]>([]);
   const [annual, setAnnual] = useState<DocItem[]>([]);
   const [announcements, setAnnouncements] = useState<DocItem[]>([]);
+  const [regulatory, setRegulatory] = useState<DocItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>('concalls');
@@ -102,6 +104,7 @@ const Documents: React.FC<DocumentsProps> = ({ ticker, className }) => {
     setConcalls([]);
     setAnnual([]);
     setAnnouncements([]);
+    setRegulatory([]);
 
     const encoded = encodeURIComponent(ticker);
 
@@ -109,12 +112,15 @@ const Documents: React.FC<DocumentsProps> = ({ ticker, className }) => {
       fetch(`/api/proxy/dev/concalls?stock_name=${encoded}`).then(r => r.ok ? r.json() : null).catch(() => null),
       fetch(`/api/proxy/dev/annual_reports?stock_name=${encoded}`).then(r => r.ok ? r.json() : null).catch(() => null),
       fetch(`/api/proxy/dev/recent_announcements?stock_name=${encoded}`).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(`/api/proxy/dev/documents?stock_name=${encoded}`).then(r => r.ok ? r.json() : null).catch(() => null),
     ])
-      .then(([cc, ar, an]) => {
+      .then(([cc, ar, an, reg]) => {
         if (!cancelled) {
           setConcalls(parseItems(cc));
           setAnnual(parseItems(ar));
           setAnnouncements(parseItems(an));
+          const regItems = reg?.Recent_Announcements ? reg.Recent_Announcements : parseItems(reg);
+          setRegulatory(regItems);
           setLoading(false);
         }
       })
@@ -137,7 +143,7 @@ const Documents: React.FC<DocumentsProps> = ({ ticker, className }) => {
           <div className="ns-card-title"><FileStack size={14} /> Documents & Filings</div>
         </div>
         <div style={{ display: 'flex', gap: 6, marginTop: 14 }}>
-          {[1, 2, 3].map(i => (
+          {[1, 2, 3, 4].map(i => (
             <div key={i} className="ns-skeleton" style={{ width: 100, height: 28, borderRadius: 8 }} />
           ))}
         </div>
@@ -157,6 +163,7 @@ const Documents: React.FC<DocumentsProps> = ({ ticker, className }) => {
     concalls,
     annual,
     announcements,
+    regulatory,
   };
 
   const activeItems = dataMap[activeTab];
@@ -165,6 +172,7 @@ const Documents: React.FC<DocumentsProps> = ({ ticker, className }) => {
     concalls: concalls.length,
     annual: annual.length,
     announcements: announcements.length,
+    regulatory: regulatory.length,
   };
 
   return (

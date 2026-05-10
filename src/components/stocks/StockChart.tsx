@@ -22,9 +22,10 @@ interface StockChartProps {
   className?: string;
   onTimeFrameChange?: (tf: string) => void;
   activeTimeFrame?: string;
+  stockId?: string;
 }
 
-const TFS = ['1W', '1M', '3M', '6M', '1Y', '3Y', '5Y', 'MAX'];
+const TFS = ['1D', '1W', '1M', '3M', '6M', '1Y', '3Y', '5Y', 'MAX'];
 
 const formatVol = (v: number) => {
   if (v >= 1e9) return (v / 1e9).toFixed(2) + 'B';
