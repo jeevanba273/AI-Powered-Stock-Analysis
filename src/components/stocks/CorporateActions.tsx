@@ -142,34 +142,45 @@ const CorporateActions: React.FC<CorporateActionsProps> = ({ ticker, className }
 
                 {/* Table */}
                 <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                     {headers.length > 0 && (
                       <thead>
                         <tr>
-                          {headers.map((h, hi) => (
-                            <th key={hi} style={{
-                              fontSize: 10, fontWeight: 600, color: 'var(--ns-text-4)', textTransform: 'uppercase',
-                              letterSpacing: '0.06em', padding: '5px 8px', textAlign: 'left',
-                              borderBottom: '1px solid var(--ns-border)', whiteSpace: 'nowrap',
-                            }}>
-                              {h}
-                            </th>
-                          ))}
+                          {headers.map((h, hi) => {
+                            const isLast = hi === headers.length - 1;
+                            return (
+                              <th key={hi} style={{
+                                fontSize: 10, fontWeight: 600, color: 'var(--ns-text-4)', textTransform: 'uppercase',
+                                letterSpacing: '0.06em', padding: '5px 8px', textAlign: 'left',
+                                borderBottom: '1px solid var(--ns-border)', whiteSpace: 'nowrap',
+                                width: isLast ? undefined : 110,
+                              }}>
+                                {h}
+                              </th>
+                            );
+                          })}
                         </tr>
                       </thead>
                     )}
                     <tbody>
                       {rows.slice(0, 10).map((row, ri) => (
                         <tr key={ri} style={{ animation: `ns-fade-up 0.3s ${0.03 * ri}s backwards` }}>
-                          {row.map((cell, cellIdx) => (
-                            <td key={cellIdx} style={{
-                              fontSize: 12, padding: '6px 8px', color: 'var(--ns-text-3)',
-                              borderBottom: ri < Math.min(rows.length, 10) - 1 ? '1px solid var(--ns-border)' : 'none',
-                              whiteSpace: 'nowrap', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis',
-                            }}>
-                              {cell || '--'}
-                            </td>
-                          ))}
+                          {row.map((cell, cellIdx) => {
+                            const isLast = cellIdx === row.length - 1;
+                            const text = cell || '--';
+                            return (
+                              <td key={cellIdx} style={{
+                                fontSize: 12, padding: '6px 8px', color: 'var(--ns-text-3)',
+                                borderBottom: ri < Math.min(rows.length, 10) - 1 ? '1px solid var(--ns-border)' : 'none',
+                                whiteSpace: isLast ? 'normal' : 'nowrap',
+                                lineHeight: isLast ? 1.4 : undefined,
+                                wordBreak: isLast ? 'break-word' : undefined,
+                                verticalAlign: 'top',
+                              }}>
+                                {isLast && text.length > 120 ? text.slice(0, 120) + '...' : text}
+                              </td>
+                            );
+                          })}
                         </tr>
                       ))}
                     </tbody>

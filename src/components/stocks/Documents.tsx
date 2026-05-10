@@ -256,7 +256,7 @@ const Documents: React.FC<DocumentsProps> = ({ ticker, className }) => {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{
                         fontSize: 12.5, fontWeight: 600, color: 'var(--ns-text-2)',
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        lineHeight: 1.4, wordBreak: 'break-word',
                       }}>
                         {title}
                       </div>
