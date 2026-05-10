@@ -151,9 +151,10 @@ const CorporateActions: React.FC<CorporateActionsProps> = ({ ticker, className }
                             return (
                               <th key={hi} style={{
                                 fontSize: 10, fontWeight: 600, color: 'var(--ns-text-4)', textTransform: 'uppercase',
-                                letterSpacing: '0.06em', padding: '5px 8px', textAlign: 'left',
+                                letterSpacing: '0.06em', padding: '5px 8px',
+                                textAlign: isLast ? 'center' : 'left',
                                 borderBottom: '1px solid var(--ns-border)',
-                                whiteSpace: isLast ? 'normal' : 'nowrap',
+                                whiteSpace: 'nowrap',
                                 width: isLast ? undefined : 110,
                               }}>
                                 {h}
