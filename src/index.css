@@ -799,3 +799,48 @@ html, body {
   font-size: 12.5px;
   font-weight: 500;
 }
+
+/* ============ Light Theme ============ */
+[data-theme="light"] {
+  --ns-bg: #f8f9fc;
+  --ns-bg-2: #f0f2f6;
+  --ns-surface: #ffffff;
+  --ns-surface-2: #f5f6f9;
+  --ns-surface-hi: #ebedf2;
+  --ns-border: rgba(0, 0, 0, 0.08);
+  --ns-border-strong: rgba(0, 0, 0, 0.15);
+  --ns-text: #1a1d26;
+  --ns-text-2: #3d4255;
+  --ns-text-3: #6b7084;
+  --ns-text-4: #9ca0b3;
+  --ns-profit: #0a9e6a;
+  --ns-profit-soft: rgba(10, 158, 106, 0.1);
+  --ns-loss: #dc2626;
+  --ns-loss-soft: rgba(220, 38, 38, 0.1);
+  --ns-accent: #0891b2;
+  --ns-accent-soft: rgba(8, 145, 178, 0.1);
+  --ns-shadow-lg: 0 10px 40px -10px rgba(0,0,0,0.1);
+}
+
+[data-theme="light"] .ns-sidebar {
+  background: rgba(255,255,255,0.8);
+}
+[data-theme="light"] .ns-topbar {
+  background: rgba(255,255,255,0.8);
+}
+[data-theme="light"] .ns-card {
+  background: linear-gradient(180deg, #ffffff, #f8f9fc);
+}
+[data-theme="light"] .ns-search-input {
+  background: #f0f2f6;
+  color: #1a1d26;
+}
+[data-theme="light"] .ns-search-dropdown {
+  background: #ffffff;
+}
+[data-theme="light"] .ns-login-page {
+  background: #f0f2f6;
+}
+[data-theme="light"] .ns-login-card {
+  background: linear-gradient(180deg, #ffffff, #f8f9fc);
+}

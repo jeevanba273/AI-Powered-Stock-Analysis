@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Bell, X, LogOut, RefreshCcw } from 'lucide-react';
+import { Search, Bell, X, LogOut, RefreshCcw, Sun, Moon } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -24,6 +24,26 @@ const TopBar: React.FC<TopBarProps> = ({ onSelectStock, onRefresh }) => {
   const [filtered, setFiltered] = useState<StockEntry[]>([]);
   const [catalogCount, setCatalogCount] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Theme toggle state
+  const [theme, setTheme] = useState(() =>
+    document.documentElement.getAttribute('data-theme') || 'dark'
+  );
+
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('ns-theme', next);
+    setTheme(next);
+  };
+
+  useEffect(() => {
+    const saved = localStorage.getItem('ns-theme');
+    if (saved) {
+      document.documentElement.setAttribute('data-theme', saved);
+      setTheme(saved);
+    }
+  }, []);
 
   // Ping indicator state
   const [apiOnline, setApiOnline] = useState<boolean | null>(null);
@@ -229,6 +249,9 @@ const TopBar: React.FC<TopBarProps> = ({ onSelectStock, onRefresh }) => {
           <RefreshCcw size={14} />
           <span>Refresh</span>
         </button>
+        <div className="ns-icon-btn" onClick={toggleTheme} title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'} style={{ cursor: 'pointer' }}>
+          {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+        </div>
         <div className="ns-icon-btn"><Bell size={16} /></div>
         <div className="ns-avatar">{username ? username.slice(0, 2).toUpperCase() : 'U'}</div>
         <div className="ns-icon-btn" onClick={logout} title="Logout" style={{ cursor: 'pointer' }}><LogOut size={16} /></div>

@@ -185,6 +185,98 @@ const Market: React.FC = () => {
     </div>
   );
 
+  // --- Heatmap Component ---
+  const Heatmap: React.FC<{ stocks: MarketStock[] }> = ({ stocks }) => {
+    if (stocks.length === 0) return null;
+
+    const getHeatColor = (pct: number): string => {
+      if (pct > 2) return '#0AD88F';
+      if (pct > 0.5) return '#4ADE80';
+      if (pct >= -0.5) return '#6B7280';
+      if (pct >= -2) return '#F87171';
+      return '#FF5353';
+    };
+
+    const getTextColor = (pct: number): string => {
+      if (pct > 0.5) return '#fff';
+      if (pct >= -0.5) return '#fff';
+      return '#fff';
+    };
+
+    // Sort by absolute volume descending, assign flex-grow based on volume rank
+    const sorted = [...stocks].sort((a, b) => Math.abs(Number(b.volume) || 0) - Math.abs(Number(a.volume) || 0));
+    const maxVol = Math.max(...sorted.map(s => Number(s.volume) || 1));
+
+    return (
+      <div className="ns-card" style={{ padding: 18 }}>
+        <div className="ns-card-header">
+          <div>
+            <div className="ns-card-title" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Activity size={14} /> Market Heatmap
+            </div>
+            <div style={{ fontSize: 10.5, color: 'var(--ns-text-4)', marginTop: 2 }}>Top gainers and losers by volume</div>
+          </div>
+          <div style={{ fontSize: 10.5, color: 'var(--ns-text-4)' }}>{sorted.length} stocks</div>
+        </div>
+        <div style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 3,
+          marginTop: 8,
+        }}>
+          {sorted.map((s, i) => {
+            const pct = Number(s.percent_change) || 0;
+            const vol = Number(s.volume) || 1;
+            const name = s.company_name || s.company || '';
+            const ticker = s.ticker_id || s.ticker || name.slice(0, 6);
+            // flex-grow proportional to volume, min 1
+            const grow = Math.max(1, Math.round((vol / maxVol) * 6));
+            return (
+              <div
+                key={i}
+                style={{
+                  flexGrow: grow,
+                  flexBasis: 0,
+                  minWidth: 90,
+                  maxWidth: '100%',
+                  background: getHeatColor(pct),
+                  color: getTextColor(pct),
+                  borderRadius: 8,
+                  padding: '10px 12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: 2,
+                  cursor: 'default',
+                  transition: 'opacity 0.15s',
+                  opacity: 0.92,
+                }}
+                onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+                onMouseLeave={e => (e.currentTarget.style.opacity = '0.92')}
+              >
+                <div style={{ fontWeight: 700, fontSize: 12.5, letterSpacing: '0.02em', textAlign: 'center', lineHeight: 1.2 }}>
+                  {ticker.length > 12 ? ticker.slice(0, 12) : ticker}
+                </div>
+                <div className="mono tnum" style={{ fontSize: 11.5, fontWeight: 600 }}>
+                  ₹{formatPrice(s.price)}
+                </div>
+                <div className="mono tnum" style={{ fontSize: 10.5, fontWeight: 600 }}>
+                  {formatPct(s.percent_change)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  const heatmapStocks: MarketStock[] = [
+    ...(trending?.top_gainers || []),
+    ...(trending?.top_losers || []),
+  ];
+
   const content = loading ? (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div className="ns-fade-up">
@@ -203,6 +295,10 @@ const Market: React.FC = () => {
         <h1 style={{ fontSize: 24, fontWeight: 600, letterSpacing: '-0.02em' }}>Market Overview</h1>
         <p style={{ fontSize: 13, color: 'var(--ns-text-3)', marginTop: 4 }}>Live market pulse — gainers, losers, and most active stocks</p>
       </div>
+
+      {/* Market Heatmap */}
+      {heatmapStocks.length > 0 && <Heatmap stocks={heatmapStocks} />}
+
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <StockTable
           stocks={trending?.top_gainers?.slice(0, 10) || []}

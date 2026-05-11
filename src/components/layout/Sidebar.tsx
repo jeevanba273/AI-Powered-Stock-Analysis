@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, BarChart3, Newspaper, Star, Search, Rocket, PiggyBank, ShoppingCart } from 'lucide-react';
+import { Home, BarChart3, Newspaper, Star, Search, Rocket, PiggyBank, ShoppingCart, ArrowLeftRight } from 'lucide-react';
 import { popularIndianStocks } from '@/services/indianStockService';
 
 interface SidebarProps {
@@ -11,6 +11,7 @@ interface SidebarProps {
 const navItems = [
   { to: '/', icon: Home, label: 'Dashboard' },
   { to: '/market', icon: BarChart3, label: 'Market' },
+  { to: '/compare', icon: ArrowLeftRight, label: 'Compare' },
   { to: '/screener', icon: Search, label: 'Screener' },
   { to: '/ipo', icon: Rocket, label: 'IPO' },
   { to: '/mutual-funds', icon: PiggyBank, label: 'Mutual Funds' },
@@ -19,6 +20,28 @@ const navItems = [
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ activeStock, onSelectStock }) => {
+  const [prices, setPrices] = useState<Record<string, { ltp: number; pct: number }>>({});
+
+  useEffect(() => {
+    const symbols = popularIndianStocks.map(s => s.ticker);
+    fetch('/api/proxy/dev/nse_stock_batch_live_price', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stock_symbols: symbols }),
+    })
+      .then(r => r.json())
+      .then((data: Record<string, { ltp: number; day_change_percent: number }>) => {
+        const mapped: Record<string, { ltp: number; pct: number }> = {};
+        for (const [sym, info] of Object.entries(data)) {
+          if (info && typeof info.ltp === 'number') {
+            mapped[sym] = { ltp: info.ltp, pct: info.day_change_percent ?? 0 };
+          }
+        }
+        setPrices(mapped);
+      })
+      .catch(err => console.error('Batch price fetch failed:', err));
+  }, []);
+
   return (
     <aside className="ns-sidebar">
       <div className="ns-brand">
@@ -67,6 +90,16 @@ const Sidebar: React.FC<SidebarProps> = ({ activeStock, onSelectStock }) => {
                 <span className="ns-watch-tic">{stock.ticker}</span>
                 <span className="ns-watch-name">{stock.name}</span>
               </div>
+              {prices[stock.ticker] && (
+                <div className="ns-watch-pct">
+                  <div className="mono tnum" style={{ fontSize: 12, fontWeight: 600 }}>
+                    ₹{prices[stock.ticker].ltp.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </div>
+                  <div className="mono" style={{ fontSize: 10.5, fontWeight: 600, color: prices[stock.ticker].pct >= 0 ? 'var(--ns-profit)' : 'var(--ns-loss)' }}>
+                    {prices[stock.ticker].pct >= 0 ? '+' : ''}{prices[stock.ticker].pct.toFixed(2)}%
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

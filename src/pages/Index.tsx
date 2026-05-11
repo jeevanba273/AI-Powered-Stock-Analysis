@@ -16,6 +16,7 @@ import AnalystTargets from '@/components/stocks/AnalystTargets';
 import CorporateActions from '@/components/stocks/CorporateActions';
 import Forecasts from '@/components/stocks/Forecasts';
 import Documents from '@/components/stocks/Documents';
+import EarningsCalendar from '@/components/stocks/EarningsCalendar';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
 const Index = () => {
@@ -348,6 +349,11 @@ const Index = () => {
               {/* Peer Comparison */}
               <ErrorBoundary fallbackMessage="Failed to load peer comparison">
                 <PeerStrip stockDetails={stockData.rawStockDetails} />
+              </ErrorBoundary>
+
+              {/* Earnings Calendar */}
+              <ErrorBoundary fallbackMessage="Failed to load earnings calendar">
+                <EarningsCalendar />
               </ErrorBoundary>
 
               {/* News Sentiment */}

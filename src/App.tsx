@@ -14,6 +14,7 @@ import Screener from "./pages/Screener";
 import IPO from "./pages/IPO";
 import MutualFunds from "./pages/MutualFunds";
 import Commodities from "./pages/Commodities";
+import Compare from "./pages/Compare";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/" element={<P><Index /></P>} />
             <Route path="/stock/:ticker" element={<P><Index /></P>} />
             <Route path="/market" element={<P><Market /></P>} />
+            <Route path="/compare" element={<P><Compare /></P>} />
             <Route path="/news" element={<P><News /></P>} />
             <Route path="/screener" element={<P><Screener /></P>} />
             <Route path="/ipo" element={<P><IPO /></P>} />
