@@ -120,6 +120,14 @@ const News: React.FC = () => {
             </div>
           )}
         </div>
+        {article.image_url && (
+          <img
+            src={article.image_url}
+            alt=""
+            style={{ width: 80, height: 60, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }}
+            onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+          />
+        )}
       </div>
     </div>
   );

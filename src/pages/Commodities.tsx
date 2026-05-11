@@ -170,6 +170,7 @@ const Commodities: React.FC = () => {
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--ns-border)' }}>
                   <th style={{ ...thStyle, textAlign: 'left' }}>Symbol</th>
+                  <th style={thStyle}>Expiry</th>
                   <th style={thStyle}>Last Price</th>
                   <th style={thStyle}>Change</th>
                   <th style={thStyle}>Change%</th>
@@ -183,21 +184,18 @@ const Commodities: React.FC = () => {
               </thead>
               <tbody>
                 {commodities.map((c, i) => {
-                  const ltp = Number(c.last_traded_price);
-                  const close = Number(c.closing_price);
-                  const priceChange = (!isNaN(ltp) && !isNaN(close) && close !== 0) ? ltp - close : NaN;
-                  const pctChange = (!isNaN(priceChange) && close !== 0) ? (priceChange / close) * 100 : NaN;
+                  const priceChange = Number(c.change) || 0;
+                  const pctChange = Number(c.per_change) || 0;
                   const isUp = priceChange >= 0;
-                  const changeColor = isNaN(priceChange)
-                    ? 'var(--ns-text-2)'
-                    : isUp
-                      ? 'var(--ns-profit)'
-                      : 'var(--ns-loss)';
+                  const changeColor = isUp ? 'var(--ns-profit)' : 'var(--ns-loss)';
 
                   return (
                     <tr key={i} style={{ borderBottom: '1px solid var(--ns-border)' }}>
                       <td style={{ ...tdStyle, textAlign: 'left', fontWeight: 600 }}>
                         {c.product || '-'}
+                      </td>
+                      <td style={{ ...tdStyle, fontSize: 11, color: 'var(--ns-text-3)' }}>
+                        {c.expiry || '-'}
                       </td>
                       <td className="mono tnum" style={{ ...tdStyle, fontWeight: 600 }}>
                         {formatNum(c.last_traded_price)}

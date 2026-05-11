@@ -16,6 +16,14 @@ interface MarketStock {
   high?: any;
   low?: any;
   overall_rating?: string;
+  short_term_trends?: string;
+  long_term_trends?: string;
+  short_term_trend?: string;
+  long_term_trend?: string;
+  year_low?: any;
+  year_high?: any;
+  '52_week_low'?: any;
+  '52_week_high'?: any;
 }
 
 const Market: React.FC = () => {
@@ -77,7 +85,18 @@ const Market: React.FC = () => {
     return n.toString();
   };
 
-  const StockTable: React.FC<{ stocks: MarketStock[]; title: string; icon: React.ReactNode }> = ({ stocks, title, icon }) => (
+  const thStyle: React.CSSProperties = { textAlign: 'right', padding: '8px 10px', color: 'var(--ns-text-3)', fontSize: 10.5, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' };
+  const thLeftStyle: React.CSSProperties = { ...thStyle, textAlign: 'left' };
+
+  const getTrendColor = (rating?: string) => {
+    if (!rating) return undefined;
+    const r = rating.toLowerCase();
+    if (r === 'bullish') return 'var(--ns-profit)';
+    if (r === 'bearish') return 'var(--ns-loss)';
+    return undefined;
+  };
+
+  const StockTable: React.FC<{ stocks: MarketStock[]; title: string; icon: React.ReactNode; showTrend?: boolean; show52WRange?: boolean }> = ({ stocks, title, icon, showTrend, show52WRange }) => (
     <div className="ns-card" style={{ padding: 18 }}>
       <div className="ns-card-header">
         <div className="ns-card-title">{icon} {title}</div>
@@ -87,10 +106,12 @@ const Market: React.FC = () => {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--ns-border)' }}>
-              <th style={{ textAlign: 'left', padding: '8px 10px', color: 'var(--ns-text-3)', fontSize: 10.5, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Stock</th>
-              <th style={{ textAlign: 'right', padding: '8px 10px', color: 'var(--ns-text-3)', fontSize: 10.5, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Price</th>
-              <th style={{ textAlign: 'right', padding: '8px 10px', color: 'var(--ns-text-3)', fontSize: 10.5, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Change</th>
-              <th style={{ textAlign: 'right', padding: '8px 10px', color: 'var(--ns-text-3)', fontSize: 10.5, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Volume</th>
+              <th style={thLeftStyle}>Stock</th>
+              <th style={thStyle}>Price</th>
+              <th style={thStyle}>Change</th>
+              <th style={thStyle}>Volume</th>
+              {showTrend && <th style={thStyle}>Trend</th>}
+              {show52WRange && <th style={thStyle}>52W Range</th>}
             </tr>
           </thead>
           <tbody>
@@ -98,6 +119,9 @@ const Market: React.FC = () => {
               const name = s.company_name || s.company || '';
               const pct = Number(s.percent_change);
               const isUp = pct >= 0;
+              const rating = s.overall_rating;
+              const weekLow = s['52_week_low'] ?? s.year_low;
+              const weekHigh = s['52_week_high'] ?? s.year_high;
               return (
                 <tr key={i} style={{ borderBottom: '1px solid var(--ns-border)' }}>
                   <td style={{ padding: '10px 10px' }}>
@@ -110,6 +134,18 @@ const Market: React.FC = () => {
                   <td className="mono tnum" style={{ textAlign: 'right', padding: '10px 10px', color: 'var(--ns-text-2)' }}>
                     {formatVol(s.volume)}
                   </td>
+                  {showTrend && (
+                    <td style={{ textAlign: 'right', padding: '10px 10px', fontSize: 11, fontWeight: 600, color: getTrendColor(rating) }}>
+                      {rating || '—'}
+                    </td>
+                  )}
+                  {show52WRange && weekLow != null && weekHigh != null ? (
+                    <td className="mono tnum" style={{ textAlign: 'right', padding: '10px 10px', fontSize: 11, color: 'var(--ns-text-2)' }}>
+                      {formatPrice(weekLow)} – {formatPrice(weekHigh)}
+                    </td>
+                  ) : show52WRange ? (
+                    <td style={{ textAlign: 'right', padding: '10px 10px', fontSize: 11, color: 'var(--ns-text-4)' }}>—</td>
+                  ) : null}
                 </tr>
               );
             })}
@@ -172,11 +208,13 @@ const Market: React.FC = () => {
           stocks={trending?.top_gainers?.slice(0, 10) || []}
           title="Top Gainers"
           icon={<TrendingUp size={14} style={{ color: 'var(--ns-profit)' }} />}
+          showTrend
         />
         <StockTable
           stocks={trending?.top_losers?.slice(0, 10) || []}
           title="Top Losers"
           icon={<TrendingDown size={14} style={{ color: 'var(--ns-loss)' }} />}
+          showTrend
         />
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
@@ -184,11 +222,15 @@ const Market: React.FC = () => {
           stocks={mostActive}
           title="Most Active (NSE)"
           icon={<Activity size={14} />}
+          showTrend
+          show52WRange
         />
         <StockTable
           stocks={bseActive}
           title="Most Active (BSE)"
           icon={<Activity size={14} />}
+          showTrend
+          show52WRange
         />
       </div>
 
@@ -204,8 +246,18 @@ const Market: React.FC = () => {
                 {(Array.isArray(shockers.NSE_PriceShocker) ? shockers.NSE_PriceShocker : []).slice(0, 8).map((s: any, i: number) => (
                   <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', borderRadius: 8, background: 'var(--ns-surface)', border: '1px solid var(--ns-border)' }}>
                     <div>
-                      <div style={{ fontSize: 12.5, fontWeight: 600 }}>{s.displayName?.slice(0, 25) || s.company || 'N/A'}</div>
-                      <div style={{ fontSize: 10.5, color: 'var(--ns-text-4)' }}>Deviation: {Number(s.deviation || 0).toFixed(1)}%</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontSize: 12.5, fontWeight: 600 }}>{s.displayName?.slice(0, 25) || s.company || 'N/A'}</span>
+                        {s.overallRating && (
+                          <span style={{ fontSize: 9.5, fontWeight: 600, padding: '1px 6px', borderRadius: 4, color: '#fff', background: s.overallRating.toLowerCase() === 'bullish' ? 'var(--ns-profit)' : s.overallRating.toLowerCase() === 'bearish' ? 'var(--ns-loss)' : 'var(--ns-text-3)' }}>
+                            {s.overallRating}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: 10.5, color: 'var(--ns-text-4)' }}>
+                        Deviation: {Number(s.deviation || 0).toFixed(1)}%
+                        {s.marketCap != null && <span style={{ marginLeft: 8 }}>MCap: {Number(s.marketCap).toLocaleString('en-IN')}</span>}
+                      </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <div className="mono tnum" style={{ fontSize: 12.5, fontWeight: 600 }}>₹{Number(s.price).toFixed(2)}</div>
@@ -227,8 +279,18 @@ const Market: React.FC = () => {
                 {(Array.isArray(shockers.BSE_PriceShocker) ? shockers.BSE_PriceShocker : []).slice(0, 8).map((s: any, i: number) => (
                   <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', borderRadius: 8, background: 'var(--ns-surface)', border: '1px solid var(--ns-border)' }}>
                     <div>
-                      <div style={{ fontSize: 12.5, fontWeight: 600 }}>{s.displayName?.slice(0, 25) || s.company || 'N/A'}</div>
-                      <div style={{ fontSize: 10.5, color: 'var(--ns-text-4)' }}>Deviation: {Number(s.deviation || 0).toFixed(1)}%</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontSize: 12.5, fontWeight: 600 }}>{s.displayName?.slice(0, 25) || s.company || 'N/A'}</span>
+                        {s.overallRating && (
+                          <span style={{ fontSize: 9.5, fontWeight: 600, padding: '1px 6px', borderRadius: 4, color: '#fff', background: s.overallRating.toLowerCase() === 'bullish' ? 'var(--ns-profit)' : s.overallRating.toLowerCase() === 'bearish' ? 'var(--ns-loss)' : 'var(--ns-text-3)' }}>
+                            {s.overallRating}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: 10.5, color: 'var(--ns-text-4)' }}>
+                        Deviation: {Number(s.deviation || 0).toFixed(1)}%
+                        {s.marketCap != null && <span style={{ marginLeft: 8 }}>MCap: {Number(s.marketCap).toLocaleString('en-IN')}</span>}
+                      </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <div className="mono tnum" style={{ fontSize: 12.5, fontWeight: 600 }}>₹{Number(s.price).toFixed(2)}</div>

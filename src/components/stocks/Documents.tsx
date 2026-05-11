@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileStack, Mic, BookOpen, Bell, ShieldCheck, ExternalLink } from 'lucide-react';
+import { FileStack, Mic, BookOpen, Bell, ShieldCheck, Star, ExternalLink } from 'lucide-react';
 
 interface DocItem {
   title?: string;
@@ -28,7 +28,7 @@ interface DocumentsProps {
   className?: string;
 }
 
-type TabKey = 'concalls' | 'annual' | 'announcements' | 'regulatory';
+type TabKey = 'concalls' | 'annual' | 'announcements' | 'regulatory' | 'credit_ratings';
 
 const formatDate = (dateStr: string | undefined): string => {
   if (!dateStr) return '--';
@@ -67,6 +67,7 @@ const getUrl = (item: DocItem): string | null => {
 const getConcallLinks = (item: DocItem): { label: string; url: string }[] => {
   const links: { label: string; url: string }[] = [];
   if (item.transcript) links.push({ label: 'Transcript', url: item.transcript });
+  if (item['ai summary']) links.push({ label: 'AI Summary', url: item['ai summary'] });
   if (item.ppt) links.push({ label: 'PPT', url: item.ppt });
   if (item.rec) links.push({ label: 'Recording', url: item.rec });
   return links;
@@ -86,6 +87,7 @@ const tabMeta: Record<TabKey, { label: string; icon: React.ReactNode }> = {
   annual:        { label: 'Annual Reports',    icon: <BookOpen size={12} /> },
   announcements: { label: 'Announcements',     icon: <Bell size={12} /> },
   regulatory:    { label: 'Regulatory Filings', icon: <ShieldCheck size={12} /> },
+  credit_ratings: { label: 'Credit Ratings',   icon: <Star size={12} /> },
 };
 
 const Documents: React.FC<DocumentsProps> = ({ ticker, className }) => {
@@ -93,6 +95,7 @@ const Documents: React.FC<DocumentsProps> = ({ ticker, className }) => {
   const [annual, setAnnual] = useState<DocItem[]>([]);
   const [announcements, setAnnouncements] = useState<DocItem[]>([]);
   const [regulatory, setRegulatory] = useState<DocItem[]>([]);
+  const [creditRatings, setCreditRatings] = useState<DocItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>('concalls');
@@ -105,6 +108,7 @@ const Documents: React.FC<DocumentsProps> = ({ ticker, className }) => {
     setAnnual([]);
     setAnnouncements([]);
     setRegulatory([]);
+    setCreditRatings([]);
 
     const encoded = encodeURIComponent(ticker);
 
@@ -113,14 +117,16 @@ const Documents: React.FC<DocumentsProps> = ({ ticker, className }) => {
       fetch(`/api/proxy/dev/annual_reports?stock_name=${encoded}`).then(r => r.ok ? r.json() : null).catch(() => null),
       fetch(`/api/proxy/dev/recent_announcements?stock_name=${encoded}`).then(r => r.ok ? r.json() : null).catch(() => null),
       fetch(`/api/proxy/dev/documents?stock_name=${encoded}`).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(`/api/proxy/dev/credit_ratings?stock_name=${encoded}`).then(r => r.ok ? r.json() : null).catch(() => null),
     ])
-      .then(([cc, ar, an, reg]) => {
+      .then(([cc, ar, an, reg, cr]) => {
         if (!cancelled) {
           setConcalls(parseItems(cc));
           setAnnual(parseItems(ar));
           setAnnouncements(parseItems(an));
           const regItems = reg?.Recent_Announcements ? reg.Recent_Announcements : parseItems(reg);
           setRegulatory(regItems);
+          setCreditRatings(parseItems(cr));
           setLoading(false);
         }
       })
@@ -143,7 +149,7 @@ const Documents: React.FC<DocumentsProps> = ({ ticker, className }) => {
           <div className="ns-card-title"><FileStack size={14} /> Documents & Filings</div>
         </div>
         <div style={{ display: 'flex', gap: 6, marginTop: 14 }}>
-          {[1, 2, 3, 4].map(i => (
+          {[1, 2, 3, 4, 5].map(i => (
             <div key={i} className="ns-skeleton" style={{ width: 100, height: 28, borderRadius: 8 }} />
           ))}
         </div>
@@ -164,6 +170,7 @@ const Documents: React.FC<DocumentsProps> = ({ ticker, className }) => {
     annual,
     announcements,
     regulatory,
+    credit_ratings: creditRatings,
   };
 
   const activeItems = dataMap[activeTab];
@@ -173,6 +180,7 @@ const Documents: React.FC<DocumentsProps> = ({ ticker, className }) => {
     annual: annual.length,
     announcements: announcements.length,
     regulatory: regulatory.length,
+    credit_ratings: creditRatings.length,
   };
 
   return (
