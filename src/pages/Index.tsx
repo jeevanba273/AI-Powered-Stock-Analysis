@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { CircleDashed, AlertCircle, KeyRound, RefreshCcw, Search, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { CircleDashed, AlertCircle, KeyRound, RefreshCcw, Search, ArrowUpRight, ArrowDownRight, Download } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { fetchStockData, fetchHistoricalData, StockData, INDIAN_API_KEY } from '@/services/indianStockService';
@@ -116,6 +116,39 @@ const Index = () => {
       }
     } catch (err) {
       console.error(`[TimeFrame] Failed to fetch ${period} data:`, err);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    const content = document.querySelector('.ns-content') as HTMLElement;
+    if (!content || !stockData) return;
+    toast.loading('Generating PDF report...', { id: 'pdf-export' });
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const { jsPDF } = await import('jspdf');
+      const canvas = await html2canvas(content, {
+        backgroundColor: '#1e2230',
+        scale: 1.5,
+        useCORS: true,
+        logging: false,
+      });
+      const imgData = canvas.toDataURL('image/jpeg', 0.85);
+      const imgW = canvas.width;
+      const imgH = canvas.height;
+      const pdfW = 210;
+      const pdfH = (imgH * pdfW) / imgW;
+      const pdf = new jsPDF('p', 'mm', [pdfW, pdfH + 20]);
+      pdf.setFillColor(30, 34, 48);
+      pdf.rect(0, 0, pdfW, pdfH + 20, 'F');
+      pdf.setTextColor(200, 200, 210);
+      pdf.setFontSize(8);
+      pdf.text(`NeuraStock Report — ${stockData.ticker} — ${new Date().toLocaleDateString('en-IN')}`, 10, 8);
+      pdf.addImage(imgData, 'JPEG', 0, 12, pdfW, pdfH);
+      pdf.save(`NeuraStock_${stockData.ticker}_${new Date().toISOString().slice(0, 10)}.pdf`);
+      toast.success('PDF downloaded', { id: 'pdf-export' });
+    } catch (err: any) {
+      console.error('[PDF] Export failed:', err);
+      toast.error('Failed to generate PDF', { id: 'pdf-export' });
     }
   };
 
@@ -274,6 +307,14 @@ const Index = () => {
                     <span className="mono" style={{ color: 'var(--ns-text-3)' }}>{formatDateTime(stockData.lastUpdated)}</span>
                   </div>
                 </div>
+                <button
+                  onClick={handleExportPDF}
+                  className="ns-ai-cta"
+                  style={{ marginLeft: 'auto', padding: '6px 12px', fontSize: 11.5 }}
+                  title="Download analysis as PDF"
+                >
+                  <Download size={14} /> Export PDF
+                </button>
                 <div className="ns-price-block">
                   <div className="ns-price tnum">
                     <span className="ns-currency">₹</span>

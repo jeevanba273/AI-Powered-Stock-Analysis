@@ -24,22 +24,33 @@ const Sidebar: React.FC<SidebarProps> = ({ activeStock, onSelectStock }) => {
 
   useEffect(() => {
     const symbols = popularIndianStocks.map(s => s.ticker);
-    fetch('/api/proxy/dev/nse_stock_batch_live_price', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ stock_symbols: symbols }),
-    })
-      .then(r => r.json())
-      .then((data: Record<string, { ltp: number; day_change_percent: number }>) => {
-        const mapped: Record<string, { ltp: number; pct: number }> = {};
-        for (const [sym, info] of Object.entries(data)) {
-          if (info && typeof info.ltp === 'number') {
-            mapped[sym] = { ltp: info.ltp, pct: info.day_change_percent ?? 0 };
+    const batchSize = 4;
+    const batches: string[][] = [];
+    for (let i = 0; i < symbols.length; i += batchSize) {
+      batches.push(symbols.slice(i, i + batchSize));
+    }
+
+    Promise.allSettled(
+      batches.map(batch =>
+        fetch('/api/proxy/dev/nse_stock_batch_live_price', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ stock_symbols: batch }),
+        }).then(r => r.json())
+      )
+    ).then(results => {
+      const mapped: Record<string, { ltp: number; pct: number }> = {};
+      for (const result of results) {
+        if (result.status === 'fulfilled' && result.value && !result.value.error) {
+          for (const [sym, info] of Object.entries(result.value as Record<string, any>)) {
+            if (info && typeof info.ltp === 'number') {
+              mapped[sym] = { ltp: info.ltp, pct: info.day_change_percent ?? 0 };
+            }
           }
         }
-        setPrices(mapped);
-      })
-      .catch(err => console.error('Batch price fetch failed:', err));
+      }
+      setPrices(mapped);
+    });
   }, []);
 
   return (
