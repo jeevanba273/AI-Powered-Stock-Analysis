@@ -3,119 +3,166 @@
 
 [![Live Demo](https://img.shields.io/badge/demo-live-green.svg)](https://ai-powered-stock-analysis.up.railway.app/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue.svg)](https://www.typescriptlang.org/)
-[![React](https://img.shields.io/badge/React-18.3.1-61DAFB.svg?logo=react)](https://reactjs.org/)
+[![React](https://img.shields.io/badge/React-18.3-61DAFB.svg?logo=react)](https://reactjs.org/)
 [![Vite](https://img.shields.io/badge/Vite-5.4-646CFF.svg?logo=vite)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3.4-38B2AC.svg?logo=tailwind-css)](https://tailwindcss.com/)
 [![shadcn/ui](https://img.shields.io/badge/shadcn%2Fui-latest-000.svg)](https://ui.shadcn.com/)
-[![Recharts](https://img.shields.io/badge/Recharts-2.12.7-22B5BF.svg)](https://recharts.org/)
+[![TradingView](https://img.shields.io/badge/TradingView-Lightweight%20Charts-131722.svg)](https://tradingview.github.io/lightweight-charts/)
+[![Express](https://img.shields.io/badge/Express-5-000.svg?logo=express)](https://expressjs.com/)
 
 ## Overview
 
-**NeuraStock** is an AI-powered stock analysis platform built for the **Indian stock market (NSE & BSE)**. It fetches live market data, runs technical analysis algorithms locally, and optionally leverages OpenAI's GPT-4o-mini for deeper insights — all presented through interactive charts and a clean dashboard UI.
+**NeuraStock** is a full-stack, AI-powered stock analysis platform for the **Indian stock market (NSE & BSE)**. It features an Express 5 backend that proxies all API calls (keeping keys server-side), a 1-hour server cache, and a React 18 frontend with TradingView Lightweight Charts, GPT-4o-mini analysis, and eight dedicated pages covering stocks, markets, IPOs, mutual funds, commodities, and news.
 
 ## Live Demo
 
 [**ai-powered-stock-analysis.up.railway.app**](https://ai-powered-stock-analysis.up.railway.app/)
 
-## Key Features
+## Pages
 
-### Real-Time Market Data
-- Live stock prices via the IndianAPI batch price endpoint (NSE)
-- 3-year historical price and volume data
-- Company fundamentals: P/E ratio, market cap, book value, ROE, debt-to-equity
-- IST-aware market open/closed status detection
-- Searchable catalog of **4,798 Indian stocks** with NSE and BSE codes
+NeuraStock has **8 pages** accessible from the sidebar:
 
-### AI-Powered Technical Analysis
-- **Dual analysis engine**: local algorithmic analysis runs first; OpenAI GPT-4o-mini is used as a fallback/enhancement
-- **Technical indicators**: RSI, MACD, Bollinger Bands, SMA/EMA crossovers (20/50-day)
-- **Pattern recognition**: Doji, Three White Soldiers, Three Black Crows, Golden Cross, Death Cross, resistance breakouts, support breakdowns
-- **Support & resistance levels**: calculated from local price minima/maxima
-- **Risk assessment**: 1-5 scale based on price volatility, P/E ratio, and recent momentum
-- **Recommendations**: Strong Buy / Buy / Hold / Sell / Strong Sell based on short and medium-term momentum
+| Page | Route | Description |
+|------|-------|-------------|
+| **Dashboard** | `/`, `/stock/:ticker` | Full single-stock analysis with AI, charts, filings, peers, and PDF export |
+| **Market** | `/market` | Heatmap, top gainers/losers, most active, price shockers, 52-week highs/lows |
+| **Compare** | `/compare` | Side-by-side comparison of up to 3 stocks |
+| **Screener** | `/screener` | Search stocks by industry and sector |
+| **IPO** | `/ipo` | Upcoming, open, and listed IPOs with expandable detail panels |
+| **Mutual Funds** | `/mutual-funds` | Browse funds by category, NAV chart, holdings breakdown |
+| **Commodities** | `/commodities` | MCX futures with open interest signal |
+| **News** | `/news` | Paginated market news feed |
 
-### Trend Analysis
-- **Current Trend Analysis**: Linear regression over 1-week, 1-month, and 3-month windows with R-squared strength measurement and volatility classification
-- **Future Trend Prediction**: Short, mid, and long-term outlook derived from pattern formations, support/resistance profiles, and AI recommendation signals
+## Dashboard Sections
 
-### News Sentiment Analysis
-- Fetches company-specific news via IndianAPI
-- AI-driven sentiment classification (Positive / Neutral / Negative) with percentage breakdown
-- Uses OpenAI GPT-4o-mini for sentiment scoring with graceful fallback to neutral defaults
+The Dashboard is a single-scroll page built around a selected stock. All sections load together:
 
-### Interactive Charts
-- **Price chart**: Area chart with gradient fill, custom tooltips showing OHLCV data and daily change percentage
-- **Volume chart**: Bar chart with formatted volume display (K/M/B)
-- Built with Recharts, fully responsive
-
-### Detailed Financials Dialog
-- Company overview and industry classification
-- Key fundamentals (from API)
-- Yearly and quarterly financial statements (Revenue, Profit, etc.)
-- Advanced statistics with auto-formatted labels (P/E, P/B, EV, ROE, ROIC, etc.)
-- 52-week price range for both NSE and BSE
-
-### Stock Search
-- Instant autocomplete search across 4,798+ stocks by name, NSE code, or BSE code
-- Quick-access buttons for popular Indian stocks (TCS, Reliance, Infosys, HDFC Bank, ICICI Bank, SBI, Tata Motors, Bharti Airtel)
-- Click-outside-to-close dropdown with keyboard-friendly UX
+- **Stock Header** -- Company logo, live price, market open/closed status
+- **Key Stats** -- 8 key metrics plus day range and 52-week range sliders
+- **AI Analyst** -- GPT-4o-mini powered analysis with pattern recognition, support/resistance levels, risk assessment, and buy/hold/sell recommendation
+- **TradingView Lightweight Charts** -- Candlestick/area charts with timeframes from 1D to MAX, SMA overlays, and hover legend
+- **Analyst Price Targets** -- Mean, high, and low price targets from real analysts
+- **Stock Forecasts** -- EPS and Revenue actual vs. estimate with surprise percentage
+- **Corporate Actions** -- Dividends, board meetings, and bonus events on a timeline
+- **Documents & Filings** -- Conference calls, annual reports, announcements, credit ratings, regulatory filings
+- **Peer Comparison Strip** -- Quick comparison against sector peers
+- **Earnings Calendar** -- Upcoming board meetings across stocks
+- **News Sentiment** -- AI-powered sentiment classification (positive/neutral/negative) of company news
+- **Export PDF** -- One-click PDF export of the full dashboard
 
 ## Tech Stack
 
 | Layer | Technologies |
 |-------|-------------|
-| **Framework** | React 18, TypeScript 5.5, Vite 5.4 (SWC) |
+| **Frontend** | React 18, TypeScript 5.5, Vite 5.4 (SWC) |
 | **Styling** | Tailwind CSS 3.4, shadcn/ui (Radix UI primitives), Lucide icons |
-| **Charts** | Recharts 2.12 |
+| **Fonts** | Geist + Geist Mono |
+| **Charts** | TradingView Lightweight Charts |
 | **State** | React Query (TanStack Query v5), React hooks |
 | **Routing** | React Router DOM v6 |
-| **APIs** | [IndianAPI](https://indianapi.in/) (market data), [OpenAI API](https://platform.openai.com/) (GPT-4o-mini for analysis & sentiment) |
-| **Deployment** | Railway |
+| **Backend** | Express 5, Node.js 20+ |
+| **Auth** | JWT with bcrypt password hashing |
+| **AI** | OpenAI GPT-4o-mini (server-side proxy for analysis + sentiment) |
+| **Data** | [IndianAPI](https://indianapi.in/) -- all 38 endpoints utilized |
+| **Deployment** | Railway (Railpack) |
+
+## Performance
+
+- **Server-side API proxy** -- no CORS issues, API key never reaches the browser
+- **1-hour server cache** with a manual Refresh button to bust cache on demand
+- **Retry logic** on all API calls (1 retry, 1-second delay)
+- **Stale-while-revalidate** client-side cache via React Query
+- **Prefetch on watchlist hover** -- data loads before the user clicks
+- **Code splitting** -- non-dashboard pages are lazy-loaded; prefetched after 3 seconds
+- **Server-side data aggregation** endpoint reduces round-trips for the dashboard
+- **Dynamic catalogs** -- 5,400+ stock catalog and 251 mutual fund catalog
+
+## Security
+
+- JWT authentication with bcrypt-hashed passwords
+- API keys stored server-side only (never in the browser bundle)
+- Protected routes require login
 
 ## Project Structure
 
 ```
+server/
+├── index.ts               # Express server entry point
+├── cache.ts               # 1-hour server-side cache layer
+├── stockCatalog.ts        # Dynamic stock catalog (5,400+ stocks)
+└── routes/
+    ├── auth.ts            # JWT login / token verification
+    ├── proxy.ts           # IndianAPI proxy (all 38 endpoints)
+    ├── ai.ts              # GPT-4o-mini analysis + sentiment proxy
+    └── stock.ts           # Aggregated stock data endpoint
+
 src/
+├── pages/
+│   ├── Index.tsx          # Dashboard (stock analysis)
+│   ├── Market.tsx         # Heatmap, gainers/losers, most active
+│   ├── Compare.tsx        # Side-by-side stock comparison
+│   ├── Screener.tsx       # Industry/sector stock screener
+│   ├── IPO.tsx            # IPO listings (upcoming, open, listed)
+│   ├── MutualFunds.tsx    # Mutual fund browser + NAV chart
+│   ├── Commodities.tsx    # MCX futures + OI signal
+│   ├── News.tsx           # Paginated market news
+│   ├── Login.tsx          # Authentication page
+│   └── NotFound.tsx       # 404 page
 ├── components/
 │   ├── stocks/
-│   │   ├── AIAnalysisResults.tsx    # Full analysis display with patterns, risk, S/R levels, insights
-│   │   ├── AIErrorState.tsx         # Error handling UI for analysis failures
-│   │   ├── AILoadingState.tsx       # Pre-analysis placeholder state
-│   │   ├── CurrentTrendAnalysis.tsx  # Linear regression trend analysis (1W/1M/3M)
-│   │   ├── FutureTrendAnalysis.tsx   # Predictive trend outlook based on AI signals
-│   │   ├── StockAnalysis.tsx        # Analysis orchestration component
-│   │   ├── StockChart.tsx           # Price area chart + volume bar chart
-│   │   ├── StockSearch.tsx          # Search bar with autocomplete dropdown
-│   │   ├── StockSearchDialog.tsx    # Dialog-based stock search (Command palette)
-│   │   └── StockSummary.tsx         # Price card with stats + detailed financials dialog
-│   └── ui/                          # shadcn/ui component library
-├── config/
-│   ├── apiKeys.ts                   # Environment variable loader for API keys
-│   └── apiKeys.example.ts          # Example configuration
-├── data/
-│   └── stocksCatalog.ts            # 4,798 Indian stocks (NSE + BSE codes)
+│   │   ├── StockChart.tsx         # TradingView Lightweight Charts (1D–MAX, SMA)
+│   │   ├── StockSummary.tsx       # Key stats panel, day/52-week range
+│   │   ├── StockAnalysis.tsx      # AI Analyst (GPT-4o-mini analysis)
+│   │   ├── AnalystTargets.tsx     # Mean/high/low price targets
+│   │   ├── Forecasts.tsx          # EPS & Revenue actual vs estimate
+│   │   ├── CorporateActions.tsx   # Dividends, board meetings, bonus
+│   │   ├── Documents.tsx          # Filings, reports, announcements
+│   │   ├── PeerStrip.tsx          # Peer comparison strip
+│   │   └── EarningsCalendar.tsx   # Upcoming board meetings
+│   ├── layout/
+│   │   ├── Sidebar.tsx            # App sidebar navigation
+│   │   ├── TopBar.tsx             # Top bar with search
+│   │   └── AppShell.tsx           # Layout wrapper
+│   ├── auth/
+│   │   └── ProtectedRoute.tsx     # Route guard (JWT check)
+│   └── ui/                        # shadcn/ui component library
+├── contexts/
+│   └── AuthContext.tsx             # Authentication state provider
 ├── services/
-│   ├── aiService.ts                # AI analysis engine (local algorithms + OpenAI fallback)
-│   ├── indianStockService.ts       # IndianAPI integration (live prices, historical, news)
-│   └── stockService.ts             # Legacy wrapper (redirects to indianStockService)
-├── pages/
-│   ├── Index.tsx                   # Main dashboard page
-│   └── NotFound.tsx                # 404 page
-├── hooks/
-│   └── use-mobile.tsx              # Mobile breakpoint detection hook
+│   ├── indianStockService.ts      # IndianAPI service layer
+│   └── aiService.ts               # AI analysis + sentiment service
 ├── lib/
-│   └── utils.ts                    # Utility functions (cn helper)
-├── App.tsx                         # Root component with providers and routing
-└── main.tsx                        # Entry point
+│   ├── auth.ts                    # Auth helper utilities
+│   ├── fetchRetry.ts              # Fetch with retry (1 retry, 1s delay)
+│   └── utils.ts                   # Utility functions (cn helper)
+├── App.tsx                        # Root component with providers and routing
+└── main.tsx                       # Entry point
 ```
 
 ## Getting Started
 
 ### Prerequisites
 
-- **Node.js 16+** with npm (or Bun — `bun.lockb` is included)
-- An [IndianAPI](https://indianapi.in/) API key (for stock data)
-- An [OpenAI API](https://platform.openai.com/) key (optional — local algorithms work without it)
+- **Node.js 20+** with npm
+- An [IndianAPI](https://indianapi.in/) API key (for all market data)
+- An [OpenAI API](https://platform.openai.com/) key (for AI analysis and sentiment)
+
+### Environment Variables
+
+Create a `.env` file in the project root:
+
+```env
+# Frontend
+VITE_INDIAN_API_KEY=your-key
+VITE_OPENAI_API_KEY=
+
+# Server
+INDIAN_API_KEY=your-key
+OPENAI_API_KEY=your-openai-key
+AUTH_USERNAME=your-username
+AUTH_PASSWORD_HASH=$2b$10$...
+JWT_SECRET=your-64-byte-hex
+```
 
 ### Installation
 
@@ -134,11 +181,7 @@ src/
    ```bash
    cp .env.example .env
    ```
-   Edit `.env` and add your API keys:
-   ```
-   VITE_INDIAN_API_KEY=your-indian-api-key-here
-   VITE_OPENAI_API_KEY=your-openai-api-key-here
-   ```
+   Edit `.env` and fill in all variables listed above.
 
 4. **Start the development server**
    ```bash
@@ -157,54 +200,27 @@ npm run build
 npm run preview
 ```
 
-## How It Works
-
-1. **Data Fetching** — When a stock is selected, four parallel API calls fetch live price, 3-year historical data, company fundamentals, and recent news from IndianAPI.
-
-2. **News Sentiment** — News headlines are sent to OpenAI GPT-4o-mini for sentiment classification, returning a positive/neutral/negative percentage breakdown.
-
-3. **AI Analysis (on demand)** — Clicking "Generate Analysis" triggers the analysis engine:
-   - **Local algorithms run first**: risk scoring (volatility + P/E + momentum), pattern detection (RSI, MACD, Bollinger Bands, candlestick patterns, MA crossovers), support/resistance from local minima/maxima, and recommendation based on short/medium-term returns.
-   - **OpenAI fallback**: If local analysis fails, the same data is sent to GPT-4o-mini with a structured JSON prompt for analysis, patterns, risk, and recommendations.
-   - **Triple fallback**: If OpenAI also fails or returns unparseable JSON, local algorithms retry. If everything fails, a generic safe response is returned.
-
-4. **Trend Analysis** — Current trends use linear regression with R-squared confidence; future trend predictions combine pattern signals, risk profiles, and AI recommendations.
-
-5. **Visualization** — All results render through interactive Recharts charts and a card-based dashboard layout.
-
 ## Deployment
 
-The application is deployed on [Railway](https://railway.app/):
+The application is deployed on [Railway](https://railway.app/) using Railpack:
 
 1. Fork this repository
 2. Create a new project on Railway
 3. Connect your GitHub repository
-4. Add environment variables (`VITE_INDIAN_API_KEY`, `VITE_OPENAI_API_KEY`)
-5. Deploy — Railway auto-detects the Vite build
-
-## API Reference
-
-| API | Endpoint | Purpose |
-|-----|----------|---------|
-| IndianAPI | `POST /nse_stock_batch_live_price` | Live stock prices |
-| IndianAPI | `GET /historical_data` | 3-year price & volume history |
-| IndianAPI | `GET /get_stock_data` | Company details & fundamentals |
-| IndianAPI | `GET /company_news` | Company-specific news |
-| IndianAPI | `GET /indices` | Market indices (NIFTY 50, Bank NIFTY, India VIX) |
-| OpenAI | `POST /v1/chat/completions` | Stock analysis & news sentiment (GPT-4o-mini) |
+4. Add all environment variables (see above)
+5. Deploy -- Railway auto-detects the build via Railpack
 
 ## Acknowledgements
 
-- [IndianAPI](https://indianapi.in/) for Indian stock market data
-- [OpenAI](https://openai.com/) for GPT-4o-mini powering AI analysis and sentiment
+- [IndianAPI](https://indianapi.in/) for comprehensive Indian stock market data (all 38 endpoints)
+- [OpenAI](https://openai.com/) for GPT-4o-mini powering AI analysis and news sentiment
+- [TradingView](https://tradingview.github.io/lightweight-charts/) for Lightweight Charts
 - [shadcn/ui](https://ui.shadcn.com/) for the component library
-- [Recharts](https://recharts.org/) for charting
-- [TradingView](https://www.tradingview.com/) for chart design inspiration
 
 ---
 
 <p align="center">
-  Built with ❤️ by <a href="https://github.com/jeevanba273">JEEVAN B A</a>
+  Built with care by <a href="https://github.com/jeevanba273">JEEVAN B A</a>
 </p>
 
 <p align="center">

@@ -1079,56 +1079,50 @@ GET /usage
 
 ---
 
-## Endpoint Priority Summary
+## Endpoint Usage — All 38 Endpoints In Use
 
-### CRITICAL (cron jobs + core features)
-
-| Endpoint | Method | Purpose | Called by |
-|----------|--------|---------|----------|
-| `/nse_stock_batch_live_price` | POST | **Batch OHLCV for all held NSE symbols in ONE call** | Price update cron |
-| `/stock` | GET | Company metadata, sector, industry, corporate actions | Metadata population, detail page |
-| `/historical_data` | GET | Historical price backfill (close prices) — also works for indices (e.g., `stock_name=NIFTY 50`) | Initial setup, gap-fill, index charts |
-| `/corporate_actions` | GET | Detect splits, bonuses, dividends | Weekly cron |
-| `/indices` | GET | Live Nifty 50, Sensex for dashboard header | Dashboard load |
-
-### IMPORTANT (analytics + metadata)
-
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/industry_search` | GET | Sector, industry classification for metadata |
-| `/get_stock_data` | GET | Single-stock live OHLC (ad-hoc lookups) |
-| `/bse_stock_batch_live_price` | POST | BSE-only stocks pricing |
-| `/logo` | GET | Company logos for UI |
-| `/ping` | GET | Health check before cron |
-| `/usage` | GET | Monitor API consumption |
-
-### OPTIONAL (nice-to-have features)
-
-| Endpoint | Purpose |
-|----------|---------|
-| `/stock_target_price` | Analyst recommendations |
-| `/stock_forecasts` | EPS/Revenue forecasts |
-| `/historical_stats` | Quarterly results, balance sheet |
-| `/trending` | Market overview widget |
-| `/price_shockers` | Market overview widget |
-| `/NSE_most_active` / `/BSE_most_active` | Market overview widget |
-| `/news` | Market news feed |
-| `/company_news` | Per-stock news |
-| `/ai_news` | AI-curated insights |
-| `/1D_intraday_data` | Intraday charts |
-| `/credit_ratings` | Company credit ratings |
-| `/concalls` | Conference call transcripts |
-| `/annual_reports` | Annual report links |
-| `/recent_announcements` | Exchange filings |
-
-### NOT NEEDED
-
-| Endpoint | Reason |
-|----------|--------|
-| `/commodities` | Not tracking commodity futures |
-| `/mutual_funds` / `/mutual_fund_search` / `/mutual_funds_details` | Not tracking MFs |
-| `/get_mf_historical_data` / `/mf_holdings` | Not tracking MFs |
-| `/ipo` / `/ipo/v2` / `/ipo/{id}` | IPO tracking not in scope |
+| Endpoint | Method | Used In | Component/File |
+|----------|--------|---------|---------------|
+| `/nse_stock_batch_live_price` | POST | Live prices, sidebar watchlist | indianStockService.ts, Sidebar.tsx |
+| `/bse_stock_batch_live_price` | POST | BSE-only stock fallback | indianStockService.ts |
+| `/get_stock_data` | GET | Stock details, fundamentals, peers | indianStockService.ts, ai.ts |
+| `/historical_data` | GET | Price charts (all timeframes) | indianStockService.ts |
+| `/company_news` | GET | News feed, AI sentiment | indianStockService.ts |
+| `/indices` | GET | Market indices | indianStockService.ts |
+| `/stock` | GET | Fallback stock details | indianStockService.ts |
+| `/industry_search` | GET | Screener page | Screener.tsx |
+| `/trending` | GET | Market heatmap, gainers/losers | Market.tsx |
+| `/NSE_most_active` | GET | Market page | Market.tsx |
+| `/BSE_most_active` | GET | Market page | Market.tsx |
+| `/price_shockers` | GET | Market page | Market.tsx |
+| `/fetch_52_week_high_low_data` | GET | Market page | Market.tsx |
+| `/stock_target_price` | GET | Analyst targets, AI prompt | AnalystTargets.tsx, ai.ts |
+| `/stock_forecasts` | GET | EPS/Revenue forecasts | Forecasts.tsx |
+| `/corporate_actions` | GET | Corporate actions, earnings calendar, AI prompt | CorporateActions.tsx, EarningsCalendar.tsx, ai.ts |
+| `/historical_stats` | GET | Quarterly financials in dialog | StockSummary.tsx |
+| `/logo` | GET | Company logo in header | indianStockService.ts |
+| `/credit_ratings` | GET | Credit ratings tab | Documents.tsx |
+| `/concalls` | GET | Conference calls tab | Documents.tsx |
+| `/annual_reports` | GET | Annual reports tab | Documents.tsx |
+| `/documents` | GET | Regulatory filings tab | Documents.tsx |
+| `/recent_announcements` | GET | Announcements tab | Documents.tsx |
+| `/news` | GET | News page (paginated) | News.tsx |
+| `/ai_news` | GET | (removed — stale data from API) | — |
+| `/company_news` | GET | Per-stock news, sentiment | indianStockService.ts |
+| `/commodities` | GET | Commodities page | Commodities.tsx |
+| `/mutual_funds` | GET | MF browse by category | MutualFunds.tsx |
+| `/mutual_funds_details` | GET | MF fund detail | MutualFunds.tsx |
+| `/mutual_fund_search` | GET | MF search | MutualFunds.tsx |
+| `/get_mf_historical_data` | GET | MF NAV chart | MutualFunds.tsx |
+| `/mf_holdings` | GET | MF top holdings | MutualFunds.tsx |
+| `/ipo` | GET | Legacy IPO endpoint | — |
+| `/ipo/v2` | GET | IPO tracker (upcoming/open/listed) | IPO.tsx |
+| `/ipo/{id}` | GET | IPO detail expansion | IPO.tsx |
+| `/1D_intraday_data` | POST | 1D intraday chart | Index.tsx |
+| `/ping` | GET | API health check | TopBar.tsx |
+| `/usage` | GET | API usage counter | TopBar.tsx |
+| `/static/all_stocks.json` | GET | Stock catalog (server startup) | stockCatalog.ts |
+| `/static/all_mf.json` | GET | MF catalog (server startup) | stockCatalog.ts |
 
 ---
 
@@ -1159,6 +1153,10 @@ GET /usage
 | All other endpoints | Yes | Yes |
 
 **Fallback strategy (implemented in `indianStockService.ts`):**
+- Server-side proxy at `/api/proxy/dev/*` (dev server) and `/api/proxy/fallback/*` (normal server)
+- 1-hour cache with empty response rejection (empty arrays/objects are not cached)
+- Retry on 500 with 300ms delay
+- Server-side aggregation at `/api/stock/:ticker` (combines data from multiple endpoints)
 - When dev server returns 5xx or times out, fall back to the normal server
 - `/nse_stock_batch_live_price` (dev-only) → falls back to `GET /stock?name=` on normal server (degraded: returns current price only, no full OHLCV)
 - `/get_stock_data` (dev-only) → falls back to `GET /stock?name=` on normal server (response transformed to match expected shape)
