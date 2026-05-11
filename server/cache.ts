@@ -20,6 +20,8 @@ export function getCached(url: string): CacheEntry | null {
 
 export function setCache(url: string, data: string, contentType: string, status: number): void {
   if (status < 200 || status >= 300) return;
+  if (data.length < 10) return;
+  if (data.includes('"error"')) return;
   store.set(url, { data, contentType, status, expiresAt: Date.now() + DEFAULT_TTL });
 }
 
