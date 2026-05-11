@@ -45,5 +45,55 @@ export function getCatalogAge(): { count: number; ageMinutes: number } {
 export function startCatalogRefresh(): void {
   setInterval(() => {
     loadCatalog();
+    loadMfCatalog();
   }, REFRESH_INTERVAL);
+}
+
+// ---- Mutual Fund Catalog ----
+interface MfEntry {
+  id: string;
+  mfName: string;
+  [key: string]: any;
+}
+
+let mfCatalog: MfEntry[] = [];
+
+export async function loadMfCatalog(): Promise<void> {
+  try {
+    console.log('[MfCatalog] Fetching MF list from IndianAPI...');
+    const t0 = Date.now();
+    const res = await fetch('https://dev.indianapi.in/static/all_mf.json', {
+      headers: { 'X-API-Key': API_KEY() }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data: any = await res.json();
+    const allFunds: MfEntry[] = [];
+    for (const category of Object.values(data)) {
+      if (typeof category === 'object' && category !== null) {
+        for (const subCat of Object.values(category as Record<string, any>)) {
+          if (Array.isArray(subCat)) {
+            allFunds.push(...subCat);
+          }
+        }
+      }
+    }
+    if (allFunds.length > 0) {
+      mfCatalog = allFunds;
+      console.log(`[MfCatalog] Loaded ${mfCatalog.length} funds (${Math.round(Date.now() - t0)}ms)`);
+    }
+  } catch (err: any) {
+    console.error(`[MfCatalog] Failed to fetch: ${err.message}`);
+  }
+}
+
+export function getMfCatalog(): MfEntry[] {
+  return mfCatalog;
+}
+
+export function findMfId(fundName: string): string | null {
+  const lower = fundName.toLowerCase();
+  const exact = mfCatalog.find(f => f.mfName?.toLowerCase() === lower);
+  if (exact) return exact.id;
+  const partial = mfCatalog.find(f => f.mfName?.toLowerCase().includes(lower) || lower.includes(f.mfName?.toLowerCase()));
+  return partial?.id || null;
 }

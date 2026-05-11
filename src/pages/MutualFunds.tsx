@@ -206,15 +206,14 @@ const MutualFunds: React.FC = () => {
 
     const encodedName = encodeURIComponent(fundName);
 
-    // Look up MF ID from search (NAV/holdings need ID, not name)
+    // Look up MF ID from server catalog (loaded from all_mf.json)
     let mfId = '';
     try {
-      const shortName = fundName.split(' ').slice(0, 3).join(' ');
-      const searchRes = await fetch(`/api/proxy/dev/mutual_fund_search?query=${encodeURIComponent(shortName)}`);
-      const searchData = await searchRes.json();
-      if (Array.isArray(searchData)) {
-        const match = searchData.find((s: any) => s.schemeName === fundName) || searchData[0];
-        if (match?.id) mfId = match.id;
+      const res = await fetch(`/api/mf/lookup?name=${encodedName}`);
+      const data = await res.json();
+      if (data?.id) {
+        mfId = data.id;
+        console.log(`[MutualFunds] Resolved ${fundName} → ${mfId}`);
       }
     } catch (e) {
       console.warn('[MutualFunds] ID lookup failed:', e);

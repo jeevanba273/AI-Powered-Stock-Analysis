@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.js';
 import proxyRoutes from './routes/proxy.js';
 import aiRoutes from './routes/ai.js';
-import { loadCatalog, getCatalog, getCatalogAge, startCatalogRefresh } from './stockCatalog.js';
+import { loadCatalog, getCatalog, getCatalogAge, startCatalogRefresh, loadMfCatalog, findMfId } from './stockCatalog.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,6 +33,13 @@ app.get('/api/stocks/catalog-stats', (_req, res) => {
   res.json(getCatalogAge());
 });
 
+app.get('/api/mf/lookup', (req, res) => {
+  const name = req.query.name as string;
+  if (!name) { res.status(400).json({ error: 'name param required' }); return; }
+  const id = findMfId(name);
+  res.json({ id, name });
+});
+
 const distPath = path.join(__dirname, '..', 'dist');
 app.use(express.static(distPath));
 
@@ -41,7 +48,7 @@ app.get('{*path}', (_req, res) => {
 });
 
 async function start() {
-  await loadCatalog();
+  await Promise.all([loadCatalog(), loadMfCatalog()]);
   startCatalogRefresh();
 
   app.listen(PORT, '0.0.0.0', () => {
