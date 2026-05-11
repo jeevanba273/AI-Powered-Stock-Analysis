@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart3 } from 'lucide-react';
+import { fetchJsonRetry } from '@/lib/fetchRetry';
 
 interface ForecastRow {
   year: string;
@@ -161,8 +162,8 @@ const Forecasts: React.FC<ForecastsProps> = ({ ticker, className }) => {
     const revUrl = `/api/proxy/dev/stock_forecasts?stock_id=${encodedTicker}&measure_code=SAL&period_type=Annual&data_type=Estimates&age=Current`;
 
     Promise.all([
-      fetch(epsUrl).then(r => r.ok ? r.json() : null).catch(() => null),
-      fetch(revUrl).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetchJsonRetry(epsUrl),
+      fetchJsonRetry(revUrl),
     ])
       .then(([epsJson, revJson]) => {
         if (!cancelled) {

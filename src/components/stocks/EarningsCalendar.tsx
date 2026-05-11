@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar } from 'lucide-react';
+import { fetchJsonRetry } from '@/lib/fetchRetry';
 
 interface EarningEvent {
   ticker: string;
@@ -25,11 +26,10 @@ const EarningsCalendar: React.FC<{ className?: string }> = ({ className }) => {
       await Promise.allSettled(
         WATCHLIST_STOCKS.map(async (ticker) => {
           try {
-            const res = await fetch(
+            const json = await fetchJsonRetry(
               `/api/proxy/dev/corporate_actions?stock_name=${encodeURIComponent(ticker)}`
             );
-            if (!res.ok) return;
-            const json = await res.json();
+            if (!json) return;
 
             const meetings = json?.board_meetings;
             if (!meetings?.data || !Array.isArray(meetings.data)) return;

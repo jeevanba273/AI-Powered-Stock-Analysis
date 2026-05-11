@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Target } from 'lucide-react';
+import { fetchJsonRetry } from '@/lib/fetchRetry';
 
 interface PriceTarget {
   Mean: number;
@@ -51,14 +52,10 @@ const AnalystTargets: React.FC<AnalystTargetsProps> = ({ ticker, currentPrice, c
     setError(false);
     setData(null);
 
-    fetch(`/api/proxy/dev/stock_target_price?stock_id=${encodeURIComponent(ticker)}`)
-      .then(res => {
-        if (!res.ok) throw new Error('fetch failed');
-        return res.json();
-      })
+    fetchJsonRetry(`/api/proxy/dev/stock_target_price?stock_id=${encodeURIComponent(ticker)}`)
       .then(json => {
         if (!cancelled) {
-          setData(json);
+          if (!json) { setError(true); } else { setData(json); }
           setLoading(false);
         }
       })

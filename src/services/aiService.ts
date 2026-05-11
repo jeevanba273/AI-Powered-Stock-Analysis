@@ -2,6 +2,7 @@
 
 // Get API key from configuration
 import { OPENAI_API_KEY } from '@/config/apiKeys';
+import { fetchRetry } from '@/lib/fetchRetry';
 
 export interface AIAnalysisRequest {
   ticker: string;
@@ -378,7 +379,7 @@ const generateAnalysisText = (stockData: any, patterns: string[], recommendation
 
 // Actual OpenAI API call
 export const generateAIAnalysis = async (request: AIAnalysisRequest): Promise<AIAnalysisResponse> => {
-  const res = await fetch('/api/ai/analyze', {
+  const res = await fetchRetry('/api/ai/analyze', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -437,7 +438,7 @@ export const analyzeNewsSentiment = async (ticker: string, newsData: any[]): Pro
   }
   
   try {
-    const res = await fetch('/api/ai/sentiment', {
+    const res = await fetchRetry('/api/ai/sentiment', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

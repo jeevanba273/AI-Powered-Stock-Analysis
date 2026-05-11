@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FileText } from 'lucide-react';
+import { fetchJsonRetry } from '@/lib/fetchRetry';
 
 interface CategoryData {
   msg: string;
@@ -38,11 +39,7 @@ const CorporateActions: React.FC<CorporateActionsProps> = ({ ticker, className }
     setError(false);
     setData(null);
 
-    fetch(`/api/proxy/dev/corporate_actions?stock_name=${encodeURIComponent(ticker)}`)
-      .then(res => {
-        if (!res.ok) throw new Error('fetch failed');
-        return res.json();
-      })
+    fetchJsonRetry(`/api/proxy/dev/corporate_actions?stock_name=${encodeURIComponent(ticker)}`)
       .then(json => {
         if (!cancelled) {
           // The API returns an object with category keys

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Home, BarChart3, Newspaper, Star, Search, Rocket, PiggyBank, ShoppingCart, ArrowLeftRight } from 'lucide-react';
 import { popularIndianStocks } from '@/services/indianStockService';
+import { fetchRetry } from '@/lib/fetchRetry';
 
 interface SidebarProps {
   activeStock: string;
@@ -32,7 +33,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeStock, onSelectStock }) => {
 
     Promise.allSettled(
       batches.map(batch =>
-        fetch('/api/proxy/dev/nse_stock_batch_live_price', {
+        fetchRetry('/api/proxy/dev/nse_stock_batch_live_price', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ stock_symbols: batch }),

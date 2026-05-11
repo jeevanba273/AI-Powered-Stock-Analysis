@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FileStack, Mic, BookOpen, Bell, ShieldCheck, Star, ExternalLink } from 'lucide-react';
+import { fetchJsonRetry } from '@/lib/fetchRetry';
 
 interface DocItem {
   title?: string;
@@ -112,11 +113,11 @@ const Documents: React.FC<DocumentsProps> = ({ ticker, className }) => {
     const encoded = encodeURIComponent(ticker);
 
     Promise.allSettled([
-      fetch(`/api/proxy/dev/concalls?stock_name=${encoded}`).then(r => r.ok ? r.json() : null),
-      fetch(`/api/proxy/dev/annual_reports?stock_name=${encoded}`).then(r => r.ok ? r.json() : null),
-      fetch(`/api/proxy/dev/recent_announcements?stock_name=${encoded}`).then(r => r.ok ? r.json() : null),
-      fetch(`/api/proxy/dev/documents?stock_name=${encoded}`).then(r => r.ok ? r.json() : null),
-      fetch(`/api/proxy/dev/credit_ratings?stock_name=${encoded}`).then(r => r.ok ? r.json() : null),
+      fetchJsonRetry(`/api/proxy/dev/concalls?stock_name=${encoded}`),
+      fetchJsonRetry(`/api/proxy/dev/annual_reports?stock_name=${encoded}`),
+      fetchJsonRetry(`/api/proxy/dev/recent_announcements?stock_name=${encoded}`),
+      fetchJsonRetry(`/api/proxy/dev/documents?stock_name=${encoded}`),
+      fetchJsonRetry(`/api/proxy/dev/credit_ratings?stock_name=${encoded}`),
     ])
       .then(([ccR, arR, anR, regR, crR]) => {
         if (!cancelled) {
