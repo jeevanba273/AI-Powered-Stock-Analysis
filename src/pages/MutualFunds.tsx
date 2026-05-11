@@ -206,16 +206,32 @@ const MutualFunds: React.FC = () => {
 
     const encodedName = encodeURIComponent(fundName);
 
+    // Look up MF ID from search (NAV/holdings need ID, not name)
+    let mfId = '';
+    try {
+      const shortName = fundName.split(' ').slice(0, 3).join(' ');
+      const searchRes = await fetch(`/api/proxy/dev/mutual_fund_search?query=${encodeURIComponent(shortName)}`);
+      const searchData = await searchRes.json();
+      if (Array.isArray(searchData)) {
+        const match = searchData.find((s: any) => s.schemeName === fundName) || searchData[0];
+        if (match?.id) mfId = match.id;
+      }
+    } catch (e) {
+      console.warn('[MutualFunds] ID lookup failed:', e);
+    }
+
+    const mfIdOrName = mfId || encodedName;
+
     const [detailResult, navResult, holdingsResult] = await Promise.allSettled([
       fetch(`/api/proxy/dev/mutual_funds_details?stock_name=${encodedName}`).then(r => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       }),
-      fetch(`/api/proxy/dev/get_mf_historical_data?stock_id=${encodedName}&stats=1Y`).then(r => {
+      fetch(`/api/proxy/dev/get_mf_historical_data?stock_id=${mfIdOrName}&stats=1Y`).then(r => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       }),
-      fetch(`/api/proxy/dev/mf_holdings?stock_id=${encodedName}`).then(r => {
+      fetch(`/api/proxy/dev/mf_holdings?stock_id=${mfIdOrName}`).then(r => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       }),
@@ -533,7 +549,7 @@ const MutualFunds: React.FC = () => {
                 <tbody>
                   {holdingsData.slice(0, 10).map((h, idx) => {
                     const stockName = h.stock_name || h.name || '--';
-                    const weight = h.weight ?? h.percentage;
+                    const weight = h.weight ?? h.percentage ?? h.allocation;
                     const weightStr = weight !== undefined && weight !== null ? Number(weight).toFixed(2) + '%' : '--';
                     const sector = h.sector || '--';
                     return (
