@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PiggyBank, Search, Star, X, ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
+import { createChart, ColorType, AreaSeries } from 'lightweight-charts';
 import Sidebar from '@/components/layout/Sidebar';
 import TopBar from '@/components/layout/TopBar';
 
@@ -358,6 +359,50 @@ const MutualFunds: React.FC = () => {
     return entries;
   };
 
+  /* ---------- NAV TradingView Chart ---------- */
+  const NavChart: React.FC<{ data: NavHistoryPoint[] }> = ({ data }) => {
+    const chartContainerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+      if (!chartContainerRef.current || data.length === 0) return;
+
+      const isPositive = data[data.length - 1].nav >= data[0].nav;
+      const lineColor = isPositive ? '#0AD88F' : '#FF5353';
+
+      const chart = createChart(chartContainerRef.current, {
+        layout: { background: { type: ColorType.Solid, color: 'transparent' }, textColor: '#8b8fa3', fontFamily: "'Geist Mono', monospace", fontSize: 10 },
+        grid: { vertLines: { color: 'rgba(55, 60, 80, 0.3)' }, horzLines: { color: 'rgba(55, 60, 80, 0.3)' } },
+        crosshair: { vertLine: { color: 'rgba(135, 140, 160, 0.5)', style: 3, width: 1 }, horzLine: { color: 'rgba(135, 140, 160, 0.5)', style: 3, width: 1 } },
+        rightPriceScale: { borderColor: 'rgba(55, 60, 80, 0.5)' },
+        timeScale: { borderColor: 'rgba(55, 60, 80, 0.5)', timeVisible: false },
+        handleScroll: true,
+        handleScale: true,
+      });
+
+      const series = chart.addSeries(AreaSeries, {
+        topColor: isPositive ? 'rgba(10, 216, 143, 0.35)' : 'rgba(255, 83, 83, 0.35)',
+        bottomColor: isPositive ? 'rgba(10, 216, 143, 0)' : 'rgba(255, 83, 83, 0)',
+        lineColor,
+        lineWidth: 2,
+        crosshairMarkerRadius: 4,
+        crosshairMarkerBorderColor: lineColor,
+        crosshairMarkerBackgroundColor: '#1e2230',
+      });
+
+      series.setData(data.map(d => ({ time: d.date as string, value: d.nav })) as any);
+      chart.timeScale().fitContent();
+
+      const resizeObserver = new ResizeObserver(entries => {
+        for (const entry of entries) chart.applyOptions({ width: entry.contentRect.width });
+      });
+      resizeObserver.observe(chartContainerRef.current);
+
+      return () => { resizeObserver.disconnect(); chart.remove(); };
+    }, [data]);
+
+    return <div ref={chartContainerRef} style={{ width: '100%', height: 200 }} />;
+  };
+
   /* ---------- Fund Detail Panel ---------- */
 
   const DetailPanel: React.FC<{
@@ -485,34 +530,9 @@ const MutualFunds: React.FC = () => {
             NAV History (1Y)
           </div>
           {navLoading ? (
-            <div className="ns-skeleton" style={{ width: '100%', height: 60, borderRadius: 6 }} />
+            <div className="ns-skeleton" style={{ width: '100%', height: 200, borderRadius: 6 }} />
           ) : navData.length > 0 ? (
-            (() => {
-              const navs = navData.map(d => d.nav);
-              const minNav = Math.min(...navs);
-              const maxNav = Math.max(...navs);
-              const range = maxNav - minNav || 1;
-              const w = 300;
-              const h = 60;
-              const padding = 2;
-              const len = navData.length;
-              const points = navData.map((d, i) => {
-                const x = len > 1 ? (i / (len - 1)) * w : w / 2;
-                const y = h - padding - ((d.nav - minNav) / range) * (h - padding * 2);
-                return `${x},${y}`;
-              });
-              const linePath = 'M' + points.join(' L');
-              const areaPath = linePath + ` L${w},${h} L0,${h} Z`;
-              const isPositive = navs[navs.length - 1] >= navs[0];
-              const color = isPositive ? '#0AD88F' : '#FF5252';
-              const fillColor = isPositive ? 'rgba(10, 216, 143, 0.2)' : 'rgba(255, 82, 82, 0.2)';
-              return (
-                <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" style={{ width: '100%', height: 60, display: 'block' }}>
-                  <path d={areaPath} fill={fillColor} />
-                  <path d={linePath} fill="none" stroke={color} strokeWidth="1.5" />
-                </svg>
-              );
-            })()
+            <NavChart data={navData} />
           ) : (
             <div style={{ fontSize: 12, color: 'var(--ns-text-4)', padding: '8px 0' }}>
               NAV history not available
@@ -542,7 +562,7 @@ const MutualFunds: React.FC = () => {
                   <tr style={{ borderBottom: '1px solid var(--ns-border)' }}>
                     <th style={{ textAlign: 'left', padding: '6px 8px', color: 'var(--ns-text-4)', fontSize: 10.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Stock Name</th>
                     <th style={{ textAlign: 'right', padding: '6px 8px', color: 'var(--ns-text-4)', fontSize: 10.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Weight %</th>
-                    <th style={{ textAlign: 'left', padding: '6px 8px', color: 'var(--ns-text-4)', fontSize: 10.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Sector</th>
+                    <th style={{ textAlign: 'right', padding: '6px 8px', color: 'var(--ns-text-4)', fontSize: 10.5, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Value (Cr)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -550,12 +570,12 @@ const MutualFunds: React.FC = () => {
                     const stockName = h.stock_name || h.name || '--';
                     const weight = h.weight ?? h.percentage ?? h.allocation;
                     const weightStr = weight !== undefined && weight !== null ? Number(weight).toFixed(2) + '%' : '--';
-                    const sector = h.sector || '--';
+                    const value = h.value ? '₹' + Number(h.value).toLocaleString('en-IN', { maximumFractionDigits: 2 }) : '--';
                     return (
                       <tr key={idx} style={{ borderBottom: '1px solid var(--ns-border)' }}>
                         <td style={{ padding: '6px 8px', fontWeight: 600 }}>{stockName}</td>
                         <td className="mono tnum" style={{ padding: '6px 8px', textAlign: 'right' }}>{weightStr}</td>
-                        <td style={{ padding: '6px 8px', color: 'var(--ns-text-3)' }}>{sector}</td>
+                        <td className="mono tnum" style={{ padding: '6px 8px', textAlign: 'right', color: 'var(--ns-text-3)' }}>{value}</td>
                       </tr>
                     );
                   })}
