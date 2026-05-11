@@ -39,18 +39,13 @@ const Sidebar: React.FC<SidebarProps> = ({ activeStock, onSelectStock }) => {
 
   useEffect(() => {
     const symbols = popularIndianStocks.map(s => s.ticker);
-    const batchSize = 2;
-    const batches: string[][] = [];
-    for (let i = 0; i < symbols.length; i += batchSize) {
-      batches.push(symbols.slice(i, i + batchSize));
-    }
 
     Promise.allSettled(
-      batches.map(batch =>
+      symbols.map(sym =>
         fetchRetry('/api/proxy/dev/nse_stock_batch_live_price', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ stock_symbols: batch }),
+          body: JSON.stringify({ stock_symbols: [sym] }),
         }).then(r => r.json())
       )
     ).then(results => {

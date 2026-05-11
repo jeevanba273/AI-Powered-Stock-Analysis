@@ -425,6 +425,6 @@ export const popularIndianStocks = [
   { ticker: 'HDFCBANK', name: 'HDFC Bank' },
   { ticker: 'ICICIBANK', name: 'ICICI Bank' },
   { ticker: 'SBIN', name: 'State Bank of India' },
-  { ticker: 'TATAMOTORS', name: 'Tata Motors' },
+  { ticker: 'LT', name: 'Larsen & Toubro' },
   { ticker: 'BHARTIARTL', name: 'Bharti Airtel' },
 ];
