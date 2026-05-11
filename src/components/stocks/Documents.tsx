@@ -67,7 +67,6 @@ const getUrl = (item: DocItem): string | null => {
 const getConcallLinks = (item: DocItem): { label: string; url: string }[] => {
   const links: { label: string; url: string }[] = [];
   if (item.transcript) links.push({ label: 'Transcript', url: item.transcript });
-  if (item['ai summary']) links.push({ label: 'AI Summary', url: item['ai summary'] });
   if (item.ppt) links.push({ label: 'PPT', url: item.ppt });
   if (item.rec) links.push({ label: 'Recording', url: item.rec });
   return links;
@@ -112,27 +111,22 @@ const Documents: React.FC<DocumentsProps> = ({ ticker, className }) => {
 
     const encoded = encodeURIComponent(ticker);
 
-    Promise.all([
-      fetch(`/api/proxy/dev/concalls?stock_name=${encoded}`).then(r => r.ok ? r.json() : null).catch(() => null),
-      fetch(`/api/proxy/dev/annual_reports?stock_name=${encoded}`).then(r => r.ok ? r.json() : null).catch(() => null),
-      fetch(`/api/proxy/dev/recent_announcements?stock_name=${encoded}`).then(r => r.ok ? r.json() : null).catch(() => null),
-      fetch(`/api/proxy/dev/documents?stock_name=${encoded}`).then(r => r.ok ? r.json() : null).catch(() => null),
-      fetch(`/api/proxy/dev/credit_ratings?stock_name=${encoded}`).then(r => r.ok ? r.json() : null).catch(() => null),
+    Promise.allSettled([
+      fetch(`/api/proxy/dev/concalls?stock_name=${encoded}`).then(r => r.ok ? r.json() : null),
+      fetch(`/api/proxy/dev/annual_reports?stock_name=${encoded}`).then(r => r.ok ? r.json() : null),
+      fetch(`/api/proxy/dev/recent_announcements?stock_name=${encoded}`).then(r => r.ok ? r.json() : null),
+      fetch(`/api/proxy/dev/documents?stock_name=${encoded}`).then(r => r.ok ? r.json() : null),
+      fetch(`/api/proxy/dev/credit_ratings?stock_name=${encoded}`).then(r => r.ok ? r.json() : null),
     ])
-      .then(([cc, ar, an, reg, cr]) => {
+      .then(([ccR, arR, anR, regR, crR]) => {
         if (!cancelled) {
-          setConcalls(parseItems(cc));
-          setAnnual(parseItems(ar));
-          setAnnouncements(parseItems(an));
-          const regItems = reg?.Recent_Announcements ? reg.Recent_Announcements : parseItems(reg);
-          setRegulatory(regItems);
-          setCreditRatings(parseItems(cr));
-          setLoading(false);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setError(true);
+          const val = (r: PromiseSettledResult<any>) => r.status === 'fulfilled' ? r.value : null;
+          setConcalls(parseItems(val(ccR)));
+          setAnnual(parseItems(val(arR)));
+          setAnnouncements(parseItems(val(anR)));
+          const reg = val(regR);
+          setRegulatory(reg?.Recent_Announcements ? reg.Recent_Announcements : parseItems(reg));
+          setCreditRatings(parseItems(val(crR)));
           setLoading(false);
         }
       });
