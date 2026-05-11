@@ -137,54 +137,112 @@ const Index = () => {
   };
 
   const handleExportPDF = async () => {
-    const content = document.querySelector('.ns-content') as HTMLElement;
-    if (!content || !stockData) return;
-    toast.loading('Generating PDF report...', { id: 'pdf-export' });
+    if (!stockData) return;
+    toast.loading('Generating PDF...', { id: 'pdf-export' });
     try {
-      const html2canvas = (await import('html2canvas')).default;
       const { jsPDF } = await import('jspdf');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const w = 210;
+      const n = (v: any) => Number(v) || 0;
+      let y = 15;
 
-      // html2canvas doesn't support oklch() — set hex fallbacks temporarily
-      const root = document.documentElement;
-      const hexMap: Record<string, string> = {
-        '--ns-bg': '#1e2230', '--ns-bg-2': '#252a3a', '--ns-surface': '#2d3348',
-        '--ns-surface-2': '#353c54', '--ns-surface-hi': '#3e4660',
-        '--ns-border': 'rgba(60,66,90,0.7)', '--ns-border-strong': 'rgba(80,88,115,0.8)',
-        '--ns-text': '#f5f5f7', '--ns-text-2': '#c0c4d4', '--ns-text-3': '#8b8fa3',
-        '--ns-text-4': '#5f6378', '--ns-profit': '#0AD88F', '--ns-profit-soft': 'rgba(10,216,143,0.14)',
-        '--ns-loss': '#FF5353', '--ns-loss-soft': 'rgba(255,83,83,0.14)',
-        '--ns-accent': '#5BD4E8', '--ns-accent-soft': 'rgba(91,212,232,0.16)',
-      };
-      const originals: Record<string, string> = {};
-      for (const [k, v] of Object.entries(hexMap)) {
-        originals[k] = root.style.getPropertyValue(k);
-        root.style.setProperty(k, v);
-      }
+      // Colors
+      const bg = [30, 34, 48] as const;
+      const white = [245, 245, 247] as const;
+      const gray = [139, 143, 163] as const;
+      const green = [10, 216, 143] as const;
+      const red = [255, 83, 83] as const;
+      const cyan = [91, 212, 232] as const;
 
-      const canvas = await html2canvas(content, {
-        backgroundColor: '#1e2230',
-        scale: 1.5,
-        useCORS: true,
-        logging: false,
-      });
+      // Background
+      pdf.setFillColor(...bg);
+      pdf.rect(0, 0, w, 297, 'F');
 
-      // Restore oklch values
-      for (const [k, v] of Object.entries(originals)) {
-        if (v) root.style.setProperty(k, v);
-        else root.style.removeProperty(k);
-      }
-      const imgData = canvas.toDataURL('image/jpeg', 0.85);
-      const imgW = canvas.width;
-      const imgH = canvas.height;
-      const pdfW = 210;
-      const pdfH = (imgH * pdfW) / imgW;
-      const pdf = new jsPDF('p', 'mm', [pdfW, pdfH + 20]);
-      pdf.setFillColor(30, 34, 48);
-      pdf.rect(0, 0, pdfW, pdfH + 20, 'F');
-      pdf.setTextColor(200, 200, 210);
+      // Header
+      pdf.setTextColor(...cyan);
+      pdf.setFontSize(18);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('NeuraStock', 15, y);
       pdf.setFontSize(8);
-      pdf.text(`NeuraStock Report — ${stockData.ticker} — ${new Date().toLocaleDateString('en-IN')}`, 10, 8);
-      pdf.addImage(imgData, 'JPEG', 0, 12, pdfW, pdfH);
+      pdf.setTextColor(...gray);
+      pdf.text(`Report generated ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}`, w - 15, y, { align: 'right' });
+      y += 12;
+
+      // Stock name + price
+      pdf.setFontSize(22);
+      pdf.setTextColor(...white);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`${stockData.ticker}`, 15, y);
+      pdf.setFontSize(10);
+      pdf.setTextColor(...gray);
+      pdf.text(stockData.companyName, 15, y + 6);
+
+      const priceStr = `₹${n(stockData.price).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      pdf.setFontSize(20);
+      pdf.setTextColor(...white);
+      pdf.text(priceStr, w - 15, y, { align: 'right' });
+      const changeColor = stockData.change >= 0 ? green : red;
+      pdf.setFontSize(10);
+      pdf.setTextColor(...changeColor);
+      pdf.text(`${stockData.change >= 0 ? '+' : ''}${n(stockData.change).toFixed(2)} (${n(stockData.changePercent).toFixed(2)}%)`, w - 15, y + 6, { align: 'right' });
+      y += 18;
+
+      // Divider
+      pdf.setDrawColor(60, 66, 90);
+      pdf.line(15, y, w - 15, y);
+      y += 8;
+
+      // Key Stats
+      pdf.setFontSize(11);
+      pdf.setTextColor(...cyan);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Key Statistics', 15, y);
+      y += 7;
+
+      const stats = [
+        ['Prev Close', `₹${n(stockData.stats.prevClose || stockData.stats.close).toFixed(2)}`],
+        ['Open', `₹${n(stockData.stats.open).toFixed(2)}`],
+        ['Day High', `₹${n(stockData.stats.high).toFixed(2)}`],
+        ['Day Low', `₹${n(stockData.stats.low).toFixed(2)}`],
+        ['Volume', `${n(stockData.stats.volume).toLocaleString()}`],
+        ['Market Cap', stockData.stats.marketCap],
+        ['P/E Ratio', n(stockData.stats.pe).toFixed(2)],
+        ['Dividend', stockData.stats.dividend],
+      ];
+
+      pdf.setFontSize(9);
+      const colW = (w - 30) / 4;
+      stats.forEach((s, i) => {
+        const col = i % 4;
+        const row = Math.floor(i / 4);
+        const x = 15 + col * colW;
+        const ry = y + row * 12;
+        pdf.setTextColor(...gray);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(s[0], x, ry);
+        pdf.setTextColor(...white);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(s[1], x, ry + 5);
+      });
+      y += Math.ceil(stats.length / 4) * 12 + 5;
+
+      // Divider
+      pdf.setDrawColor(60, 66, 90);
+      pdf.line(15, y, w - 15, y);
+      y += 8;
+
+      // Market Status
+      pdf.setFontSize(9);
+      pdf.setTextColor(...gray);
+      pdf.text(`Market: ${stockData.marketStatus === 'open' ? 'Open' : 'Closed'} · NSE · Last updated: ${new Date(stockData.lastUpdated).toLocaleString('en-IN')}`, 15, y);
+      y += 10;
+
+      // Disclaimer
+      pdf.setFontSize(7);
+      pdf.setTextColor(80, 84, 100);
+      pdf.text('This report is for informational purposes only. Not financial advice. Data from IndianAPI + GPT-4o-mini analysis.', 15, 290);
+      pdf.text('Generated by NeuraStock — ai-powered-stock-analysis.up.railway.app', 15, 294);
+
       pdf.save(`NeuraStock_${stockData.ticker}_${new Date().toISOString().slice(0, 10)}.pdf`);
       toast.success('PDF downloaded', { id: 'pdf-export' });
     } catch (err: any) {
