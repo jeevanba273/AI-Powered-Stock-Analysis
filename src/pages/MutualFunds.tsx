@@ -852,13 +852,14 @@ const MutualFunds: React.FC = () => {
                   transition: 'background 0.1s ease',
                 }}
                 onClick={() => {
-                  openFundDetail(fund.fund_name);
+                  const name = fund.fund_name || (fund as any).schemeName || '';
+                  if (name) openFundDetail(name);
                   setSearchOpen(false);
                 }}
                 onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
               >
-                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2 }}>{fund.fund_name}</div>
+                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 2 }}>{fund.fund_name || (fund as any).schemeName || '--'}</div>
                 <div style={{ display: 'flex', gap: 12, fontSize: 11, color: 'var(--ns-text-3)' }}>
                   {fund.latest_nav && <span>NAV: {formatNav(fund.latest_nav)}</span>}
                   {fund.star_rating && <span>{renderStars(fund.star_rating)}</span>}
