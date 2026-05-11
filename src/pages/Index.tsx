@@ -19,6 +19,8 @@ import Documents from '@/components/stocks/Documents';
 import EarningsCalendar from '@/components/stocks/EarningsCalendar';
 import ErrorBoundary from '@/components/ErrorBoundary';
 
+const stockCache = new Map<string, StockData>();
+
 const Index = () => {
   const { ticker: urlTicker } = useParams<{ ticker: string }>();
   const navigate = useNavigate();
@@ -33,15 +35,30 @@ const Index = () => {
   }, [urlTicker]);
 
   const loadStockData = async (ticker: string) => {
-    setIsLoading(true);
     setError(null);
+
+    // Show cached data immediately if available (no spinner)
+    const cached = stockCache.get(ticker);
+    if (cached) {
+      setStockData(cached);
+      setActiveStock(ticker);
+      setIsLoading(false);
+    } else {
+      setIsLoading(true);
+    }
+
+    // Fetch fresh data in background
     try {
       const data = await fetchStockData(ticker);
+      stockCache.set(ticker, data);
       setStockData(data);
       setActiveStock(ticker);
     } catch (error: any) {
-      console.error("Error fetching stock data:", error);
-      setError(error.message || 'Failed to load data');
+      // Only show error if we don't have cached data
+      if (!cached) {
+        console.error("Error fetching stock data:", error);
+        setError(error.message || 'Failed to load data');
+      }
     } finally {
       setIsLoading(false);
     }

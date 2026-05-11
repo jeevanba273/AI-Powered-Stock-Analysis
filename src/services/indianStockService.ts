@@ -329,15 +329,12 @@ export const fetchStockData = async (ticker: string): Promise<StockData> => {
 
     const [liveStockData, historicalData, stockDetails] = criticalData;
 
-    // Sentiment — call server-side AI
+    // Sentiment — fire-and-forget (don't block page render)
     let newsSentiment: StockData['newsSentiment'] | undefined;
     if (companyNews.length > 0) {
-      try {
-        newsSentiment = await analyzeNewsSentiment(ticker, companyNews);
-        console.log(`[Sentiment] ${ticker} OK:`, newsSentiment?.overall);
-      } catch (err: any) {
-        console.warn(`[Sentiment] ${ticker} failed: ${err.message}`);
-      }
+      analyzeNewsSentiment(ticker, companyNews)
+        .then(s => console.log(`[Sentiment] ${ticker} OK:`, s?.overall))
+        .catch(err => console.warn(`[Sentiment] ${ticker} failed: ${err.message}`));
     }
 
     const totalMs = Math.round(performance.now() - t0);

@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.js';
 import proxyRoutes from './routes/proxy.js';
 import aiRoutes from './routes/ai.js';
+import stockRoutes from './routes/stock.js';
 import { loadCatalog, getCatalog, getCatalogAge, startCatalogRefresh, loadMfCatalog, findMfId } from './stockCatalog.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -19,6 +20,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/proxy', proxyRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/stock', stockRoutes);
 
 app.get('/api/stocks/catalog', (_req, res) => {
   const catalog = getCatalog();

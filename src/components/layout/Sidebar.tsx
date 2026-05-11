@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Home, BarChart3, Newspaper, Star, Search, Rocket, PiggyBank, ShoppingCart, ArrowLeftRight } from 'lucide-react';
 import { popularIndianStocks } from '@/services/indianStockService';
@@ -22,6 +22,20 @@ const navItems = [
 
 const Sidebar: React.FC<SidebarProps> = ({ activeStock, onSelectStock }) => {
   const [prices, setPrices] = useState<Record<string, { ltp: number; pct: number }>>({});
+  const prefetchedRef = useRef<Set<string>>(new Set());
+
+  const prefetchStock = (ticker: string) => {
+    if (prefetchedRef.current.has(ticker) || ticker === activeStock) return;
+    prefetchedRef.current.add(ticker);
+    // Fire-and-forget — just warm the server cache
+    fetch('/api/proxy/dev/nse_stock_batch_live_price', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stock_symbols: [ticker] }),
+    }).catch(() => {});
+    fetch(`/api/proxy/dev/get_stock_data?stock_name=${ticker}`).catch(() => {});
+    fetch(`/api/proxy/dev/historical_data?stock_name=${ticker}&period=1yr&filter=price`).catch(() => {});
+  };
 
   useEffect(() => {
     const symbols = popularIndianStocks.map(s => s.ticker);
@@ -96,6 +110,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeStock, onSelectStock }) => {
             <div
               key={stock.ticker}
               className={`ns-watch-row ${activeStock === stock.ticker ? 'active' : ''}`}
+              onMouseEnter={() => prefetchStock(stock.ticker)}
               onClick={() => onSelectStock(stock.ticker)}
             >
               <div className="ns-watch-id">
