@@ -445,7 +445,7 @@ html, body {
 }
 
 /* Bento grid */
-.ns-bento { display: grid; grid-template-columns: 360px 1fr; gap: 16px; }
+.ns-bento { display: grid; grid-template-columns: 320px 1fr; gap: 16px; }
 .ns-row-bento { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 
 /* Stat grid */
@@ -662,8 +662,8 @@ html, body {
 }
 
 /* Responsive */
-@media (max-width: 1280px) {
-  .ns-app { grid-template-columns: 240px 1fr; }
+@media (max-width: 1024px) {
+  .ns-app { grid-template-columns: 220px 1fr; }
   .ns-bento { grid-template-columns: 1fr; }
   .ns-row-bento { grid-template-columns: 1fr 1fr; }
   .ns-peer-strip { grid-template-columns: repeat(3, 1fr); }
