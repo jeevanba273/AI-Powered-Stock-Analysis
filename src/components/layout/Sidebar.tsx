@@ -24,7 +24,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeStock, onSelectStock }) => {
 
   useEffect(() => {
     const symbols = popularIndianStocks.map(s => s.ticker);
-    const batchSize = 4;
+    const batchSize = 2;
     const batches: string[][] = [];
     for (let i = 0; i < symbols.length; i += batchSize) {
       batches.push(symbols.slice(i, i + batchSize));

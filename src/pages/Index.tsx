@@ -126,12 +126,36 @@ const Index = () => {
     try {
       const html2canvas = (await import('html2canvas')).default;
       const { jsPDF } = await import('jspdf');
+
+      // html2canvas doesn't support oklch() — set hex fallbacks temporarily
+      const root = document.documentElement;
+      const hexMap: Record<string, string> = {
+        '--ns-bg': '#1e2230', '--ns-bg-2': '#252a3a', '--ns-surface': '#2d3348',
+        '--ns-surface-2': '#353c54', '--ns-surface-hi': '#3e4660',
+        '--ns-border': 'rgba(60,66,90,0.7)', '--ns-border-strong': 'rgba(80,88,115,0.8)',
+        '--ns-text': '#f5f5f7', '--ns-text-2': '#c0c4d4', '--ns-text-3': '#8b8fa3',
+        '--ns-text-4': '#5f6378', '--ns-profit': '#0AD88F', '--ns-profit-soft': 'rgba(10,216,143,0.14)',
+        '--ns-loss': '#FF5353', '--ns-loss-soft': 'rgba(255,83,83,0.14)',
+        '--ns-accent': '#5BD4E8', '--ns-accent-soft': 'rgba(91,212,232,0.16)',
+      };
+      const originals: Record<string, string> = {};
+      for (const [k, v] of Object.entries(hexMap)) {
+        originals[k] = root.style.getPropertyValue(k);
+        root.style.setProperty(k, v);
+      }
+
       const canvas = await html2canvas(content, {
         backgroundColor: '#1e2230',
         scale: 1.5,
         useCORS: true,
         logging: false,
       });
+
+      // Restore oklch values
+      for (const [k, v] of Object.entries(originals)) {
+        if (v) root.style.setProperty(k, v);
+        else root.style.removeProperty(k);
+      }
       const imgData = canvas.toDataURL('image/jpeg', 0.85);
       const imgW = canvas.width;
       const imgH = canvas.height;
