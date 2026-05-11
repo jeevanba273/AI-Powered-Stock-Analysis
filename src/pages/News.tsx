@@ -12,6 +12,7 @@ interface NewsArticle {
   pub_date?: string;
   source?: string;
   topics?: string[];
+  read_time?: string;
 }
 
 const CATEGORIES = [
@@ -54,9 +55,11 @@ const News: React.FC = () => {
           title: a.headline || a.title || '',
           summary: a.summary || '',
           url: a.url || '',
+          image_url: a.image?.url || a.image_url || '',
           pub_date: a.published_at || a.pub_date || '',
           source: a.source || '',
           topics: a.topics || [],
+          read_time: a.read_time || '',
         })));
       })
       .catch(err => console.error('[AI News] Fetch error:', err));
@@ -107,6 +110,7 @@ const News: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 10.5, color: 'var(--ns-text-4)' }}>
             {article.source && <span style={{ fontWeight: 600 }}>{article.source}</span>}
             {article.pub_date && <span>{formatDate(article.pub_date)}</span>}
+            {article.read_time && <span>{article.read_time}</span>}
             {article.url && <ExternalLink size={10} />}
           </div>
           {article.topics && article.topics.length > 0 && (

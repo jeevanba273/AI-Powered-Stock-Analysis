@@ -14,6 +14,7 @@ interface MutualFund {
   star_rating?: number | string;
   '1_month_return'?: number | string;
   '3_month_return'?: number | string;
+  '6_month_return'?: number | string;
   '1_year_return'?: number | string;
   '3_year_return'?: number | string;
   '5_year_return'?: number | string;
@@ -38,6 +39,7 @@ interface FundDetail {
   star_rating?: number | string;
   '1_month_return'?: number | string;
   '3_month_return'?: number | string;
+  '6_month_return'?: number | string;
   '1_year_return'?: number | string;
   '3_year_return'?: number | string;
   '5_year_return'?: number | string;
@@ -176,7 +178,7 @@ const MutualFunds: React.FC = () => {
       'category', 'sub_category', 'risk_level', 'fund_manager', 'fund_house',
       'launch_date', 'expense_ratio', 'aum', 'exit_load', 'benchmark',
       'min_investment', 'min_sip',
-      '1_month_return', '3_month_return', '1_year_return', '3_year_return', '5_year_return',
+      '1_month_return', '3_month_return', '6_month_return', '1_year_return', '3_year_return', '5_year_return',
     ];
     return !meaningfulKeys.some(k => {
       const v = data[k];
@@ -384,6 +386,7 @@ const MutualFunds: React.FC = () => {
     const returnRows: [string, unknown][] = [
       ['1M Return', getReturn('1_month_return')],
       ['3M Return', getReturn('3_month_return')],
+      ['6M Return', getReturn('6_month_return')],
       ['1Y Return', getReturn('1_year_return')],
       ['3Y Return', getReturn('3_year_return')],
       ['5Y Return', getReturn('5_year_return')],
@@ -585,6 +588,7 @@ const MutualFunds: React.FC = () => {
                   <th style={thStyle}>AUM</th>
                   <th style={thStyle}>1M</th>
                   <th style={thStyle}>3M</th>
+                  <th style={thStyle}>6M</th>
                   <th style={thStyle}>1Y</th>
                   <th style={thStyle}>3Y</th>
                   <th style={thStyle}>5Y</th>
@@ -627,6 +631,9 @@ const MutualFunds: React.FC = () => {
                         <td className="mono tnum" style={{ ...tdStyle, color: returnColor(fund['3_month_return']) }}>
                           {formatReturn(fund['3_month_return'])}
                         </td>
+                        <td className="mono tnum" style={{ ...tdStyle, color: returnColor(fund['6_month_return']) }}>
+                          {formatReturn(fund['6_month_return'])}
+                        </td>
                         <td className="mono tnum" style={{ ...tdStyle, color: returnColor(fund['1_year_return']) }}>
                           {formatReturn(fund['1_year_return'])}
                         </td>
@@ -641,7 +648,7 @@ const MutualFunds: React.FC = () => {
                       {/* Inline detail panel */}
                       {isSelected && (
                         <tr>
-                          <td colSpan={10} style={{ padding: 0 }}>
+                          <td colSpan={11} style={{ padding: 0 }}>
                             {detailLoading ? (
                               <div style={{ padding: '20px 18px', background: 'var(--ns-surface)', borderTop: '1px solid var(--ns-border)' }}>
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>

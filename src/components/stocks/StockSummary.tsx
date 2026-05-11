@@ -102,7 +102,6 @@ const StockSummary: React.FC<StockSummaryProps> = ({
         <div className="ns-stat">
           <div className="ns-stat-label">Volume</div>
           <div className="ns-stat-val mono tnum">{formatVolume(stats.volume)}</div>
-          {stats.avgVolume && <div className="ns-stat-sub">Avg {formatVolume(stats.avgVolume)}</div>}
         </div>
         <div className="ns-stat">
           <div className="ns-stat-label">Market Cap</div>

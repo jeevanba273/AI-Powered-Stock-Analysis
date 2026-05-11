@@ -6,6 +6,7 @@ import TopBar from '@/components/layout/TopBar';
 
 interface Commodity {
   product?: string;
+  product_month?: string;
   expiry?: string;
   last_traded_price?: string;
   last_traded_quantity?: string;
@@ -18,6 +19,9 @@ interface Commodity {
   closing_price?: string;
   buy_price?: string;
   sell_price?: string;
+  oiResult?: string;
+  change?: string;
+  per_change?: string;
 }
 
 const Commodities: React.FC = () => {
@@ -180,6 +184,7 @@ const Commodities: React.FC = () => {
                   <th style={thStyle}>Close</th>
                   <th style={thStyle}>Volume</th>
                   <th style={thStyle}>Open Interest</th>
+                  <th style={thStyle}>OI Signal</th>
                 </tr>
               </thead>
               <tbody>
@@ -192,7 +197,12 @@ const Commodities: React.FC = () => {
                   return (
                     <tr key={i} style={{ borderBottom: '1px solid var(--ns-border)' }}>
                       <td style={{ ...tdStyle, textAlign: 'left', fontWeight: 600 }}>
-                        {c.product || '-'}
+                        <div>{c.product || '-'}</div>
+                        {c.product_month && (
+                          <div style={{ fontSize: 10, color: 'var(--ns-text-4)', fontWeight: 400, marginTop: 1 }}>
+                            {c.product_month}
+                          </div>
+                        )}
                       </td>
                       <td style={{ ...tdStyle, fontSize: 11, color: 'var(--ns-text-3)' }}>
                         {c.expiry || '-'}
@@ -212,6 +222,16 @@ const Commodities: React.FC = () => {
                       <td className="mono tnum" style={tdStyle}>{formatNum(c.closing_price)}</td>
                       <td className="mono tnum" style={tdStyle}>{formatVol(c.total_quantity_traded)}</td>
                       <td className="mono tnum" style={tdStyle}>{formatVol(c.open_interest)}</td>
+                      <td style={{
+                        ...tdStyle,
+                        fontWeight: 600,
+                        fontSize: 11,
+                        color: c.oiResult === 'Long Build up' ? 'var(--ns-profit)'
+                          : c.oiResult === 'Short Build up' ? 'var(--ns-loss)'
+                          : 'var(--ns-text-2)',
+                      }}>
+                        {c.oiResult || '-'}
+                      </td>
                     </tr>
                   );
                 })}
